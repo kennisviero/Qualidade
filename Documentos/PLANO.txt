@@ -1,0 +1,70 @@
+Pipeline completo de **Gestão da Qualidade em Ciclo Fechado (*Closed-Loop Quality*)**, alinhado à norma ABNT e ao ciclo PDCA (*Plan, Do, Check, Act*).
+
+**1. Planejamento e Engenharia da Qualidade (*Plan*)**
+
+* **Requisitos e Programação:** Definição de escopo, cronograma (*schedule*) e planejamento avançado da qualidade do produto (APQP).
+* **Engenharia de Qualidade (*Design for Quality*):** Aplicação de engenharia de sistemas, especificações geométricas e tolerâncias (GD&T, PMI) para mapear características críticas do produto.
+* **Análise de Riscos:** Mapeamento preventivo de falhas de projeto e processo por meio de FMEA (*Design/Process FMEA*).
+* **Planos de Inspeção:** Elaboração do Plano de Controle (*Control Plan*), especificação de inspeções e processo de aprovação de peças manufaturadas (PPAP).
+
+**2. Execução no Chão de Fábrica (*Do*)**
+
+* **Orquestração de Processos:** Automação de fluxos de trabalho (*workflows*) integrados entre departamentos e sistemas de execução fabril (MES / Opcenter).
+* **Inspeções e Testes:** Coleta de medições tridimensionais (CMM), testes laboratoriais (LIMS — ensaios não destrutivos como ultrassom, raio-X e espectrometria) e captura de dados via sensoriamento/IoT.
+* **Controle de Variabilidade:** Aplicação de Controle Estatístico de Processo (CEP / SPC) para garantir estabilidade operacional e qualidade lote a lote.
+
+**3. Captura e Verificação de Anomalias (*Check*)**
+
+* **Registro de Issues:** Coleta estruturada de não conformidades, defeitos e ocorrências operacionais em qualquer ponto do ciclo de vida.
+* **Análise de Tendências:** Consolidação da lista de *issues* para geração de curvas de tendência e identificação dos gargalos e desvios mais frequentes.
+
+**4. Tratamento e Melhoria Contínua (*Act*)**
+
+* **Análise de Causa Raiz:** Resolução estruturada de problemas (*Problem Solving*) aplicando metodologias analíticas como 8D, 5 Porquês e Diagrama de Ishikawa.
+* **Ações Corretivas e Preventivas:** Execução de ações de remediação e contenção via *Quality Action Management* (estruturado no conceito CAPA).
+* **Fechamento do Ciclo:** Gestão de mudanças (*Change Management*) para reincorporar as soluções de volta ao planejamento e à engenharia, impedindo a reincidência de falhas.
+======
+
+A esteira  percorrido por uma **issue** segue um ciclo fechado de rastreabilidade e melhoria contínua:
+
+* **1. Captura e Registro:** A *issue* (ou não conformidade/defeito) é identificada e registrada em diferentes momentos do ciclo de vida, como no chão de fábrica durante a execução, na inspeção tridimensional, no recebimento de materiais ou na validação de protótipos.
+* **2. Consolidação e Análise de Tendência:** Os dados coletados alimentam uma lista centralizada para gerar curvas de tendência, permitindo visualizar graficamente onde estão concentrados os gargalos e problemas recorrentes.
+* **3. Investigação de Causa Raiz (*Problem Solving*):** A *issue* é submetida a um processo analítico mais profundo (estruturado em 8 Disciplinas/8D) usando ferramentas como 5 Porquês, Diagrama de Ishikawa e planos CAPA para determinar o que originou a falha.
+* **4. Derivação e Roteamento:** Uma vez diagnosticada, a *issue* é desdobrada em tarefas específicas e encaminhada diretamente para as áreas responsáveis (como Engenharia de Design, Manufatura ou Qualidade).
+* **5. Execução da Melhoria e Realimentação:** As áreas afetadas trabalham nas ações de correção e prevenção (*Quality Improvement*). O resultado é reincorporado ao processo inicial (*closed-loop*), atualizando planos e impedindo que a falha volte a ocorrer.
+
+======
+
+Aqui estão os campos essenciais divididos por categorias lógicas:
+## 📑 Identificação e Contexto Inicial
+
+* Título claro e conciso: Uma frase curta que resume o problema ou a necessidade (ex: [Bug] Botão de checkout não responde no Safari Mobile).
+* Tipo de Issue: Identificação se é um Bug (erro), Feature Request (nova funcionalidade), Improvement (melhoria) ou Task (tarefa técnica).
+* Descrição/Objetivo: Um resumo em um ou dois parágrafos explicando o que está acontecendo ou o que precisa ser feito e o valor de negócio dessa alteração.
+
+## 🐛 Para Casos de Erro (Bug Reports)
+
+* Comportamento atual: O que está acontecendo de errado no momento.
+* Comportamento esperado: O que deveria acontecer se o sistema estivesse funcionando corretamente.
+* Passos para reproduzir: Uma lista numerada e sequencial com as ações exatas para replicar o erro.
+* Ambiente: Informações técnicas sobre onde o erro ocorre (ex: Sistema Operacional, Navegador, Versão do App, ambiente de Homologação ou Produção).
+* Evidências: Prints de tela (screenshots), gravações de vídeo ou trechos de logs de erro.
+
+## 🎯 Critérios de Aceite (Para Novas Funcionalidades)
+
+* Critérios de Aceite: Regras claras que definem quando a tarefa pode ser considerada "pronta" (geralmente descritas no formato BDD: Dado que... Quando... Então...).
+
+## 🛠️ Gerenciamento e Triagem
+
+* Prioridade/Severidade: Classificação do impacto (ex: Bloqueante, Alta, Média, Baixa).
+* Responsável (Assignee): Quem vai executar a tarefa.
+* Etiquetas (Labels): Tags para categorização e filtros (ex: frontend, backend, seguranca, design).
+* Épico/Componente: A qual módulo maior ou projeto essa issue está vinculada.
+
+Se você quiser, posso ajudar a estruturar isso de forma prática. Você gostaria de:
+
+* Um template pronto em Markdown para copiar e colar no Jira ou GitHub?
+* Exemplos práticos de critérios de aceite bem escritos?
+* Entender como definir a diferença entre prioridade e severidade?
+
+=====

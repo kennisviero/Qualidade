@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>7 Ferramentas da Qualidade</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+<body>
+  <div id="loginOverlay" class="overlay hidden">
+    <div class="login-box card">
+      <h2>Entrar</h2>
+      <label>Email</label>
+      <input type="text" id="loginEmail" value="admin" />
+      <label>Senha</label>
+      <input type="password" id="loginSenha" value="admin" />
+      <p id="loginError" class="error hidden"></p>
+      <button id="btnLogin" class="btn primary">Entrar</button>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <h1>7 Ferramentas da Qualidade</h1>
+    <div class="project-selector">
+      <span id="userInfo" class="muted"></span>
+      <label for="empresaSelect">Empresa:</label>
+      <select id="empresaSelect"></select>
+      <button id="btnLogout" class="btn">Sair</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar">
+      <a href="#" data-section="empresas" class="admin-only hidden">Empresas</a>
+      <a href="#" data-section="setores">Setores</a>
+      <a href="#" data-section="processos">Processos</a>
+      <a href="#" data-section="usuarios" class="admin-only hidden">Usuários</a>
+      <a href="#" data-section="issues">Issues</a>
+    </nav>
+
+    <main class="content">
+      <section id="section-empresas" class="section">
+        <h2>Empresas</h2>
+        <form id="empresaForm" class="card">
+          <input type="text" id="empresaRazao" placeholder="Razão social" required />
+          <input type="text" id="empresaCnpj" placeholder="CNPJ" />
+          <button type="submit" class="btn primary">Criar empresa</button>
+        </form>
+        <div id="empresaList" class="list"></div>
+      </section>
+
+      <section id="section-usuarios" class="section">
+        <h2>Usuários</h2>
+        <form id="usuarioForm" class="card grid-2">
+          <input type="text" id="usuarioNome" placeholder="Nome" required />
+          <input type="text" id="usuarioEmail" placeholder="Email" required />
+          <input type="password" id="usuarioSenha" placeholder="Senha" required />
+          <select id="usuarioPapel">
+            <option value="editor">editor</option>
+            <option value="visualizador">visualizador</option>
+            <option value="admin">admin</option>
+          </select>
+          <label id="usuarioEmpresaLabel" class="hidden">Empresa</label>
+          <select id="usuarioEmpresa" class="hidden"></select>
+          <label id="usuarioSetorLabel">Setor</label>
+          <select id="usuarioSetor"></select>
+          <label>Posição</label>
+          <select id="usuarioPosicao">
+            <option value="">—</option>
+            <option value="Presidente">Presidente</option>
+            <option value="Diretoria">Diretoria</option>
+            <option value="Gerente">Gerente</option>
+            <option value="Supervisor">Supervisor</option>
+            <option value="Encarregado">Encarregado</option>
+            <option value="Colaborador">Colaborador</option>
+          </select>
+          <button type="submit" class="btn primary">Criar usuário</button>
+        </form>
+        <div id="usuarioList" class="list"></div>
+      </section>
+
+      <section id="section-setores" class="section">
+        <h2>Setores</h2>
+        <p class="hint">Empresa (1) → Setor (n).</p>
+        <form id="setorForm" class="card grid-2">
+          <div>
+            <label>Empresa</label>
+            <select id="setorEmpresa"></select>
+          </div>
+          <div>
+            <label>Nome do setor</label>
+            <input type="text" id="setorNome" placeholder="Ex.: Produção" required />
+          </div>
+          <button type="submit" class="btn primary">Criar setor</button>
+        </form>
+        <div id="setorList" class="list"></div>
+      </section>
+
+      <section id="section-processos" class="section">
+        <h2>Processos</h2>
+        <p class="hint">Empresa (1) → Processo (n). O setor é um campo de cadastro (não faz parte da chave).</p>
+        <form id="processoForm" class="card grid-2">
+          <div>
+            <label>Empresa</label>
+            <select id="processoEmpresa"></select>
+          </div>
+          <div>
+            <label>Setor (campo)</label>
+            <select id="processoSetor"></select>
+          </div>
+          <div>
+            <label>Nome do processo</label>
+            <input type="text" id="processoNome" placeholder="Ex.: Expedição" required />
+          </div>
+          <div>
+            <label>Descrição</label>
+            <input type="text" id="processoDescricao" />
+          </div>
+          <button type="submit" class="btn primary">Criar processo</button>
+        </form>
+        <div id="processoList" class="list"></div>
+
+        <div id="processoDetail" class="card hidden">
+          <div class="rnc-header">
+            <h3 id="processoDetailTitulo">—</h3>
+            <span id="processoStatus" class="muted"></span>
+            <span class="spacer"></span>
+            <button id="btnProcessoExcluir" class="btn">Excluir processo</button>
+          </div>
+          <div class="grid-2">
+            <div>
+              <label>Nome</label>
+              <input type="text" id="processoGestNome" />
+            </div>
+            <div>
+              <label>Descrição</label>
+              <textarea id="processoGestDescricao" rows="2"></textarea>
+            </div>
+            <div>
+              <label>Ativo (equipamento)</label>
+              <input type="text" id="processoGestAtivo" placeholder="Ex.: Máquina X" />
+            </div>
+            <div>
+              <label>Status</label>
+              <select id="processoGestStatus">
+                <option value="rascunho">Rascunho</option>
+                <option value="em_revisao">Em revisão</option>
+                <option value="aprovado">Aprovado</option>
+              </select>
+            </div>
+            <div>
+              <label>Guardião (responsável)</label>
+              <select id="processoGestResponsavel"></select>
+            </div>
+            <div>
+              <label>Aprovador final</label>
+              <select id="processoGestAprovador"></select>
+            </div>
+          </div>
+          <div class="fluxo-meta-actions">
+            <button id="btnProcessoSalvarMeta" class="btn primary">Salvar metadados</button>
+            <button id="btnProcessoAprovar" class="btn primary">Aprovar</button>
+          </div>
+          <div id="processoDatas" class="fluxo-datas"></div>
+          <h4>Histórico de revisões</h4>
+          <div id="processoRevisoes" class="list"></div>
+          <div class="card">
+            <h3>Documentos do processo</h3>
+            <div class="docs-actions">
+              <input type="text" id="docsNovaPasta" placeholder="Nova pasta..." />
+              <button id="btnNovaPasta" class="btn">Nova pasta</button>
+              <input type="text" id="docsNovoNome" placeholder="Novo arquivo (ex.: procedimento.txt)" />
+              <button id="btnCriarDoc" class="btn">Criar arquivo</button>
+              <button id="btnRefreshDocs" class="btn">Atualizar</button>
+            </div>
+            <p class="hint">Arraste arquivos do seu computador para dentro de uma pasta da árvore. Clique para selecionar; Delete exclui; duplo clique abre.</p>
+            <div id="docsTree" class="docs-tree"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-issues" class="section active">
+        <h2>Issues — Gestão de Não Conformidades (PDCA)</h2>
+        <div class="card">
+          <button id="btnIssueNova" class="btn primary">+ Nova Issue</button>
+          <div id="issueList" class="list"></div>
+        </div>
+
+        <div class="issues-workspace">
+          <div class="issue-form-column">
+        <div id="issueDetail" class="card hidden">
+          <div class="rnc-header">
+            <h3 id="issueTitulo">—</h3>
+            <span id="issueStatus" class="muted"></span>
+            <span id="issueRncStatus" class="meta-chip"></span>
+            <span class="spacer"></span>
+            <button id="btnIssueEmitirRnc" class="btn primary">Emitir RNC</button>
+            <button id="btnIssueExcluir" class="btn">Excluir issue</button>
+          </div>
+          <div class="rnc-tabs">
+            <button class="rnc-tab active" data-issue-tab="captura">1. Captura</button>
+            <button class="rnc-tab" data-issue-tab="contencao">2. Contenção</button>
+            <button class="rnc-tab" data-issue-tab="investigacao">3. Investigação</button>
+            <button class="rnc-tab" data-issue-tab="acao">4. Ação</button>
+            <button class="rnc-tab" data-issue-tab="analise">5. Análise</button>
+          </div>
+
+          <div id="issue-tab-captura" class="rnc-pane active">
+            <div class="card issue-initial-block">
+              <h4>Dados obrigat&#243;rios para abertura da Issue</h4>
+              <p class="hint">A Issue precisa nascer com fatos verific&#225;veis. Use &ldquo;n&#227;o houve&rdquo; ou &ldquo;n&#227;o se aplica&rdquo; quando uma evid&#234;ncia ou a&#231;&#227;o n&#227;o existir.</p>
+              <div class="grid-3">
+                <div><label>ID &#250;nico da Issue</label><input type="text" id="issueCodigo" readonly placeholder="Gerado ao salvar" /></div>
+                <div><label>Data e hora da detec&#231;&#227;o *</label><input type="datetime-local" id="issueDetectadoEm" required /></div>
+                <div><label>Autor do registro</label><input type="text" id="issueAutor" readonly placeholder="Usu&#225;rio autenticado" /></div>
+              </div>
+              <div class="grid-2">
+                <div><label>Comportamento esperado *</label><textarea id="issueComportamentoEsperado" rows="3" required placeholder="Requisito, padr&#227;o, norma ou manual que deveria ser seguido"></textarea></div>
+                <div><label>Comportamento observado / desvio *</label><textarea id="issueComportamentoObservado" rows="3" required placeholder="Descreva o fato de forma t&#233;cnica e neutra"></textarea></div>
+                <div><label>Evid&#234;ncias objetivas *</label><textarea id="issueEvidencias" rows="3" required placeholder="Liste anexos, logs, fotos, medi&#231;&#245;es, protocolos ou contratos"></textarea></div>
+                <div><label>A&#231;&#227;o de emerg&#234;ncia adotada *</label><textarea id="issueAcaoEmergencial" rows="3" required placeholder="O que foi feito para conter? Se nada, informe explicitamente"></textarea></div>
+                <div><label>Impacto / gravidade objetiva *</label><select id="issueImpacto" required><option value="">Selecione</option><option value="baixo">Baixo</option><option value="medio">M&#233;dio</option><option value="alto">Alto</option><option value="critico">Cr&#237;tico</option></select></div>
+                <div><label>Quem foi afetado ou envolvido *</label><select id="issueEnvolvidos" required><option value="">Selecione</option><option value="cliente">Cliente</option><option value="operador">Operador</option><option value="equipe_interna">Equipe interna</option><option value="fornecedor">Fornecedor</option><option value="sistema_processo">Sistema/Processo</option><option value="multiplos">M&#250;ltiplos envolvidos</option></select></div>
+              </div>
+              <h4>Filtro 5W1H</h4>
+              <div class="grid-3">
+                <div><label>Where / Onde ocorreu? *</label><textarea id="issueOnde" rows="2" required></textarea></div>
+                <div><label>Why / Por que inicial?</label><textarea id="issuePorQueInicial" rows="2" placeholder="Somente uma suspeita t&#233;cnica inicial, sem afirmar causa raiz"></textarea></div>
+                <div><label>How / Como foi detectado? *</label><textarea id="issueComoDetectado" rows="2" required placeholder="Teste, alerta, auditoria, inspe&#231;&#227;o ou reclama&#231;&#227;o"></textarea></div>
+              </div>
+              <h4>Contexto t&#233;cnico complementar</h4>
+              <div class="grid-3">
+                <div><label>C&#243;digo de erro / protocolo</label><input type="text" id="issueCodigoErro" /></div>
+                <div><label>Ambiente</label><input type="text" id="issueAmbiente" placeholder="Produ&#231;&#227;o, homologa&#231;&#227;o, campo, linha..." /></div>
+                <div><label>Anexos</label><span class="hint">Use a &#225;rvore de documentos na aba 4 para enviar arquivos.</span></div>
+              </div>
+            </div>
+            <p class="hint">Plan — captura e registo da issue em qualquer ponto do ciclo de vida.</p>
+            <div class="grid-2">
+              <div>
+                <label>Setor</label>
+                <select id="issueSetor"></select>
+              </div>
+              <div>
+                <label>Processo</label>
+                <select id="issueProcesso"></select>
+              </div>
+              <div>
+                <label>Tipo</label>
+                <select id="issueTipo">
+                  <option value="nao_conformidade">Não conformidade</option>
+                  <option value="defeito">Defeito</option>
+                  <option value="ocorrencia">Ocorrência operacional</option>
+                  <option value="recurso">Recurso/requisição</option>
+                  <option value="outro">Outro</option>
+                </select>
+              </div>
+              <div class="hidden">
+                <label>Severidade</label>
+                <select id="issueSeveridade">
+                  <option value="baixa">Baixa</option>
+                  <option value="media">Média</option>
+                  <option value="alta">Alta</option>
+                  <option value="critica">Crítica</option>
+                </select>
+              </div>
+              <div>
+                <label>Etapa de captura</label>
+                <select id="issueEtapa">
+                  <option value="">—</option>
+                  <option value="fabricacao">Fabricação</option>
+                  <option value="inspecao">Inspeção</option>
+                  <option value="recebimento">Recebimento</option>
+                  <option value="expedicao">Expedição</option>
+                  <option value="outra">Outra</option>
+                </select>
+              </div>
+              <div>
+                <label>Descrição</label>
+                <textarea id="issueDescricao" rows="3"></textarea>
+                <label class="inline">Transcrever arquivo (TXT/PDF/DOCX) → descrição</label>
+                <input type="file" id="issueTranscricaoDescricao" accept=".txt,.pdf,.docx" />
+              </div>
+              <div>
+                <label>Origem</label>
+                <label class="inline"><input type="radio" name="issueOrigem" value="interno" /> Interno</label>
+                <label class="inline"><input type="radio" name="issueOrigem" value="externo" /> Externo</label>
+                <label>Produto</label>
+                <input type="text" id="issueProduto" />
+                <label>Norma</label>
+                <input type="text" id="issueNorma" />
+                <label class="inline"><input type="checkbox" id="issueReincidencia" /> Reincidência</label>
+              </div>
+            </div>
+            <button id="btnIssueSalvar" class="btn primary">Salvar registro</button>
+          </div>
+
+          <div id="issue-tab-contencao" class="rnc-pane">
+            <p class="hint">Plan/Do — ação de contenção e bloqueio de lote.</p>
+            <h4>Rastreabilidade temporal</h4>
+            <div class="grid-3">
+              <div><label>Último OK em</label><input type="datetime-local" id="issueUltimoOk" /></div>
+              <div><label>Alarme em</label><input type="datetime-local" id="issueAlarme" /></div>
+              <div><label>Margem de segurança (min)</label><input type="text" id="issueMargem" /></div>
+            </div>
+            <h4>Identificação</h4>
+            <div class="grid-3">
+              <div><label>Código material (SKU/PN)</label><input type="text" id="issueCodigoMaterial" /></div>
+              <div><label>Lote</label><input type="text" id="issueLote" /></div>
+              <div><label>Ordem de produção</label><input type="text" id="issueOrdemProducao" /></div>
+              <div><label>Número de Série (SN) início</label><input type="text" id="issueSnInicio" /></div>
+              <div><label>Número de Série (SN) fim</label><input type="text" id="issueSnFim" /></div>
+            </div>
+            <h4>Localização</h4>
+            <div class="grid-3">
+              <div><label>Linha / posto</label><input type="text" id="issueLinhaPosto" /></div>
+              <div><label>Status do estoque</label><input type="text" id="issueStatusEstoque" /></div>
+              <div><label>Posição do estoque</label><input type="text" id="issuePosicaoEstoque" /></div>
+            </div>
+            <h4>Responsabilidade</h4>
+            <div class="grid-3">
+              <div><label>Operador</label><select id="issueOperador"></select></div>
+              <div><label>Inspetor</label><select id="issueInspetor"></select></div>
+              <div><label>Motivo do bloqueio</label><input type="text" id="issueMotivoBloqueio" /></div>
+            </div>
+            <div class="rnc-investigar">
+              <label class="inline"><input type="checkbox" id="issueInvestigar" /> Investigar a causa?</label>
+              <span id="issueInvestigarOpts" class="hidden">
+                <label class="inline"><input type="checkbox" id="issueUsarIshikawa" /> Ishikawa</label>
+                <label class="inline"><input type="checkbox" id="issueUsarPorques" /> 5 Porquês</label>
+              </span>
+            </div>
+            <button id="btnIssueSalvarContencao" class="btn primary">Salvar contenção</button>
+          </div>
+
+          <div id="issue-tab-investigacao" class="rnc-pane">
+            <p class="hint">Do — análise de causa raiz (Ishikawa e/ou 5 Porquês). Disponível quando "investigar a causa" está marcado na aba de contenção.</p>
+            <div id="issueIshiBlock" class="hidden">
+              <div class="grid-2">
+                <div><label>Nome do Ishikawa (automático = código da issue)</label><input type="text" id="issueIshiNome" readonly /></div>
+                <div><label>Efeito (problema)</label><input type="text" id="issueIshiEfeito" /></div>
+                <div><label>Ativo (equipamento)</label><input type="text" id="issueIshiAtivo" /></div>
+                <div><label>Descrição</label><textarea id="issueIshiDescricao" rows="2"></textarea></div>
+              </div>
+              <div class="grid-2">
+                <div><label id="issueIshiLabelMetodo">Método</label><textarea id="issueIshiMetodo" rows="3"></textarea></div>
+                <div><label id="issueIshiLabelMaquina">Máquina</label><textarea id="issueIshiMaquina" rows="3"></textarea></div>
+                <div><label id="issueIshiLabelMedida">Medida</label><textarea id="issueIshiMedida" rows="3"></textarea></div>
+                <div><label id="issueIshiLabelMeio">Meio Ambiente</label><textarea id="issueIshiMeio" rows="3"></textarea></div>
+                <div><label id="issueIshiLabelMaterial">Material</label><textarea id="issueIshiMaterial" rows="3"></textarea></div>
+                <div><label id="issueIshiLabelMao">Mão de Obra</label><textarea id="issueIshiMao" rows="3"></textarea></div>
+              </div>
+              <details class="card">
+                <summary>Editar nomes das categorias (6Ms)</summary>
+                <div class="grid-2">
+                  <div><label>1º M</label><input type="text" id="issueCatMetodo" placeholder="Método" /></div>
+                  <div><label>2º M</label><input type="text" id="issueCatMaquina" placeholder="Máquina" /></div>
+                  <div><label>3º M</label><input type="text" id="issueCatMedida" placeholder="Medida" /></div>
+                  <div><label>4º M</label><input type="text" id="issueCatMeio" placeholder="Meio Ambiente" /></div>
+                  <div><label>5º M</label><input type="text" id="issueCatMaterial" placeholder="Material" /></div>
+                  <div><label>6º M</label><input type="text" id="issueCatMao" placeholder="Mão de Obra" /></div>
+                </div>
+                <p class="hint">Deixe em branco para usar o nome sugerido. Salve o Ishikawa para aplicar.</p>
+              </details>
+              <button id="btnIssueSalvarIshi" class="btn primary">Salvar Ishikawa</button>
+              <button id="btnIssueGerarIshi" class="btn primary">Gerar</button>
+              <button id="btnIssueGerarAcoesIshi" class="btn primary">Gerar ações do Ishikawa</button>
+              <div id="issueIshiOut" class="chart"></div>
+            </div>
+            <div id="issuePorquesBlock" class="hidden">
+              <h4>5 Porquês</h4>
+              <p class="hint">Se ambos marcados, cada porquê usa um item distinto do Ishikawa.</p>
+              <div id="issuePorquesList"></div>
+              <div class="grid-2">
+                <div><label>Causa raiz</label><textarea id="issueCausaRaiz" rows="2"></textarea></div>
+              </div>
+              <button id="btnIssueSalvarPorques" class="btn primary">Salvar 5 Porquês</button>
+            </div>
+          </div>
+
+          <div id="issue-tab-acao" class="rnc-pane">
+            <p class="hint">Check/Act — plano de ação (5W2H).</p>
+            <div class="card">
+              <label>Resultado esperado do plano <small>(salvo automaticamente ao salvar uma ação)</small></label>
+              <textarea id="issueResultadoEsperado" rows="2"></textarea>
+            </div>
+            <div id="issueAcoes" class="rnc-acoes-container">
+              <table class="rnc-matrix">
+                <thead><tr>
+                  <th>#</th><th>O quê</th><th>Por quê</th><th>Onde</th><th>Como</th>
+                  <th>Quanto</th><th>Prazo</th><th>Resp.</th><th>Status</th>
+                  <th>Obs.</th><th></th>
+                </tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div class="card">
+              <h4 id="issueAcaoFormTitle">Nova ação (5W2H)</h4>
+              <div class="grid-2">
+                <div><label>Descrição (O quê?)</label><input type="text" id="issueAcaoDescricao" /></div>
+                <div><label>Responsável</label><select id="issueAcaoResponsavel"></select></div>
+                <div><label>Prazo limite</label><input type="date" id="issueAcaoPrazo" /></div>
+                <div><label>Por quê</label><input type="text" id="issueAcaoPorQue" /></div>
+                <div><label>Onde</label><input type="text" id="issueAcaoOnde" /></div>
+                <div><label>Como</label><input type="text" id="issueAcaoComo" /></div>
+                <div><label>Quanto</label><input type="text" id="issueAcaoQuanto" /></div>
+                <div><label>Observação</label><textarea id="issueAcaoObservacao" rows="2"></textarea></div>
+                <div>
+                  <label>Transcrever arquivo (TXT/PDF/DOCX) → observação</label>
+                  <input type="file" id="issueTranscricaoFile" accept=".txt,.pdf,.docx" />
+                </div>
+              </div>
+              <button id="btnIssueAddAcao" class="btn primary">Adicionar ação</button>
+              <button id="btnIssueCancelarAcao" class="btn hidden">Cancelar edição</button>
+            </div>
+            <div class="rnc-finalizar card">
+              <div class="grid-2">
+                <div><label>Resultado alcançado</label><textarea id="issueResultado" rows="2"></textarea></div>
+                <div>
+                  <label>Nota de atingimento (1–5)</label>
+                  <select id="issueNota">
+                    <option value="1">1 — não atingido</option>
+                    <option value="2">2 — pouco</option>
+                    <option value="3">3 — médio</option>
+                    <option value="4">4 — próximo do esperado</option>
+                    <option value="5">5 — 100%</option>
+                  </select>
+                </div>
+              </div>
+              <button id="btnIssueFinalizar" class="btn primary">Finalizar issue</button>
+            </div>
+          </div>
+
+          <div id="issue-tab-analise" class="rnc-pane">
+            <div class="card issue-rnc-emissao">
+              <h4>Emiss&#227;o formal da RNC</h4>
+              <p class="hint">A emiss&#227;o cria um n&#250;mero pr&#243;prio de RNC, preserva o c&#243;digo da Issue de origem e registra quem/quando fez a transi&#231;&#227;o.</p>
+              <div class="grid-3">
+                <div><label>C&#243;digo da Issue de origem</label><input id="issueRncIssueCodigo" readonly /></div>
+                <div><label>N&#250;mero da RNC</label><input id="issueRncCodigo" readonly placeholder="Gerado na emiss&#227;o" /></div>
+                <div><label>Classifica&#231;&#227;o *</label><select id="issueRncCriticidade"><option value="">Selecione</option><option value="maior">Maior</option><option value="menor">Menor</option></select></div>
+                <div><label>Enquadramento normativo/contratual *</label><textarea id="issueRncEnquadramento" rows="2" placeholder="Ex.: ISO 9001, item 8.7; contrato, cl&#225;usula..."></textarea></div>
+                <div><label>Origem do gatilho *</label><select id="issueRncOrigem"><option value="">Selecione</option><option value="auditoria_interna">Auditoria interna</option><option value="auditoria_externa">Auditoria externa</option><option value="reclamacao_cliente">Reclama&#231;&#227;o de cliente</option><option value="inspecao_rotina">Inspe&#231;&#227;o de rotina</option></select></div>
+                <div><label>Disposi&#231;&#227;o inicial *</label><select id="issueRncDisposicao"><option value="">Selecione</option><option value="refugo">Refugo</option><option value="retrabalho">Retrabalho</option><option value="devolucao_fornecedor">Devolu&#231;&#227;o ao fornecedor</option><option value="liberacao_concessao">Libera&#231;&#227;o sob concess&#227;o</option></select></div>
+              </div>
+              <div class="grid-2">
+                <div><label>A&#231;&#227;o de conten&#231;&#227;o definitiva *</label><textarea id="issueRncContencao" rows="3" placeholder="Como o risco foi isolado e impedido de avan&#231;ar?"></textarea></div>
+                <div><label>Respons&#225;vel pela conten&#231;&#227;o *</label><select id="issueRncContencaoResponsavel"></select><label>Data/hora da conten&#231;&#227;o *</label><input type="datetime-local" id="issueRncContencaoEm" /></div>
+                <div><label>L&#237;der da investiga&#231;&#227;o *</label><select id="issueRncLider"></select></div>
+                <div><label>Auditor da efic&#225;cia *</label><select id="issueRncAuditor"></select></div>
+                <div><label>Equipe de investiga&#231;&#227;o * (selecione pelo menos 2)</label><select id="issueRncEquipe" multiple size="4"></select></div>
+                <div><label>Metodologia de an&#225;lise *</label><select id="issueRncMetodologia"><option value="">Selecione</option><option value="5_porques">5 Porqu&#234;s</option><option value="ishikawa">Ishikawa</option><option value="fmea">FMEA</option></select></div>
+                <div><label>Prazo para conclus&#227;o da an&#225;lise *</label><input type="date" id="issueRncPrazoAnalise" /></div>
+                <div><label>Prazo do plano de a&#231;&#227;o *</label><input type="date" id="issueRncPrazoPlano" /></div>
+                <div><label>Prazo da verifica&#231;&#227;o de efic&#225;cia *</label><input type="date" id="issueRncPrazoEficacia" /></div>
+              </div>
+              <div id="issueRncAuditoria" class="hint"></div>
+              <button id="btnIssueEmitirRncForm" class="btn primary">Validar e emitir RNC</button>
+            </div>
+            <p class="hint">Check — consolidação e análise de tendências (Pareto automático por dimensão + tendência de criação/finalização).</p>
+            <div class="card">
+              <h4>Resumo</h4>
+              <div id="issueAnaliseResumo" class="fluxo-datas"></div>
+            </div>
+            <div class="card">
+              <h4>Pareto por dimensão</h4>
+              <label>Dimensão</label>
+              <select id="issueAnaliseDimensao">
+                <option value="status">Status</option>
+              </select>
+              <button id="btnIssueAnalise" class="btn primary">Gerar análise</button>
+              <div id="issueParetoOut" class="chart"></div>
+            </div>
+            <div class="card">
+              <h4>Tendência (criação vs finalização)</h4>
+              <div id="issueTrendsOut" class="chart"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h4>Documentos da issue</h4>
+            <div class="docs-actions">
+              <input type="text" id="issueDocsNovaPasta" placeholder="Nova pasta..." />
+              <button id="btnIssueNovaPasta" class="btn">Nova pasta</button>
+              <input type="text" id="issueDocsNovoNome" placeholder="Novo arquivo (ex.: relato.txt)" />
+              <button id="btnIssueCriarDoc" class="btn">Criar arquivo</button>
+              <button id="btnIssueRefreshDocs" class="btn">Atualizar</button>
+            </div>
+            <p class="hint">Arraste arquivos para uma pasta. Clique para selecionar; Delete exclui; duplo clique abre.</p>
+            <div id="issueDocsTree" class="docs-tree"></div>
+          </div>
+        </div>
+
+          </div>
+          <aside class="card issue-kanban-panel">
+          <h3>Kanban de tarefas (empresa)</h3>
+          <p class="hint">Arraste um cartão entre as colunas. Sair do backlog define a data de início.</p>
+          <div id="issueKanban" class="kanban"></div>
+          </aside>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

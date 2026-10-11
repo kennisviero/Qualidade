@@ -1,0 +1,66 @@
+from contextlib import asynccontextmanager
+from pathlib import Path
+
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+from app.db import init_db
+from app.routers import (
+    auth,
+    datasets,
+    documentos,
+    empresas,
+    issues,
+    processos,
+    projects,
+    setores,
+    transcricao,
+    usuarios,
+)
+
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
+
+app = FastAPI(title="7 Ferramentas da Qualidade", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
+)
+
+
+@app.middleware("http")
+async def no_cache_static(request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static/"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        response.headers["Pragma"] = "no-cache"
+    return response
+
+app.include_router(auth.router)
+app.include_router(empresas.router)
+app.include_router(usuarios.router)
+app.include_router(projects.router)
+app.include_router(datasets.router)
+app.include_router(setores.router)
+app.include_router(processos.router)
+app.include_router(documentos.router)
+app.include_router(issues.router)
+app.include_router(transcricao.router)
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+
+
+@app.get("/")
+def index():
+    return FileResponse(str(STATIC_DIR / "index.html"))
