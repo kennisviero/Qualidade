@@ -181,7 +181,7 @@ def test_ciclo_completo_da_issue():
         issue = c.post("/api/issues", json={"descricao": "Peça fora de medida", "severidade": "alta"}).json()
         issue = criar_issue(c, descricao="Peca fora de medida", severidade="alta").json()
         iid = issue["id"]
-        assert issue["status"] == "registrado"
+        assert issue["status"] == "cadastrada"
         # 2. Contenção: investigar com 5 Porquês
         r = c.put(f"/api/issues/{iid}", json={"lote": "L1", "investigar_causa": 1, "usar_porques": 1})
         assert r.status_code == 200
@@ -192,19 +192,19 @@ def test_ciclo_completo_da_issue():
                   "causa_raiz": "Ferramenta gasta"},
         )
         assert r.status_code == 200
-        assert c.get(f"/api/issues/{iid}").json()["status"] == "em_investigacao"
+        assert c.get(f"/api/issues/{iid}").json()["status"] == "em_tratamento"
         # 4. Ação
         acao = c.post(f"/api/issues/{iid}/acoes", json={"descricao": "Trocar ferramenta"}).json()
-        assert c.get(f"/api/issues/{iid}").json()["status"] == "plano_acao"
+        assert c.get(f"/api/issues/{iid}").json()["status"] == "em_tratamento"
         c.put(f"/api/issues/{iid}/acoes/{acao['id']}/status", json={"status": "em_andamento"})
-        assert c.get(f"/api/issues/{iid}").json()["status"] == "em_execucao"
+        assert c.get(f"/api/issues/{iid}").json()["status"] == "em_tratamento"
         c.put(f"/api/issues/{iid}/acoes/{acao['id']}/status", json={"status": "finalizada"})
         # 5. Finalização com nota
         r = c.post(f"/api/issues/{iid}/finalizar",
                    json={"resultado_alcancado": "Medida dentro da tolerância", "nota_atingimento": 5})
         assert r.status_code == 200
         final = r.json()
-        assert final["status"] == "finalizado"
+        assert final["status"] == "fechada"
         assert final["nota_atingimento"] == 5
         assert final["finalizado_em"]
 
@@ -216,9 +216,9 @@ def test_put_nao_finaliza_issue():
         _, admin_email, _ = preparar_empresa(c, "Empresa PutFin")
         entrar_como(c, admin_email)
         issue = criar_issue(c).json()
-        r = c.put(f"/api/issues/{issue['id']}", json={"status": "finalizado"})
+        r = c.put(f"/api/issues/{issue['id']}", json={"status": "fechada"})
         assert r.status_code == 422
-        assert c.get(f"/api/issues/{issue['id']}").json()["status"] == "registrado"
+        assert c.get(f"/api/issues/{issue['id']}").json()["status"] == "cadastrada"
 
 
 def test_criar_acao_nao_regride_status():
@@ -229,9 +229,9 @@ def test_criar_acao_nao_regride_status():
         iid = issue["id"]
         a1 = c.post(f"/api/issues/{iid}/acoes", json={"descricao": "A1"}).json()
         c.put(f"/api/issues/{iid}/acoes/{a1['id']}/status", json={"status": "em_andamento"})
-        assert c.get(f"/api/issues/{iid}").json()["status"] == "em_execucao"
+        assert c.get(f"/api/issues/{iid}").json()["status"] == "em_tratamento"
         c.post(f"/api/issues/{iid}/acoes", json={"descricao": "A2"})
-        assert c.get(f"/api/issues/{iid}").json()["status"] == "em_execucao"
+        assert c.get(f"/api/issues/{iid}").json()["status"] == "em_tratamento"
 
 
 @pytest.mark.parametrize("resultado", ["", "   "])

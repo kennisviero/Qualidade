@@ -33,6 +33,36 @@ body {
 .project-selector select { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
 
 .layout { display: flex; min-height: calc(100vh - 61px); }
+.layout.menu-collapsed > .sidebar { display: none; }
+#section-rncs .rnc-workspace { display: grid; grid-template-columns: minmax(620px, 1180px) minmax(440px, 1fr); gap: 12px; align-items: start; min-width: 1080px; }
+#section-rncs { overflow-x: auto; }
+#section-rncs .issue-kanban-panel { padding: 7px; }
+#rncKanban .kanban-card { font-size: 10px; padding: 5px 2px; }
+#rncKanban .kanban-col h4 { font-size: 10px; }
+#rncSelect { width: 100%; }
+.rnc-selector-row { display: grid; grid-template-columns: minmax(200px, 1fr) minmax(280px, 2fr); gap: 10px; }
+#rncFilter { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
+.rnc-plan-matrix { overflow-x: auto; margin: 12px 0; }
+.rnc-plan-matrix table { width: 100%; min-width: 1380px; border-collapse: collapse; font-size: 12px; }
+.rnc-plan-matrix th, .rnc-plan-matrix td { border: 1px solid var(--border); padding: 5px; vertical-align: top; }
+.rnc-plan-matrix th { background: var(--bg); text-align: left; }
+#rncDetail .rnc-plan-matrix input, #rncDetail .rnc-plan-matrix select, #rncDetail .rnc-plan-matrix textarea { width: 100%; min-width: 100px; font-size: 12px; padding: 8px; }
+.rnc-plan-matrix td:first-child textarea, .rnc-plan-matrix td:nth-child(6) textarea { min-width: 160px; }
+.rnc-plan-matrix th, .rnc-plan-matrix td { overflow-wrap: anywhere; }
+.rnc-plan-matrix .btn { padding: 6px 10px; font-size: 12px; }
+#rncDetail .card { min-width: 0; }
+#rncDetail input, #rncDetail select, #rncDetail textarea { min-width: 0; max-width: 100%; }
+.rnc-evidence-list p { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; overflow-wrap: anywhere; }
+.rnc-evidence-list a { min-width: 0; overflow-wrap: anywhere; }
+#rncDetail .rnc-data-block { margin-top: 12px; }
+#rncDetail .rnc-data-block h4 { margin: 0 0 10px; }
+#rncDetail input[readonly], #rncDetail textarea[readonly] { background: var(--bg); color: var(--text); }
+#rncDetail textarea { min-height: 52px; resize: vertical; }
+#rncDetail h4 { font-size: 13px; }
+#rncDetail .grid-2, #rncDetail .grid-3 { gap: 8px; }
+#rncDetail .rnc-header { flex-wrap: wrap; }
+#rncDetail .rnc-header-actions { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; }
+#rncDetail .rnc-kanban-status { font-size: 12px; color: var(--accent); font-weight: 600; }
 
 .sidebar {
   width: 220px;
@@ -52,6 +82,11 @@ body {
 
 .sidebar a:hover { background: var(--bg); }
 .sidebar a.active { background: #e0eaff; color: var(--accent); font-weight: 600; }
+.sidebar-submenu { margin: 0 12px 8px 24px; border-left: 1px solid var(--border); }
+.sidebar .sidebar-submenu a { padding: 7px 10px; font-size: 12px; line-height: 1.3; }
+.issue-cleanup { max-width: 650px; font-size: 13px; }
+.issue-cleanup select { margin-bottom: 10px; }
+.issue-cleanup .hint { margin: 10px 0; }
 
 .content { flex: 1; padding: 16px; min-width: 0; }
 
@@ -305,7 +340,15 @@ textarea.code-input, .card textarea {
 .rnc-pane.active { display: block; }
 .rnc-pane h4 { margin: 12px 0 6px; color: var(--accent); }
 
-#issueDetail { max-width: 1180px; }
+#issueDetail { max-width: 1180px; font-size: 12px; }
+#issueDetail label,
+#issueDetail input,
+#issueDetail select,
+#issueDetail textarea,
+#issueDetail .btn,
+#issueDetail .rnc-tab { font-size: 12px; }
+#issueDetail h4 { font-size: 13px; }
+#issueDetail .hint { font-size: 12px; }
 #issueDetail > .rnc-pane > .card { margin-bottom: 10px; }
 #issueDetail textarea { min-height: 46px; resize: vertical; }
 #issueDetail .issue-initial-block textarea { min-height: 52px; }
@@ -320,6 +363,42 @@ textarea.code-input, .card textarea {
 }
 
 .issue-form-column { min-width: 0; }
+.selecao-workspace { display: grid; grid-template-columns: repeat(2, minmax(450px, 1fr)); gap: 10px; align-items: start; overflow-x: auto; }
+.selecao-entrada, .selecao-retorno { min-width: 0; }
+.selecao-retorno { min-height: 300px; }
+#issue-view-selecao .card { padding: 10px; }
+#issue-view-selecao .hint, #selecaoMensagem, #issue-view-selecao label { font-size: 11px; line-height: 1.3; }
+#issue-view-selecao input, #issue-view-selecao select, #issue-view-selecao textarea { font-size: 11px; padding: 5px 6px; }
+#issue-view-selecao .btn { font-size: 11px; padding: 5px 8px; }
+#selecaoAnaliseForm > .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+#selecaoAnaliseForm > .grid-3 > div:first-child { grid-column: 1 / -1; }
+.selecao-lista { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; margin: 8px 0; align-items: start; }
+.selecao-linha { position: relative; min-width: 0; border: 1px solid var(--border); border-radius: 4px; padding: 5px; font-size: 11px; line-height: 1.3; }
+.selecao-codigo { display: block; margin: 0 30px 5px 0; color: #1e3a8a; font-weight: 700; overflow-wrap: anywhere; }
+a.selecao-codigo { cursor: pointer; text-decoration: none; }
+a.selecao-codigo:hover, a.selecao-codigo:focus-visible { text-decoration: underline; }
+#issue-view-selecao .selecao-linha > input[type="checkbox"],
+#issue-view-selecao .selecao-candidata > input[type="checkbox"] { position: absolute; top: 5px; right: 5px; width: 22px; height: 22px; margin: 0; padding: 0; cursor: pointer; accent-color: var(--accent); }
+.selecao-linha .meta strong { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.selecao-linha .meta { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.selecao-linha .meta span { display: block; }
+.selecao-paginacao { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; font-size: 11px; }
+#selecaoCandidatas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; align-items: start; margin-bottom: 8px; }
+.selecao-candidata { position: relative; min-width: 0; border: 1px solid var(--border); border-radius: 4px; padding: 6px; }
+.selecao-candidata > strong { overflow-wrap: anywhere; font-size: 11px; }
+.selecao-candidata .grid-3 { grid-template-columns: 1fr; gap: 5px; }
+.selecao-candidata p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 11px; line-height: 1.3; margin: 5px 0; }
+.selecao-candidata summary { cursor: pointer; font-weight: 600; font-size: 11px; margin: 6px 0; }
+.selecao-candidata select[multiple] { min-height: 100px; }
+.selecao-resultado-item { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+#issueDashboardAtrasadas { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+#issueDashboardAtrasadas > .btn { width: 100%; margin: 0; padding: 8px 10px; text-align: left; font-size: 12px; white-space: normal; overflow-wrap: anywhere; }
+#issueDashboardAtrasadas > .hint { grid-column: 1 / -1; }
+#issueDashboardAtrasadas > .btn > span { display: block; margin-top: 3px; }
+.issue-kpis { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.issue-kpi { flex: 0 1 150px; min-width: 130px; display: flex; flex-direction: column; gap: 2px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); }
+.issue-kpi span { font-size: 11px; line-height: 1.2; color: var(--muted); }
+.issue-kpi strong { font-size: 17px; line-height: 1.2; color: var(--accent); }
 .issue-kanban-panel { position: sticky; top: 12px; min-width: 0; }
 .issue-kanban-panel h3 { margin-top: 0; font-size: 16px; }
 .issue-kanban-panel .kanban {
@@ -346,11 +425,11 @@ textarea.code-input, .card textarea {
 @media (max-width: 900px) {
   .grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   #issueDetail { max-width: none; }
-  .issues-workspace { grid-template-columns: 1fr; }
-  .issue-kanban-panel { position: static; }
+  .issues-workspace { grid-template-columns: minmax(300px, 1fr) 240px; overflow-x: auto; }
 }
 
 @media (max-width: 620px) {
+  .selecao-candidata .grid-3 { grid-template-columns: 1fr; }
   .content { padding: 10px; }
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
   .rnc-header { flex-wrap: wrap; }

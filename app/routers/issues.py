@@ -1,14 +1,14 @@
 import json
 import re
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
 from app.auth import get_current_user, is_superuser, require_papel
 from app.calculations import pareto
-from app.db import DOCS_DIR, get_connection
+from app.db import DOCS_DIR, RNC_FIELDS, get_connection
 from app.docs import (
     build_ishikawa_pasta,
     build_issue_pasta,
@@ -27,12 +27,11 @@ router = APIRouter(prefix="/api/issues", tags=["issues"])
 
 editor_dep = require_papel("admin", "editor")
 
-ISSUE_STATUSES = ("registrado", "em_investigacao", "plano_acao", "em_execucao", "finalizado")
+ISSUE_STATUSES = ("cadastrada", "em_tratamento", "fechada")
 ACAO_STATUSES = ("backlog", "iniciada", "em_andamento", "em_revisao", "finalizada")
-SEVERIDADES = ("baixa", "media", "alta", "critica")
 RNC_CRITICIDADES = ("maior", "menor")
 RNC_ORIGENS = ("auditoria_interna", "auditoria_externa", "reclamacao_cliente", "inspecao_rotina")
-RNC_DISPOSICOES = ("refugo", "retrabalho", "devolucao_fornecedor", "liberacao_concessao")
+RNC_DISPOSICOES = ("refugo", "retrabalho", "devolucao_fornecedor", "liberacao_concessao", "bloqueio_preventivo")
 RNC_METODOLOGIAS = ("5_porques", "ishikawa", "fmea")
 
 
@@ -42,17 +41,8 @@ def now():
 
 class IssueIn(SafeModel):
     empresa_id: int | None = None
-    setor_id: int | None = None
-    processo_id: int | None = None
-    descricao: str = ""
+    autor_registro_id: int | None = None
     data: str = ""
-    origem: str = ""
-    produto: str = ""
-    norma: str = ""
-    reincidencia: int = 0
-    tipo: str = "nao_conformidade"
-    severidade: str = "media"
-    etapa_captura: str = ""
     detectado_em: str = ""
     comportamento_esperado: str = ""
     comportamento_observado: str = ""
@@ -88,17 +78,8 @@ class IssueIn(SafeModel):
 
 
 class IssueUpdate(SafeModel):
-    setor_id: int | None = None
-    processo_id: int | None = None
-    descricao: str | None = None
+    autor_registro_id: int | None = None
     data: str | None = None
-    origem: str | None = None
-    produto: str | None = None
-    norma: str | None = None
-    reincidencia: int | None = None
-    tipo: str | None = None
-    severidade: str | None = None
-    etapa_captura: str | None = None
     detectado_em: str | None = None
     comportamento_esperado: str | None = None
     comportamento_observado: str | None = None
@@ -136,20 +117,20 @@ class IssueUpdate(SafeModel):
 
 
 class RncEmissaoIn(SafeModel):
-    criticidade: str
-    enquadramento_normativo: str
-    origem_gatilho: str
-    acao_contencao_definitiva: str
-    contencao_responsavel_id: int
-    contencao_em: str
-    disposicao_inicial: str
-    lider_investigacao_id: int
-    equipe_investigacao: list[int]
-    metodologia: str
-    prazo_analise: str
-    prazo_plano_acao: str
-    prazo_verificacao_eficacia: str
-    auditor_eficacia_id: int
+    criticidade: str = ""
+    enquadramento_normativo: str = ""
+    origem_gatilho: str = ""
+    acao_contencao_definitiva: str = ""
+    contencao_responsavel_id: int | None = None
+    contencao_em: str = ""
+    disposicao_inicial: str = ""
+    lider_investigacao_id: int | None = None
+    equipe_investigacao: list[int] = []
+    metodologia: str = ""
+    prazo_analise: str = ""
+    prazo_plano_acao: str = ""
+    prazo_verificacao_eficacia: str = ""
+    auditor_eficacia_id: int | None = None
 
 
 class IshikawaLinkIn(SafeModel):
@@ -242,75 +223,27 @@ INITIAL_REQUIRED_FIELDS = (
 )
 
 
-def _validar_cadastro_inicial_legacy(issue, conn, empresa_id, user, existing=None):
-    """Garante o conjunto factual mínimo antes de criar ou editar uma Issue."""
-    values = {}
-    for field, _label in INITIAL_REQUIRED_FIELDS:
-        value = getattr(issue, field, None)
-        if value is None and existing is not None:
-            value = existing[field]
-        values[field] = (value or "").strip()
-    missing = [label for field, label in INITIAL_REQUIRED_FIELDS if not values[field]]
-    if missing:
-        raise HTTPException(
-            status_code=422,
-            detail="Preencha os dados iniciais obrigatórios: " + ", ".join(missing),
-        )
-    if issue.setor_id is None and issue.processo_id is None and existing is None:
-        raise HTTPException(status_code=422, detail="Informe a área/setor ou o processo afetado")
-    setor_id = getattr(issue, "setor_id", None)
-    processo_id = getattr(issue, "processo_id", None)
-    operador_id = getattr(issue, "operador_id", None)
-    inspetor_id = getattr(issue, "inspetor_id", None)
-    if existing is not None:
-        setor_id = setor_id if setor_id is not None else existing["setor_id"]
-        processo_id = processo_id if processo_id is not None else existing["processo_id"]
-        operador_id = operador_id if operador_id is not None else existing["operador_id"]
-        inspetor_id = inspetor_id if inspetor_id is not None else existing["inspetor_id"]
-        if setor_id is None and processo_id is None:
-            raise HTTPException(status_code=422, detail="Informe a área/setor ou o processo afetado")
-    if setor_id is not None:
-        setor = conn.execute("SELECT empresa_id FROM setores WHERE id = ?", (setor_id,)).fetchone()
-        if setor is None or setor["empresa_id"] != empresa_id:
-            raise HTTPException(status_code=422, detail="Setor/u00e1rea inválido para a empresa da Issue")
-    if processo_id is not None:
-        processo = conn.execute("SELECT empresa_id FROM processos WHERE id = ?", (processo_id,)).fetchone()
-        if processo is None or processo["empresa_id"] != empresa_id:
-            raise HTTPException(status_code=422, detail="Processo inválido para a empresa da Issue")
-    for field, user_id in (("operador_id", operador_id), ("inspetor_id", inspetor_id)):
-        if user_id is None:
-            continue
-        target = conn.execute("SELECT empresa_id FROM usuarios WHERE id = ?", (user_id,)).fetchone()
-        if target is None or target["empresa_id"] != empresa_id:
-            raise HTTPException(status_code=422, detail=f"{field} inválido para a empresa da Issue")
-    if not investigar_causa and (usar_ishikawa or usar_porques):
-        raise HTTPException(
-            status_code=422,
-            detail="Não é possível usar Ishikawa/5 Porquês sem investigar a causa",
-        )
-
-
 def _next_codigo(conn, empresa_id):
     rows = conn.execute(
         "SELECT codigo FROM issues WHERE empresa_id = ?", (empresa_id,)
     ).fetchall()
     maxn = 0
     for r in rows:
-        m = re.match(r"RNC-(\d+)", r["codigo"] or "")
+        m = re.fullmatch(r"ISSUE-(\d+)", r["codigo"] or "")
         if m:
             maxn = max(maxn, int(m.group(1)))
-    return f"RNC-{maxn + 1:04d}"
+    return f"ISSUE-{maxn + 1:04d}"
 
 
 def _next_rnc_codigo(conn, empresa_id):
     ano = datetime.now(timezone.utc).year
     rows = conn.execute(
-        "SELECT rnc_codigo FROM issues WHERE empresa_id = ? AND rnc_codigo LIKE ?",
+        "SELECT codigo FROM rncs WHERE empresa_id = ? AND codigo LIKE ?",
         (empresa_id, f"RNC-{ano}-%"),
     ).fetchall()
     maxn = 0
     for r in rows:
-        m = re.match(rf"RNC-{ano}-(\d+)$", r["rnc_codigo"] or "")
+        m = re.match(rf"RNC-{ano}-(\d+)$", r["codigo"] or "")
         if m:
             maxn = max(maxn, int(m.group(1)))
     return f"RNC-{ano}-{maxn + 1:03d}"
@@ -328,25 +261,11 @@ def _validar_cadastro_inicial(issue, conn, empresa_id, existing=None):
     if missing:
         raise HTTPException(status_code=422, detail="Preencha os dados iniciais obrigatorios: " + ", ".join(missing))
 
-    setor_id = getattr(issue, "setor_id", None)
-    processo_id = getattr(issue, "processo_id", None)
     operador_id = getattr(issue, "operador_id", None)
     inspetor_id = getattr(issue, "inspetor_id", None)
     if existing is not None:
-        setor_id = setor_id if setor_id is not None else existing["setor_id"]
-        processo_id = processo_id if processo_id is not None else existing["processo_id"]
         operador_id = operador_id if operador_id is not None else existing["operador_id"]
         inspetor_id = inspetor_id if inspetor_id is not None else existing["inspetor_id"]
-    if setor_id is None and processo_id is None:
-        raise HTTPException(status_code=422, detail="Informe a area/setor ou o processo afetado")
-    if setor_id is not None:
-        setor = conn.execute("SELECT empresa_id FROM setores WHERE id = ?", (setor_id,)).fetchone()
-        if setor is None or setor["empresa_id"] != empresa_id:
-            raise HTTPException(status_code=422, detail="Setor/area invalido para a empresa da Issue")
-    if processo_id is not None:
-        processo = conn.execute("SELECT empresa_id FROM processos WHERE id = ?", (processo_id,)).fetchone()
-        if processo is None or processo["empresa_id"] != empresa_id:
-            raise HTTPException(status_code=422, detail="Processo invalido para a empresa da Issue")
     for field, user_id in (("operador_id", operador_id), ("inspetor_id", inspetor_id)):
         if user_id is None:
             continue
@@ -361,6 +280,14 @@ def _validar_usuario_empresa(conn, user_id, empresa_id, campo):
     target = conn.execute("SELECT empresa_id FROM usuarios WHERE id = ?", (user_id,)).fetchone()
     if target is None or target["empresa_id"] != empresa_id:
         raise HTTPException(status_code=422, detail=f"{campo} invalido para a empresa da Issue")
+
+
+def _validar_autor(conn, autor_id, empresa_id, user):
+    if autor_id is None:
+        raise HTTPException(status_code=422, detail="Selecione o autor do registro")
+    if autor_id == user["id"]:
+        return
+    _validar_usuario_empresa(conn, autor_id, empresa_id, "Autor do registro")
 
 
 def fetch_issue(conn, issue_id, user):
@@ -399,8 +326,17 @@ def issue_to_dict(conn, row, include_acoes=False):
     d["inspetor_nome"] = user_nome(conn, d.get("inspetor_id"))
     d["criado_por_nome"] = user_nome(conn, d.get("criado_por_id"))
     d["criado_por_cargo"] = user_cargo(conn, d.get("criado_por_id"))
+    d["autor_registro_id"] = d.get("autor_registro_id") or d.get("criado_por_id")
+    d["autor_registro_nome"] = user_nome(conn, d["autor_registro_id"])
+    d["autor_registro_cargo"] = user_cargo(conn, d["autor_registro_id"])
     d["finalizado_por_nome"] = user_nome(conn, d.get("finalizado_por_id"))
     d["autorizado_por_nome"] = user_nome(conn, d.get("autorizado_por_id"))
+    rnc = conn.execute("SELECT * FROM rncs WHERE issue_id = ?", (d["id"],)).fetchone()
+    d["rnc_id"] = rnc["id"] if rnc else None
+    d["rnc_status"] = rnc["status"] if rnc else "nao_emitida"
+    d["rnc_issue_codigo"] = d["codigo"] if rnc else ""
+    for field in RNC_FIELDS:
+        d["rnc_" + field] = rnc[field] if rnc else ("[]" if field == "equipe_investigacao" else "")
     try:
         d["rnc_equipe_investigacao"] = json.loads(d.get("rnc_equipe_investigacao") or "[]")
     except (TypeError, json.JSONDecodeError):
@@ -431,15 +367,26 @@ def issue_to_dict(conn, row, include_acoes=False):
     return d
 
 
-def _scope_issues_query(user):
+def _empresa_scope(user, empresa_id=None):
+    if not is_superuser(user):
+        if empresa_id is not None and empresa_id != user["empresa_id"]:
+            raise HTTPException(status_code=403, detail="Permissão insuficiente")
+        return user["empresa_id"]
+    return empresa_id
+
+
+def _scope_issues_query(user, empresa_id=None):
+    empresa_id = _empresa_scope(user, empresa_id)
+    if empresa_id is not None:
+        return "SELECT * FROM issues WHERE empresa_id = ? ORDER BY id DESC", (empresa_id,)
     if is_superuser(user):
         return "SELECT * FROM issues ORDER BY id DESC", ()
     return "SELECT * FROM issues WHERE empresa_id = ? ORDER BY id DESC", (user["empresa_id"],)
 
 
 @router.get("")
-def list_issues(user: dict = Depends(get_current_user)):
-    query, params = _scope_issues_query(user)
+def list_issues(empresa_id: int | None = None, user: dict = Depends(get_current_user)):
+    query, params = _scope_issues_query(user, empresa_id)
     with get_connection() as conn:
         rows = conn.execute(query, params).fetchall()
         result = [issue_to_dict(conn, r) for r in rows]
@@ -450,125 +397,102 @@ def list_issues(user: dict = Depends(get_current_user)):
 def create_issue(issue: IssueIn, user: dict = Depends(editor_dep)):
     criado_em = now()
     _valida_investigacao(issue.investigar_causa, issue.usar_ishikawa, issue.usar_porques)
-    if issue.severidade not in SEVERIDADES:
-        raise HTTPException(status_code=422, detail="Severidade invalida")
     with get_connection() as conn:
         if not is_superuser(user):
             empresa_id = user["empresa_id"]
         else:
-            empresa_id = None
-            if issue.setor_id is not None:
-                setor = conn.execute(
-                    "SELECT empresa_id FROM setores WHERE id = ?", (issue.setor_id,)
-                ).fetchone()
-                if setor is None:
-                    raise HTTPException(status_code=404, detail="Setor não encontrado")
-                empresa_id = setor["empresa_id"]
-            if empresa_id is None:
-                empresa_id = issue.empresa_id
+            empresa_id = issue.empresa_id
         if empresa_id is None:
             raise HTTPException(
                 status_code=400,
-                detail="Informe a empresa (ou o setor) da issue",
+                detail="Informe a empresa da issue",
             )
         empresa = conn.execute(
             "SELECT razao_social FROM empresas WHERE id = ?", (empresa_id,)
         ).fetchone()
         if empresa is None:
             raise HTTPException(status_code=404, detail="Empresa não encontrada")
-        if issue.setor_id is not None:
-            srow = conn.execute(
-                "SELECT empresa_id FROM setores WHERE id = ?", (issue.setor_id,)
-            ).fetchone()
-            if srow is None or (not is_superuser(user) and srow["empresa_id"] != empresa_id):
-                raise HTTPException(status_code=404, detail="Setor não encontrado")
         _validar_cadastro_inicial(issue, conn, empresa_id)
         codigo = _next_codigo(conn, empresa_id)
         pasta = build_issue_pasta(empresa["razao_social"], codigo)
         ensure_pasta(pasta)
-        cur = conn.execute(
-            "INSERT INTO issues (codigo, empresa_id, setor_id, processo_id, pasta, "
-            "descricao, data, origem, produto, norma, reincidencia, "
-            "tipo, severidade, etapa_captura, detectado_em, comportamento_esperado, comportamento_observado, "
-            "evidencias_objetivas, codigo_erro, ambiente, envolvidos_afetados, impacto, acao_emergencial, "
-            "o_que, onde, quando, quem, por_que_inicial, como_detectado, "
-            "ultimo_ok_em, alarme_em, margem_seguranca_min, codigo_material, lote, ordem_producao, sn_inicio, sn_fim, "
-            "linha_posto, status_estoque, posicao_estoque, operador_id, inspetor_id, motivo_bloqueio, "
-            "investigar_causa, usar_ishikawa, usar_porques, status, criado_por_id, criado_em, atualizado_em) "
-            "VALUES (" + ", ".join(["?"] * 46) + ", 'registrado', ?, ?, ?)",
-            (
-                codigo,
-                empresa_id,
-                issue.setor_id,
-                issue.processo_id,
-                pasta,
-                issue.descricao.strip() or issue.comportamento_observado.strip(),
-                issue.data,
-                issue.origem,
-                issue.produto,
-                issue.norma,
-                issue.reincidencia,
-                issue.tipo,
-                issue.severidade,
-                issue.etapa_captura,
-                issue.detectado_em,
-                issue.comportamento_esperado,
-                issue.comportamento_observado,
-                issue.evidencias_objetivas,
-                issue.codigo_erro,
-                issue.ambiente,
-                issue.envolvidos_afetados,
-                issue.impacto,
-                issue.acao_emergencial,
-                issue.o_que,
-                issue.onde,
-                issue.quando,
-                issue.quem,
-                issue.por_que_inicial,
-                issue.como_detectado,
-                issue.ultimo_ok_em,
-                issue.alarme_em,
-                issue.margem_seguranca_min,
-                issue.codigo_material,
-                issue.lote,
-                issue.ordem_producao,
-                issue.sn_inicio,
-                issue.sn_fim,
-                issue.linha_posto,
-                issue.status_estoque,
-                issue.posicao_estoque,
-                issue.operador_id,
-                issue.inspetor_id,
-                issue.motivo_bloqueio,
-                issue.investigar_causa,
-                issue.usar_ishikawa,
-                issue.usar_porques,
-                user["id"],
-                criado_em,
-                criado_em,
-            ),
-        )
+        values = issue.model_dump(exclude={"empresa_id"})
+        values["autor_registro_id"] = issue.autor_registro_id or user["id"]
+        _validar_autor(conn, values["autor_registro_id"], empresa_id, user)
+        values.update(codigo=codigo, empresa_id=empresa_id, pasta=pasta,
+                      status="cadastrada", criado_por_id=user["id"],
+                      criado_em=criado_em, atualizado_em=criado_em)
+        columns = ", ".join(values)
+        placeholders = ", ".join("?" for _ in values)
+        cur = conn.execute(f"INSERT INTO issues ({columns}) VALUES ({placeholders})", tuple(values.values()))
         conn.commit()
         row = conn.execute("SELECT * FROM issues WHERE id = ?", (cur.lastrowid,)).fetchone()
         result = issue_to_dict(conn, row, include_acoes=True)
     return result
 
 
-@router.get("/kanban")
-def list_kanban(user: dict = Depends(get_current_user)):
+@router.get("/kpis")
+def issue_kpis(empresa_id: int | None = None, user: dict = Depends(get_current_user)):
+    local_tz = timezone(timedelta(hours=-3))
+    current = datetime.fromisoformat(now()).astimezone(local_tz)
+    month = current.strftime("%Y-%m")
+    query, params = _scope_issues_query(user, empresa_id)
     with get_connection() as conn:
-        if is_superuser(user):
+        rows = conn.execute(query, params).fetchall()
+    closed_month = 0
+    open_over_15 = 0
+    treatment_over_15 = 0
+
+    def parse_date(value):
+        if not value:
+            return None
+        try:
+            parsed = datetime.fromisoformat(value)
+            return parsed.replace(tzinfo=local_tz) if parsed.tzinfo is None else parsed
+        except ValueError:
+            return None
+
+    for row in rows:
+        if row["status"] != "fechada":
+            created = parse_date(row["criado_em"])
+            if created and current - created > timedelta(days=15):
+                open_over_15 += 1
+        if row["status"] == "em_tratamento":
+            started = parse_date(row["tratamento_iniciado_em"])
+            if started and current - started > timedelta(days=15):
+                treatment_over_15 += 1
+        if row["status"] != "fechada" or not row["finalizado_em"]:
+            continue
+        try:
+            closed = datetime.fromisoformat(row["finalizado_em"])
+            if closed.tzinfo is None:
+                closed = closed.replace(tzinfo=local_tz)
+            if closed.astimezone(local_tz).strftime("%Y-%m") == month:
+                closed_month += 1
+        except ValueError:
+            continue
+    return {"cadastradas": sum(r["status"] == "cadastrada" for r in rows),
+            "em_andamento": sum(r["status"] == "em_tratamento" for r in rows),
+            "fechadas_mes": closed_month, "mes_referencia": month,
+            "abertas_mais_15_dias": open_over_15, "tratativa_mais_15_dias": treatment_over_15}
+
+
+@router.get("/kanban")
+def list_kanban(empresa_id: int | None = None, user: dict = Depends(get_current_user)):
+    empresa_id = _empresa_scope(user, empresa_id)
+    with get_connection() as conn:
+        if empresa_id is None and is_superuser(user):
             rows = conn.execute(
-                "SELECT a.*, n.codigo, n.empresa_id, n.status AS issue_status, n.descricao AS issue_descricao "
-                "FROM acoes a JOIN issues n ON n.id = a.issue_id "
+                "SELECT a.*, n.codigo, r.codigo AS rnc_codigo, n.empresa_id, n.status AS issue_status, n.comportamento_observado AS issue_descricao "
+                "FROM acoes a JOIN issues n ON n.id = a.issue_id LEFT JOIN rncs r ON r.issue_id = n.id "
                 "ORDER BY a.status, a.ordem, a.id"
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT a.*, n.codigo, n.empresa_id, n.status AS issue_status, n.descricao AS issue_descricao "
-                "FROM acoes a JOIN issues n ON n.id = a.issue_id "
+                "SELECT a.*, n.codigo, r.codigo AS rnc_codigo, n.empresa_id, n.status AS issue_status, n.comportamento_observado AS issue_descricao "
+                "FROM acoes a JOIN issues n ON n.id = a.issue_id LEFT JOIN rncs r ON r.issue_id = n.id "
                 "WHERE n.empresa_id = ? ORDER BY a.status, a.ordem, a.id",
-                (user["empresa_id"],),
+                (empresa_id,),
             ).fetchall()
         result = []
         for r in rows:
@@ -579,74 +503,32 @@ def list_kanban(user: dict = Depends(get_current_user)):
 
 
 @router.get("/stats")
-def issue_stats(user: dict = Depends(get_current_user)):
-    if is_superuser(user):
-        query = "SELECT tipo, origem, produto, severidade, status, setor_id, criado_em, finalizado_em FROM issues"
-        params: tuple = ()
-    else:
-        query = (
-            "SELECT tipo, origem, produto, severidade, status, setor_id, criado_em, finalizado_em "
-            "FROM issues WHERE empresa_id = ?"
-        )
-        params = (user["empresa_id"],)
+def issue_stats(empresa_id: int | None = None, user: dict = Depends(get_current_user)):
+    empresa_id = _empresa_scope(user, empresa_id)
+    query = "SELECT status, impacto FROM issues"
+    params = ()
+    if empresa_id is not None or not is_superuser(user):
+        query += " WHERE empresa_id = ?"
+        params = (empresa_id,)
     with get_connection() as conn:
-        rows = [dict(r) for r in conn.execute(query, params).fetchall()]
-        setores = {
-            r["id"]: r["nome"]
-            for r in conn.execute(
-                "SELECT id, nome FROM setores WHERE empresa_id = ?",
-                (user["empresa_id"],) if not is_superuser(user) else (None,),
-            ).fetchall()
-        }
-
-    def contar(campo, vazio):
-        c = Counter()
-        for r in rows:
-            val = (r.get(campo) or "").strip() or vazio
-            c[val] += 1
-        return c
-
-    def dimensao(campo, rotulo, vazio):
-        return {
-            "chave": campo,
-            "rotulo": rotulo,
-            "dados": pareto(
-                [{"rotulo": k, "frequencia": v} for k, v in contar(campo, vazio).items()]
-            ),
-        }
-
-    setor_counter = Counter()
-    for r in rows:
-        sid = r.get("setor_id")
-        setor_counter[setores.get(sid, "Sem setor")] += 1
-
-    return {
-        "total": len(rows),
-        "dimensoes": [
-            dimensao("status", "Status", "Não informado"),
-            dimensao("tipo", "Tipo", "Não informado"),
-            dimensao("severidade", "Severidade", "Não informado"),
-            dimensao("origem", "Origem", "Não informado"),
-            dimensao("produto", "Produto", "Não informado"),
-            {
-                "chave": "setor",
-                "rotulo": "Setor",
-                "dados": pareto(
-                    [{"rotulo": k, "frequencia": v} for k, v in setor_counter.items()]
-                ),
-            },
-        ],
-    }
+        rows = [dict(r) for r in conn.execute(query, params)]
+    dimensions = []
+    for field, label in (("status", "Status"), ("impacto", "Impacto")):
+        counts = Counter((r[field] or "Não informado") for r in rows)
+        dimensions.append({"chave": field, "rotulo": label,
+            "dados": pareto([{"rotulo": k, "frequencia": v} for k, v in counts.items()])})
+    return {"total": len(rows), "dimensoes": dimensions}
 
 
 @router.get("/trends")
-def issue_trends(user: dict = Depends(get_current_user)):
-    if is_superuser(user):
+def issue_trends(empresa_id: int | None = None, user: dict = Depends(get_current_user)):
+    empresa_id = _empresa_scope(user, empresa_id)
+    if empresa_id is None and is_superuser(user):
         query = "SELECT criado_em, finalizado_em, status FROM issues"
         params: tuple = ()
     else:
         query = "SELECT criado_em, finalizado_em, status FROM issues WHERE empresa_id = ?"
-        params = (user["empresa_id"],)
+        params = (empresa_id,)
     with get_connection() as conn:
         rows = [dict(r) for r in conn.execute(query, params).fetchall()]
 
@@ -657,7 +539,7 @@ def issue_trends(user: dict = Depends(get_current_user)):
         criadas[(r["criado_em"] or "")[:7]] += 1
         if r.get("finalizado_em"):
             finalizadas[(r["finalizado_em"] or "")[:7]] += 1
-        if r["status"] != "finalizado":
+        if r["status"] != "fechada":
             em_aberto += 1
     periodos = sorted(set(criadas) | set(finalizadas))
     return {
@@ -680,84 +562,12 @@ def get_issue(issue_id: int, user: dict = Depends(get_current_user)):
 @router.post("/{issue_id}/emitir-rnc")
 def emitir_rnc(issue_id: int, body: RncEmissaoIn, user: dict = Depends(editor_dep)):
     """Promove a Issue a uma RNC formal, preservando o vínculo e a auditoria."""
-    required = {
-        "criticidade": body.criticidade,
-        "enquadramento_normativo": body.enquadramento_normativo,
-        "origem_gatilho": body.origem_gatilho,
-        "acao_contencao_definitiva": body.acao_contencao_definitiva,
-        "contencao_em": body.contencao_em,
-        "disposicao_inicial": body.disposicao_inicial,
-        "metodologia": body.metodologia,
-        "prazo_analise": body.prazo_analise,
-        "prazo_plano_acao": body.prazo_plano_acao,
-        "prazo_verificacao_eficacia": body.prazo_verificacao_eficacia,
-    }
-    missing = [name for name, value in required.items() if not str(value or "").strip()]
-    if missing:
-        raise HTTPException(status_code=422, detail="Preencha todos os campos obrigatorios da RNC")
-    if body.criticidade not in RNC_CRITICIDADES:
-        raise HTTPException(status_code=422, detail="Classificacao da RNC invalida")
-    if body.origem_gatilho not in RNC_ORIGENS:
-        raise HTTPException(status_code=422, detail="Origem do gatilho da RNC invalida")
-    if body.disposicao_inicial not in RNC_DISPOSICOES:
-        raise HTTPException(status_code=422, detail="Disposicao inicial invalida")
-    if body.metodologia not in RNC_METODOLOGIAS:
-        raise HTTPException(status_code=422, detail="Metodologia de analise invalida")
-    equipe = list(dict.fromkeys(body.equipe_investigacao or []))
-    if len(equipe) < 2:
-        raise HTTPException(status_code=422, detail="Informe ao menos duas pessoas na equipe de investigacao")
-    if body.lider_investigacao_id not in equipe:
-        raise HTTPException(status_code=422, detail="O lider da investigacao deve participar da equipe")
-    emitida_em = now()
+    from app.services.rnc_emissao import emitir_rnc_transacao
     with get_connection() as conn:
-        row = fetch_issue(conn, issue_id, user)
-        if row["rnc_status"] == "emitida" or row["rnc_codigo"]:
-            raise HTTPException(status_code=409, detail="A RNC desta Issue ja foi emitida")
-        _validar_cadastro_inicial(IssueUpdate(), conn, row["empresa_id"], row)
-        for campo, user_id in (
-            ("Lider da investigacao", body.lider_investigacao_id),
-            ("Responsavel pela contencao", body.contencao_responsavel_id),
-            ("Auditor da eficacia", body.auditor_eficacia_id),
-        ):
-            _validar_usuario_empresa(conn, user_id, row["empresa_id"], campo)
-        for user_id in equipe:
-            _validar_usuario_empresa(conn, user_id, row["empresa_id"], "Membro da equipe de investigacao")
-        rnc_codigo = _next_rnc_codigo(conn, row["empresa_id"])
-        conn.execute(
-            "UPDATE issues SET rnc_status = 'emitida', rnc_codigo = ?, rnc_issue_codigo = ?, "
-            "rnc_criticidade = ?, rnc_enquadramento_normativo = ?, rnc_origem_gatilho = ?, "
-            "rnc_acao_contencao_definitiva = ?, rnc_contencao_responsavel_id = ?, rnc_contencao_em = ?, "
-            "rnc_disposicao_inicial = ?, rnc_lider_investigacao_id = ?, rnc_auditor_eficacia_id = ?, rnc_equipe_investigacao = ?, "
-            "rnc_metodologia = ?, rnc_prazo_analise = ?, rnc_prazo_plano_acao = ?, "
-            "rnc_prazo_verificacao_eficacia = ?, rnc_emitida_por_id = ?, rnc_emitida_em = ?, atualizado_em = ? "
-            "WHERE id = ?",
-            (
-                rnc_codigo,
-                row["codigo"],
-                body.criticidade,
-                body.enquadramento_normativo.strip(),
-                body.origem_gatilho,
-                body.acao_contencao_definitiva.strip(),
-                body.contencao_responsavel_id,
-                body.contencao_em.strip(),
-                body.disposicao_inicial,
-                body.lider_investigacao_id,
-                body.auditor_eficacia_id,
-                json.dumps(equipe),
-                body.metodologia,
-                body.prazo_analise.strip(),
-                body.prazo_plano_acao.strip(),
-                body.prazo_verificacao_eficacia.strip(),
-                user["id"],
-                emitida_em,
-                emitida_em,
-                issue_id,
-            ),
-        )
+        emitir_rnc_transacao(conn, issue_id, body, user)
         conn.commit()
         result = issue_to_dict(
-            conn,
-            conn.execute("SELECT * FROM issues WHERE id = ?", (issue_id,)).fetchone(),
+            conn, conn.execute("SELECT * FROM issues WHERE id=?", (issue_id,)).fetchone(),
             include_acoes=True,
         )
     return result
@@ -770,8 +580,9 @@ def update_issue(issue_id: int, issue: IssueUpdate, user: dict = Depends(editor_
         row = fetch_issue(conn, issue_id, user)
         _validar_cadastro_inicial(issue, conn, row["empresa_id"], row)
         fields = [
-            "setor_id", "processo_id", "descricao", "data", "origem", "produto", "norma",
-            "reincidencia", "tipo", "severidade", "etapa_captura",
+            "autor_registro_id",
+            "tratamento_iniciado_em",
+            "data",
             "detectado_em", "comportamento_esperado", "comportamento_observado",
             "evidencias_objetivas", "codigo_erro", "ambiente", "envolvidos_afetados",
             "impacto", "acao_emergencial", "o_que", "onde", "quando", "quem",
@@ -783,16 +594,21 @@ def update_issue(issue_id: int, issue: IssueUpdate, user: dict = Depends(editor_
             "usar_porques", "resultado_esperado", "status",
         ]
         data = dict(issue.model_dump(exclude_unset=True))
+        if "autor_registro_id" in data and data["autor_registro_id"] != (row["autor_registro_id"] or row["criado_por_id"]):
+            _validar_autor(conn, data["autor_registro_id"], row["empresa_id"], user)
         investigar = data.get("investigar_causa", row["investigar_causa"])
         usar_ishikawa = data.get("usar_ishikawa", row["usar_ishikawa"])
         usar_porques = data.get("usar_porques", row["usar_porques"])
         _valida_investigacao(investigar, usar_ishikawa, usar_porques)
         if "status" in data and data["status"] not in ISSUE_STATUSES:
             raise HTTPException(status_code=422, detail="Status inválido")
-        if "severidade" in data and data["severidade"] not in SEVERIDADES:
-            raise HTTPException(status_code=422, detail="Severidade invalida")
-        if data.get("status") == "finalizado":
-            raise HTTPException(status_code=422, detail="Use a finalização da issue para finalizar")
+        if "status" in data and data["status"] != row["status"] and data["status"] != "em_tratamento":
+            raise HTTPException(status_code=422, detail="Use o fechamento da Issue para encerrar")
+        if row["status"] == "fechada" and data.get("status", "fechada") != "fechada":
+            raise HTTPException(status_code=422, detail="A Issue está fechada")
+        if data and row["status"] == "cadastrada":
+            data["status"] = "em_tratamento"
+            data["tratamento_iniciado_em"] = row["tratamento_iniciado_em"] or atualizado_em
         sets = []
         vals = []
         for f in fields:
@@ -808,6 +624,28 @@ def update_issue(issue_id: int, issue: IssueUpdate, user: dict = Depends(editor_
         row = conn.execute("SELECT * FROM issues WHERE id = ?", (issue_id,)).fetchone()
         result = issue_to_dict(conn, row, include_acoes=True)
     return result
+
+
+@router.post("/{issue_id}/iniciar-tratamento")
+def iniciar_tratamento(issue_id: int, user: dict = Depends(editor_dep)):
+    with get_connection() as conn:
+        fetch_issue(conn, issue_id, user)
+        started_at = now()
+        conn.execute("UPDATE issues SET status = 'em_tratamento', tratamento_iniciado_em = COALESCE(tratamento_iniciado_em, ?), "
+                     "atualizado_em = ? WHERE id = ? AND status = 'cadastrada'", (started_at, started_at, issue_id))
+        conn.commit()
+        return issue_to_dict(conn, conn.execute("SELECT * FROM issues WHERE id = ?", (issue_id,)).fetchone())
+
+
+@router.post("/{issue_id}/fechar")
+def fechar_issue(issue_id: int, user: dict = Depends(editor_dep)):
+    closed_at = now()
+    with get_connection() as conn:
+        fetch_issue(conn, issue_id, user)
+        conn.execute("UPDATE issues SET status = 'fechada', finalizado_em = ?, finalizado_por_id = ?, atualizado_em = ? "
+                     "WHERE id = ? AND status <> 'fechada'", (closed_at, user["id"], closed_at, issue_id))
+        conn.commit()
+        return issue_to_dict(conn, conn.execute("SELECT * FROM issues WHERE id = ?", (issue_id,)).fetchone())
 
 
 @router.delete("/{issue_id}", status_code=204)
@@ -976,8 +814,9 @@ def save_porques(issue_id: int, body: PorquesIn, user: dict = Depends(editor_dep
                     status_code=422, detail="Cada porquê deve usar um item distinto do Ishikawa"
                 )
         conn.execute(
-            "UPDATE issues SET porques = ?, causa_raiz = ?, status = 'em_investigacao', atualizado_em = ? WHERE id = ?",
-            (json.dumps(body.porques), body.causa_raiz, atualizado_em, issue_id),
+            "UPDATE issues SET porques = ?, causa_raiz = ?, status = CASE WHEN status = 'fechada' THEN status ELSE 'em_tratamento' END, "
+            "tratamento_iniciado_em = CASE WHEN status = 'fechada' THEN tratamento_iniciado_em ELSE COALESCE(tratamento_iniciado_em, ?) END, atualizado_em = ? WHERE id = ?",
+            (json.dumps(body.porques), body.causa_raiz, atualizado_em, atualizado_em, issue_id),
         )
         conn.commit()
         row = conn.execute("SELECT * FROM issues WHERE id = ?", (issue_id,)).fetchone()
@@ -1021,10 +860,10 @@ def create_acao(issue_id: int, acao: AcaoIn, user: dict = Depends(editor_dep)):
                 maxordem + 1,
             ),
         )
-        if row["status"] in ("registrado", "em_investigacao"):
+        if row["status"] == "cadastrada":
             conn.execute(
-                "UPDATE issues SET status = 'plano_acao', atualizado_em = ? WHERE id = ?",
-                (now(), issue_id),
+                "UPDATE issues SET status = 'em_tratamento', tratamento_iniciado_em = COALESCE(tratamento_iniciado_em, ?), atualizado_em = ? WHERE id = ?",
+                (now(), now(), issue_id),
             )
         conn.commit()
         arow = conn.execute("SELECT * FROM acoes WHERE id = ?", (cur.lastrowid,)).fetchone()
@@ -1057,6 +896,9 @@ def update_acao(issue_id: int, acao_id: int, acao: AcaoUpdate, user: dict = Depe
         if sets:
             vals.append(acao_id)
             conn.execute(f"UPDATE acoes SET {', '.join(sets)} WHERE id = ?", vals)
+            if arow['rnc_id']:
+                from app.routers.rncs import invalidate_plan
+                invalidate_plan(conn,arow['rnc_id'])
             conn.commit()
         arow = conn.execute("SELECT * FROM acoes WHERE id = ?", (acao_id,)).fetchone()
         result = acao_to_dict(conn, arow)
@@ -1073,6 +915,9 @@ def delete_acao(issue_id: int, acao_id: int, user: dict = Depends(editor_dep)):
         if arow is None:
             raise HTTPException(status_code=404, detail="Ação não encontrada")
         conn.execute("DELETE FROM acoes WHERE id = ?", (acao_id,))
+        if arow['rnc_id']:
+            from app.routers.rncs import invalidate_plan
+            invalidate_plan(conn,arow['rnc_id'])
         conn.commit()
 
 
@@ -1094,10 +939,10 @@ def update_acao_status(issue_id: int, acao_id: int, body: AcaoStatusIn, user: di
             "UPDATE acoes SET status = ?, data_inicio = ? WHERE id = ?",
             (body.status, data_inicio, acao_id),
         )
-        if body.status != "backlog" and row["status"] == "plano_acao":
+        if body.status != "backlog" and row["status"] == "cadastrada":
             conn.execute(
-                "UPDATE issues SET status = 'em_execucao', atualizado_em = ? WHERE id = ?",
-                (now(), issue_id),
+                "UPDATE issues SET status = 'em_tratamento', tratamento_iniciado_em = COALESCE(tratamento_iniciado_em, ?), atualizado_em = ? WHERE id = ?",
+                (now(), now(), issue_id),
             )
         conn.commit()
         arow = conn.execute("SELECT * FROM acoes WHERE id = ?", (acao_id,)).fetchone()
@@ -1133,7 +978,7 @@ def finalizar_issue(issue_id: int, body: FinalizarIn, user: dict = Depends(edito
             )
         conn.execute(
             "UPDATE issues SET resultado_alcancado = ?, nota_atingimento = ?, "
-            "status = 'finalizado', finalizado_em = ?, finalizado_por_id = ?, atualizado_em = ? WHERE id = ?",
+            "status = 'fechada', finalizado_em = ?, finalizado_por_id = ?, atualizado_em = ? WHERE id = ?",
             (
                 body.resultado_alcancado,
                 body.nota_atingimento,

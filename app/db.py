@@ -1,4 +1,5 @@
 import os
+import json
 import re
 import sqlite3
 from pathlib import Path
@@ -27,6 +28,36 @@ CREATE TABLE IF NOT EXISTS acoes (
 );
 """
 
+RNC_FIELDS = ('codigo', 'criticidade', 'enquadramento_normativo', 'origem_gatilho', 'acao_contencao_definitiva', 'contencao_responsavel_id', 'contencao_em', 'disposicao_inicial', 'lider_investigacao_id', 'auditor_eficacia_id', 'equipe_investigacao', 'metodologia', 'prazo_analise', 'prazo_plano_acao', 'prazo_verificacao_eficacia', 'emitida_por_id', 'emitida_em')
+
+RNCS_DDL = """
+CREATE TABLE IF NOT EXISTS rncs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    issue_id INTEGER NOT NULL UNIQUE,
+    empresa_id INTEGER NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
+    status TEXT NOT NULL DEFAULT 'emitida',
+    codigo TEXT NOT NULL,
+    criticidade TEXT DEFAULT '',
+    enquadramento_normativo TEXT DEFAULT '',
+    origem_gatilho TEXT DEFAULT '',
+    acao_contencao_definitiva TEXT DEFAULT '',
+    contencao_responsavel_id INTEGER REFERENCES usuarios(id),
+    contencao_em TEXT,
+    disposicao_inicial TEXT DEFAULT '',
+    lider_investigacao_id INTEGER REFERENCES usuarios(id),
+    auditor_eficacia_id INTEGER REFERENCES usuarios(id),
+    equipe_investigacao TEXT DEFAULT '[]',
+    metodologia TEXT DEFAULT '',
+    prazo_analise TEXT DEFAULT '',
+    prazo_plano_acao TEXT DEFAULT '',
+    prazo_verificacao_eficacia TEXT DEFAULT '',
+    emitida_por_id INTEGER REFERENCES usuarios(id),
+    emitida_em TEXT,
+    UNIQUE(empresa_id, codigo),
+    FOREIGN KEY(issue_id, empresa_id) REFERENCES issues(id, empresa_id) ON DELETE CASCADE
+);
+"""
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS empresas (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,6 +65,20 @@ CREATE TABLE IF NOT EXISTS empresas (
     cnpj TEXT DEFAULT '',
     ativo INTEGER DEFAULT 1,
     criado_em TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS llm_acessos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    empresa_id INTEGER NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
+    nome TEXT NOT NULL,
+    provedor TEXT NOT NULL,
+    modelo TEXT NOT NULL,
+    url_base TEXT NOT NULL,
+    api_key TEXT NOT NULL,
+    ativo INTEGER NOT NULL DEFAULT 1,
+    criado_em TEXT NOT NULL,
+    atualizado_em TEXT NOT NULL,
+    UNIQUE(empresa_id, nome)
 );
 
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -121,18 +166,9 @@ CREATE TABLE IF NOT EXISTS issues (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     codigo TEXT NOT NULL,
     empresa_id INTEGER NOT NULL REFERENCES empresas(id) ON DELETE CASCADE,
-    setor_id INTEGER REFERENCES setores(id) ON DELETE SET NULL,
-    processo_id INTEGER REFERENCES processos(id) ON DELETE SET NULL,
     pasta TEXT DEFAULT '',
-    descricao TEXT DEFAULT '',
+    autor_registro_id INTEGER REFERENCES usuarios(id),
     data TEXT DEFAULT '',
-    origem TEXT DEFAULT '',
-    produto TEXT DEFAULT '',
-    norma TEXT DEFAULT '',
-    reincidencia INTEGER DEFAULT 0,
-    tipo TEXT DEFAULT 'nao_conformidade',
-    severidade TEXT DEFAULT 'media',
-    etapa_captura TEXT DEFAULT '',
     detectado_em TEXT DEFAULT '',
     comportamento_esperado TEXT DEFAULT '',
     comportamento_observado TEXT DEFAULT '',
@@ -165,25 +201,6 @@ CREATE TABLE IF NOT EXISTS issues (
     investigar_causa INTEGER DEFAULT 0,
     usar_ishikawa INTEGER DEFAULT 0,
     usar_porques INTEGER DEFAULT 0,
-    rnc_status TEXT DEFAULT 'nao_emitida',
-    rnc_codigo TEXT DEFAULT '',
-    rnc_issue_codigo TEXT DEFAULT '',
-    rnc_criticidade TEXT DEFAULT '',
-    rnc_enquadramento_normativo TEXT DEFAULT '',
-    rnc_origem_gatilho TEXT DEFAULT '',
-    rnc_acao_contencao_definitiva TEXT DEFAULT '',
-    rnc_contencao_responsavel_id INTEGER REFERENCES usuarios(id),
-    rnc_contencao_em TEXT,
-    rnc_disposicao_inicial TEXT DEFAULT '',
-    rnc_lider_investigacao_id INTEGER REFERENCES usuarios(id),
-    rnc_auditor_eficacia_id INTEGER REFERENCES usuarios(id),
-    rnc_equipe_investigacao TEXT DEFAULT '[]',
-    rnc_metodologia TEXT DEFAULT '',
-    rnc_prazo_analise TEXT DEFAULT '',
-    rnc_prazo_plano_acao TEXT DEFAULT '',
-    rnc_prazo_verificacao_eficacia TEXT DEFAULT '',
-    rnc_emitida_por_id INTEGER REFERENCES usuarios(id),
-    rnc_emitida_em TEXT,
     autorizado_por_id INTEGER REFERENCES usuarios(id),
     autorizado_em TEXT,
     ishikawa_id INTEGER REFERENCES ishikawas(id) ON DELETE SET NULL,
@@ -194,7 +211,8 @@ CREATE TABLE IF NOT EXISTS issues (
     nota_atingimento INTEGER,
     finalizado_em TEXT,
     finalizado_por_id INTEGER REFERENCES usuarios(id),
-    status TEXT DEFAULT 'registrado',
+    status TEXT DEFAULT 'cadastrada',
+    tratamento_iniciado_em TEXT,
     criado_por_id INTEGER REFERENCES usuarios(id),
     criado_em TEXT NOT NULL,
     atualizado_em TEXT,
@@ -220,6 +238,32 @@ def get_connection():
 
 
 def init_db():
+    from app.services.triagem_schema import DDL as TRIAGEM_DDL
+    # Backup antes da primeira migração aditiva de triagem em uma base existente.
+    if DB_PATH.exists():
+        with sqlite3.connect(DB_PATH) as source:
+            has_issues = source.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='issues'").fetchone()
+            has_triagem = source.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='llm_triagens'").fetchone()
+            has_rncs = source.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='rncs'").fetchone()
+            from app.services.rnc_schema import COLUMNS
+            rnc_columns={r[1] for r in source.execute('PRAGMA table_info(rncs)')} if has_rncs else set()
+            has_rnc_porques=has_rncs and 'investigacao_json' in rnc_columns and any('porques' in json.loads(r[0] or '{}') for r in source.execute('SELECT investigacao_json FROM rncs'))
+            has_observacoes=source.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='rnc_observacoes'").fetchone()
+            has_evidencias=source.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='rnc_evidencias'").fetchone()
+            if has_rncs and (set(COLUMNS) - rnc_columns or 'causa_raiz' in rnc_columns or has_rnc_porques or not has_observacoes or not has_evidencias):
+                from datetime import datetime, timezone
+                folder = DB_PATH.parent / 'backups'
+                folder.mkdir(parents=True, exist_ok=True)
+                stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
+                with sqlite3.connect(folder / f'qualidade_antes_rnc_abas_{stamp}.db') as target:
+                    source.backup(target)
+            if has_issues and not has_triagem:
+                from datetime import datetime, timezone
+                folder = DB_PATH.parent / 'backups'
+                folder.mkdir(parents=True, exist_ok=True)
+                stamp = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
+                with sqlite3.connect(folder / f'qualidade_antes_triagem_{stamp}.db') as target:
+                    source.backup(target)
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     with get_connection() as conn:
         _migrar_nao_conformidades(conn)
@@ -283,17 +327,9 @@ def init_db():
                 conn.execute(f"ALTER TABLE usuarios ADD COLUMN {col} {ddl}")
         ncols = [r[1] for r in conn.execute("PRAGMA table_info(issues)").fetchall()]
         for col, ddl in [
-            ("setor_id", "INTEGER REFERENCES setores(id) ON DELETE SET NULL"),
-            ("processo_id", "INTEGER REFERENCES processos(id) ON DELETE SET NULL"),
-            ("descricao", "TEXT DEFAULT ''"),
+            ("autor_registro_id", "INTEGER REFERENCES usuarios(id)"),
+            ("tratamento_iniciado_em", "TEXT"),
             ("data", "TEXT DEFAULT ''"),
-            ("origem", "TEXT DEFAULT ''"),
-            ("produto", "TEXT DEFAULT ''"),
-            ("norma", "TEXT DEFAULT ''"),
-            ("reincidencia", "INTEGER DEFAULT 0"),
-            ("tipo", "TEXT DEFAULT 'nao_conformidade'"),
-            ("severidade", "TEXT DEFAULT 'media'"),
-            ("etapa_captura", "TEXT DEFAULT ''"),
             ("detectado_em", "TEXT DEFAULT ''"),
             ("comportamento_esperado", "TEXT DEFAULT ''"),
             ("comportamento_observado", "TEXT DEFAULT ''"),
@@ -326,32 +362,17 @@ def init_db():
             ("investigar_causa", "INTEGER DEFAULT 0"),
             ("usar_ishikawa", "INTEGER DEFAULT 0"),
             ("usar_porques", "INTEGER DEFAULT 0"),
-            ("rnc_status", "TEXT DEFAULT 'nao_emitida'"),
-            ("rnc_codigo", "TEXT DEFAULT ''"),
-            ("rnc_issue_codigo", "TEXT DEFAULT ''"),
-            ("rnc_criticidade", "TEXT DEFAULT ''"),
-            ("rnc_enquadramento_normativo", "TEXT DEFAULT ''"),
-            ("rnc_origem_gatilho", "TEXT DEFAULT ''"),
-            ("rnc_acao_contencao_definitiva", "TEXT DEFAULT ''"),
-            ("rnc_contencao_responsavel_id", "INTEGER REFERENCES usuarios(id)"),
-            ("rnc_contencao_em", "TEXT"),
-            ("rnc_disposicao_inicial", "TEXT DEFAULT ''"),
-            ("rnc_lider_investigacao_id", "INTEGER REFERENCES usuarios(id)"),
-            ("rnc_auditor_eficacia_id", "INTEGER REFERENCES usuarios(id)"),
-            ("rnc_equipe_investigacao", "TEXT DEFAULT '[]'"),
-            ("rnc_metodologia", "TEXT DEFAULT ''"),
-            ("rnc_prazo_analise", "TEXT DEFAULT ''"),
-            ("rnc_prazo_plano_acao", "TEXT DEFAULT ''"),
-            ("rnc_prazo_verificacao_eficacia", "TEXT DEFAULT ''"),
-            ("rnc_emitida_por_id", "INTEGER REFERENCES usuarios(id)"),
-            ("rnc_emitida_em", "TEXT"),
         ]:
             if col not in ncols:
                 conn.execute(f"ALTER TABLE issues ADD COLUMN {col} {ddl}")
-        conn.execute(
-            "CREATE UNIQUE INDEX IF NOT EXISTS idx_issues_empresa_rnc_codigo "
-            "ON issues(empresa_id, rnc_codigo) WHERE rnc_codigo <> ''"
-        )
+        _remover_campos_duplicados_issue(conn)
+        conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_issues_id_empresa ON issues(id, empresa_id)")
+        conn.executescript(RNCS_DDL)
+        conn.executescript(TRIAGEM_DDL)
+        _separar_rncs_e_corrigir_codigos(conn)
+        from app.services.rnc_schema import migrate
+        migrate(conn)
+        _migrar_status_issues(conn)
         seed_admin(conn)
         seed_demo(conn)
         backfill_pastas(conn)
@@ -377,14 +398,6 @@ def _migrar_nao_conformidades(conn):
             )
             conn.execute(f"INSERT INTO acoes ({names}) SELECT {selects} FROM acoes_old")
         conn.execute("DROP TABLE acoes_old")
-    ncols = [r[1] for r in conn.execute("PRAGMA table_info(issues)").fetchall()]
-    for col, ddl in [
-        ("tipo", "TEXT DEFAULT 'nao_conformidade'"),
-        ("severidade", "TEXT DEFAULT 'media'"),
-        ("etapa_captura", "TEXT DEFAULT ''"),
-    ]:
-        if col not in ncols:
-            conn.execute(f"ALTER TABLE issues ADD COLUMN {col} {ddl}")
     conn.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_issues_empresa_codigo ON issues(empresa_id, codigo)"
     )
@@ -392,6 +405,69 @@ def _migrar_nao_conformidades(conn):
         conn.execute("UPDATE sqlite_sequence SET name='issues' WHERE name='nao_conformidades'")
     except sqlite3.OperationalError:
         pass
+
+
+
+
+def _separar_rncs_e_corrigir_codigos(conn):
+    """Migra códigos e RNCs sem alterar IDs, ações ou caminhos dos anexos."""
+    conn.execute("SAVEPOINT separar_rncs")
+    try:
+        rows = conn.execute("SELECT * FROM issues ORDER BY empresa_id, id").fetchall()
+        used = {}
+        for row in rows:
+            used.setdefault(row["empresa_id"], set()).add(row["codigo"])
+        for row in rows:
+            match = re.fullmatch(r"RNC-(\d+)", row["codigo"] or "")
+            if not match:
+                continue
+            codes = used[row["empresa_id"]]
+            number = int(match.group(1))
+            candidate = f"ISSUE-{number:04d}"
+            while candidate in codes:
+                number += 1
+                candidate = f"ISSUE-{number:04d}"
+            conn.execute("UPDATE issues SET codigo = ? WHERE id = ?", (candidate, row["id"]))
+            codes.add(candidate)
+        columns = {r[1] for r in conn.execute("PRAGMA table_info(issues)")}
+        if "rnc_codigo" in columns:
+            for row in rows:
+                if not row["rnc_codigo"]:
+                    continue
+                values = {name: row["rnc_" + name] for name in RNC_FIELDS if "rnc_" + name in columns}
+                values.update(issue_id=row["id"], empresa_id=row["empresa_id"])
+                names = ", ".join(values)
+                placeholders = ", ".join("?" for _ in values)
+                conn.execute(f"INSERT INTO rncs ({names}) VALUES ({placeholders})", tuple(values.values()))
+        conn.execute("DROP INDEX IF EXISTS idx_issues_empresa_rnc_codigo")
+        for name in columns:
+            if name.startswith("rnc_"):
+                conn.execute(f'ALTER TABLE issues DROP COLUMN "{name}"')
+        conn.execute("RELEASE SAVEPOINT separar_rncs")
+    except Exception:
+        conn.execute("ROLLBACK TO SAVEPOINT separar_rncs")
+        conn.execute("RELEASE SAVEPOINT separar_rncs")
+        raise
+
+def _migrar_status_issues(conn):
+    conn.execute("UPDATE issues SET status = 'cadastrada' WHERE status = 'registrado'")
+    conn.execute("UPDATE issues SET status = 'em_tratamento' WHERE status IN ('em_investigacao', 'plano_acao', 'em_execucao')")
+    conn.execute("UPDATE issues SET status = 'fechada' WHERE status = 'finalizado'")
+    conn.execute("UPDATE issues SET status = 'fechada', "
+                 "finalizado_em = COALESCE(finalizado_em, (SELECT emitida_em FROM rncs WHERE issue_id = issues.id), atualizado_em, criado_em), "
+                 "finalizado_por_id = COALESCE(finalizado_por_id, (SELECT emitida_por_id FROM rncs WHERE issue_id = issues.id)) "
+                 "WHERE EXISTS (SELECT 1 FROM rncs WHERE issue_id = issues.id)")
+    conn.execute("UPDATE issues SET finalizado_em = COALESCE(atualizado_em, criado_em) WHERE status = 'fechada' AND finalizado_em IS NULL")
+    conn.execute("UPDATE issues SET tratamento_iniciado_em = COALESCE(atualizado_em, criado_em) "
+                 "WHERE status = 'em_tratamento' AND tratamento_iniciado_em IS NULL")
+
+
+def _remover_campos_duplicados_issue(conn):
+    """Remove somente as colunas do bloco legado autorizado pelo usuário."""
+    columns = {r[1] for r in conn.execute("PRAGMA table_info(issues)")}
+    for column in ('descricao', 'etapa_captura', 'norma', 'origem', 'processo_id', 'produto', 'reincidencia', 'setor_id', 'severidade', 'tipo'):
+        if column in columns:
+            conn.execute(f'ALTER TABLE issues DROP COLUMN "{column}"')
 
 
 def _sanitize(name):

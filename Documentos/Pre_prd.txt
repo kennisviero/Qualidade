@@ -1,0 +1,102 @@
+Precisamos criar uma rotina, junto com uma tela dentro do menu issues que crie RNC a partir das issues abertas e em tratamento ok?
+
+Para que uma issue vire uma RNC temos que cumprir os critérios abaixo:
+Segundo as definições da ISO (especificamente a ISO 9000 e os requisitos de normas de gestão como a ISO 9001), uma questão (issue) ou problema só se transforma oficialmente em uma Não Conformidade (NC) — justificando a abertura de um RNC (Relatório de Não Conformidade) — quando atende a uma tríade de critérios fundamentais.
+O critério central e definitivo estabelecido pela ISO é: a existência do não atendimento a um requisito.
+Para que essa validação ocorra e o RNC seja formalizado, três elementos precisam coexistir:
+O sistema deverá ter uma tela de checklist onde o usuário selecionará as issues que ele quer submeter para a AI. Uma vez submetido para a AI ela irá classificar e retornar as issues candiatas que o sistema deverá apresentar em outra checklist permtindo que o usuário selecione as que ele quer. Apos o usuário selecionar as issues e selecionar o botao Gerar RNC's o sistema irá gerar as RNC's
+rastreando as mesmas com o codigo da ISSUE originária e o campo de criterios que a AI usou para selecionar a issue como candidata ok ?
+
+1. A Tríade de Validação da ISO
+
+• O Requisito: Deve haver uma regra, especificação, padrão ou meta preestabelecida. Se não existir uma regra clara estipulada, o problema não pode ser enquadrado como uma NC.
+• O Fato: O desvio ou falha operacional propriamente dita (o que de fato aconteceu no mundo real que contraria a regra).
+• A Evidência Objetiva: Dados, registros, fotos, testes ou documentos que comprovem, sem margem para suposições, que o fato aconteceu e o requisito foi violado.
+
+De onde vêm esses Requisitos?
+
+Um problema vira RNC se violar qualquer uma destas quatro categorias de requisitos:
+
+Tipo de Requisito	Exemplo Prático
+Requisitos Normativos (ISO)	Realizar uma auditoria interna e descobrir que o processo de gerenciamento de riscos (Ex: item 6.1 da ISO 9001) não foi executado.
+Requisitos Internos da Empresa	Ignorar uma Instrução de Trabalho (IT) interna ou pular uma etapa obrigatória de inspeção definida no processo.
+Requisitos do Cliente / Produto	Entregar um produto fora das dimensões especificadas no contrato ou atrasar a entrega acordada.
+Requisitos Legais ou Regulamentares	Operar um maquinário com licença ou laudo de segurança vencido, violando uma lei governamental.
+
+
+Quando um problema NÃO vira RNC?
+
+Muitas empresas pecam pelo excesso de burocracia, abrindo RNCs para qualquer evento menor. A ISO diferencia uma Não Conformidade de outras ocorrências:
+• Oportunidade de Melhoria (OM): O processo cumpre os requisitos e funciona bem, mas alguém identificou uma forma de torná-lo mais rápido ou barato. Não há violação, portanto, não cabe RNC.
+• Incidentes isolados de baixo impacto: Se um operador cometeu um erro humano pontual, rapidamente contido e sem impacto no cliente ou sistema, o SGQ pode optar por tratar apenas como uma correção imediata local, sem necessariamente abrir o fluxo pesado de um plano de ação corretiva global.
+Uma vez aberto o RNC, a organização deve seguir o protocolo do requisito 10.2 da norma: conter o problema imediatamente, analisar a causa raiz e implementar ações corretivas para que a falha nunca mais se repita.
+Se você estiver mapeando o processo da sua empresa, me conte: vocês pretendem automatizar o fluxo de abertura desses registros ou estão montando uma matriz de criticidade para ajudar a equipe a filtrar o que deve ou não virar RNC?
+
+Para que a IA tome a decisão mais precisa possível e evite "falsos positivos" (classificar um bug simples como RNC) ou "falsos negativos" (ignorar uma falha grave), a estrutura ideal de cada issue enviada no vetor deve conter as seguintes informações:
+
+1. Informações Críticas (Obrigatórias)
+
+• Descrição Detalhada do Fato: O que aconteceu de errado no mundo real.
+	• Exemplo ruim: "A peça veio com problema."
+	• Exemplo ideal: "A peça X-200 apresentou rachadura na base após o processo de resfriamento."
+• Dados ou Evidências Mencionadas: Menção a registros, números de lote, relatórios, fotos, ordens de serviço ou testes.
+	• Exemplo: "Identificado no lote #4552 através do teste de ultrassom realizado em 10/10."
+• O Requisito / Padrão Esperado: Qual era o comportamento correto ou a especificação técnica que deveria ter sido seguida.
+	• Exemplo: "A instrução técnica IT-04 determina que o resfriamento deve durar 20 minutos a 15°C."
+
+2. Metadados de Contexto (Altamente Recomendados)
+
+Inserir esses campos no objeto JSON da sua issue ajuda a IA a entender a gravidade e o impacto regulatório:
+• Origem / Canal: Se o problema foi detectado em uma Auditoria Interna, Reclamação de Cliente, Inspeção de Qualidade de Rotina ou se é apenas um Bug de TI interno.
+• Área / Processo: Qual setor gerou a issue (Produção, Compras, RH, Comercial, Expedição).
+• Impacto Inicial Declarado: Se a falha já afetou o cliente final, se parou a linha de produção ou se foi contida antes de sair da fábrica.
+
+Prompt:
+Você é um especialista em Sistemas de Gestão da Qualidade (SGQ), auditor líder de normas ISO e uma API de triagem automatizada. Sua função é analisar um vetor (lista) de issues registradas no sistema e identificar quais delas possuem os critérios técnicos necessários para se tornarem candidatas a uma RNC (Relatório de Não Conformidade), com base nas diretrizes da ISO 9000 e ISO 9001.
+
+---
+
+### CRITÉRIOS DE AVALIAÇÃO (DIRETRIZES ISO)
+Para ser classificada como uma candidata a RNC, a issue DEVE conter (de forma explícita nos campos ou fortemente comprovada através do texto descritivo) os três elementos da Tríade de Validação:
+1. REQUISITO: Existência de uma regra, norma, instrução de trabalho, especificação técnica, contrato com cliente ou lei que foi violada.
+2. FATO: O desvio ou falha operacional real que aconteceu no mundo físico ou digital.
+3. EVIDÊNCIA OBJETIVA: Menção direta a dados, números de lote, relatórios, fotos, testes, sensores ou registros que comprovem que o fato aconteceu e o requisito foi violado.
+
+NÃO devem virar RNC:
+- Oportunidades de Melhoria (sugestões de otimização onde o processo atual cumpre as regras).
+- Reclamações vagas, opiniões ou falhas subjetivas sem dados concretos (ex: "Acho que o processo está demorado").
+- Erros operacionais menores, pontuais e isolados que não violam processos estruturados e já foram corrigidos imediatamente sem impacto.
+
+---
+
+### FORMATO DE ENTRADA
+Você receberá um vetor de objetos JSON representando as issues capturadas pelo sistema. Cada objeto pode conter campos específicos (como 'requisito' ou 'evidencia') ou apenas um bloco de texto na 'descricao'. Você deve analisar todo o contexto fornecido no objeto.
+
+---
+
+### FORMATO DE SAÍDA (OBRIGATÓRIO)
+Retorne APENAS um objeto JSON estruturado contendo um vetor chamado "candidatas_rnc". Não adicione textos explicativos, markdown de bloco de código (```json), preâmbulos ou saudações antes ou depois do JSON. O retorno deve ser um JSON puro e válido no seguinte formato estrito:
+
+{
+  "candidatas_rnc": [
+    {
+      "id_issue": 0,
+      "titulo": "Título da issue original",
+      "justificativa": {
+        "requisito_violado": "Explicar detalhadamente qual regra, norma, procedimento interno (TI/Engenharia) ou contrato foi quebrado.",
+        "fato_e_evidencia": "Descrever o fato operacional ocorrido e apontar qual a evidência explícita mencionada na issue que sustenta a não conformidade.",
+        "criterios_ia": "Texto dissertativo e analítico explicando os critérios utilizados pela IA para validar a presença da tríade da ISO (Requisito + Fato + Evidência) que justifica a transformação desta issue em RNC."
+      },
+      "criticidade_sugerida": "BAIXA / MÉDIA / ALTA"
+    }
+  ]
+}
+
+Se nenhuma issue cumprir estritamente os critérios da tríade da ISO, retorne o vetor "candidatas_rnc" vazio.
+
+---
+
+### VETOR DE ISSUES A SEREM ANALISADAS:
+[INSERIR_VETOR_DE_ISSUES_AQUI]
+
+

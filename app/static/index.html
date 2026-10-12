@@ -21,6 +21,7 @@
   </div>
 
   <header class="topbar">
+    <button id="btnMenuToggle" class="btn" type="button" aria-controls="mainSidebar" aria-expanded="true">☰ Menu</button>
     <h1>7 Ferramentas da Qualidade</h1>
     <div class="project-selector">
       <span id="userInfo" class="muted"></span>
@@ -31,15 +32,43 @@
   </header>
 
   <div class="layout">
-    <nav class="sidebar">
+    <nav class="sidebar" id="mainSidebar" aria-label="Menu principal">
       <a href="#" data-section="empresas" class="admin-only hidden">Empresas</a>
       <a href="#" data-section="setores">Setores</a>
       <a href="#" data-section="processos">Processos</a>
       <a href="#" data-section="usuarios" class="admin-only hidden">Usuários</a>
+      <a href="#" data-section="configuracao" class="admin-only hidden">Configuração</a>
       <a href="#" data-section="issues">Issues</a>
+      <div class="sidebar-submenu" aria-label="Submenu de Issues">
+        <a href="#" data-section="issues" data-issue-view="capturar" class="active">Capturar</a>
+        <a href="#" data-section="issues" data-issue-view="dashboard">Dashboard</a>
+        <a href="#" data-section="issues" data-issue-view="selecao" class="editor-only hidden">Selecionar para RNC</a>
+        <a href="#" data-section="issues" data-issue-view="limpeza" class="admin-only hidden">Limpeza da base de Issues</a>
+      </div>
+      <a href="#" data-section="rncs">RNC</a>
     </nav>
 
     <main class="content">
+      <section id="section-rncs" class="section">
+        <h2>RNC</h2>
+        <div class="issues-workspace rnc-workspace">
+          <div class="issue-form-column">
+            <div class="card">
+              <div class="rnc-selector-row">
+                <div><label for="rncFilter">Filtrar RNCs</label><input type="search" id="rncFilter" placeholder="Ex.: RNC-2026-* ou ISSUE-000?" title="* corresponde a qualquer sequência; ? corresponde a um caractere. Pesquisa código da RNC, Issue e descrição." /></div>
+                <div><label for="rncSelect">Abrir RNC emitida</label><select id="rncSelect"><option value="">Selecione uma RNC</option></select></div>
+              </div>
+              <p id="rncMensagem" class="hint" role="status"></p>
+            </div>
+            <div id="rncDetail" class="card hidden"></div>
+          </div>
+          <aside class="card issue-kanban-panel">
+            <h3>Kanban de RNC's</h3>
+            <p class="hint">Arraste um cartão entre as colunas. Sair do backlog define a data de início.</p>
+            <div id="rncKanban" class="kanban"></div>
+          </aside>
+        </div>
+      </section>
       <section id="section-empresas" class="section">
         <h2>Empresas</h2>
         <form id="empresaForm" class="card">
@@ -182,28 +211,33 @@
 
       <section id="section-issues" class="section active">
         <h2>Issues — Gestão de Não Conformidades (PDCA)</h2>
-        <div class="card">
-          <button id="btnIssueNova" class="btn primary">+ Nova Issue</button>
-          <div id="issueList" class="list"></div>
-        </div>
-
+        <div id="issue-view-capturar" class="issue-view">
         <div class="issues-workspace">
           <div class="issue-form-column">
+        <div class="card">
+          <button id="btnIssueNova" class="btn primary">+ Nova Issue</button>
+          <div class="issue-kpis" aria-live="polite">
+            <div class="issue-kpi" title="Total de Issues cadastradas"><span>Cadastradas</span><strong id="issueKpiCadastradas">0</strong></div>
+            <div class="issue-kpi" title="Total de Issues em tratamento"><span>Em andamento</span><strong id="issueKpiAndamento">0</strong></div>
+            <div class="issue-kpi" title="Issues fechadas no mês corrente"><span>Fechadas no mês</span><strong id="issueKpiFechadas">0</strong></div>
+            <div class="issue-kpi" title="Issues ainda abertas, criadas há mais de 15 dias"><span>Abertas &gt;15 dias</span><strong id="issueKpiAbertas15">0</strong></div>
+            <div class="issue-kpi" title="Issues em tratamento há mais de 15 dias, desde o início da tratativa"><span>Tratativa &gt;15 dias</span><strong id="issueKpiTratativa15">0</strong></div>
+          </div>
+          <label for="issueList">Abrir Issue cadastrada ou em tratamento</label>
+          <select id="issueList"><option value="">Selecione uma Issue</option></select>
+        </div>
+
         <div id="issueDetail" class="card hidden">
           <div class="rnc-header">
             <h3 id="issueTitulo">—</h3>
             <span id="issueStatus" class="muted"></span>
             <span id="issueRncStatus" class="meta-chip"></span>
             <span class="spacer"></span>
-            <button id="btnIssueEmitirRnc" class="btn primary">Emitir RNC</button>
+            <button id="btnIssueFechar" class="btn" disabled>Fechar Issue</button>
             <button id="btnIssueExcluir" class="btn">Excluir issue</button>
           </div>
           <div class="rnc-tabs">
             <button class="rnc-tab active" data-issue-tab="captura">1. Captura</button>
-            <button class="rnc-tab" data-issue-tab="contencao">2. Contenção</button>
-            <button class="rnc-tab" data-issue-tab="investigacao">3. Investigação</button>
-            <button class="rnc-tab" data-issue-tab="acao">4. Ação</button>
-            <button class="rnc-tab" data-issue-tab="analise">5. Análise</button>
           </div>
 
           <div id="issue-tab-captura" class="rnc-pane active">
@@ -213,7 +247,7 @@
               <div class="grid-3">
                 <div><label>ID &#250;nico da Issue</label><input type="text" id="issueCodigo" readonly placeholder="Gerado ao salvar" /></div>
                 <div><label>Data e hora da detec&#231;&#227;o *</label><input type="datetime-local" id="issueDetectadoEm" required /></div>
-                <div><label>Autor do registro</label><input type="text" id="issueAutor" readonly placeholder="Usu&#225;rio autenticado" /></div>
+                <div><label>Autor do registro</label><select id="issueAutor" required></select></div>
               </div>
               <div class="grid-2">
                 <div><label>Comportamento esperado *</label><textarea id="issueComportamentoEsperado" rows="3" required placeholder="Requisito, padr&#227;o, norma ou manual que deveria ser seguido"></textarea></div>
@@ -232,250 +266,25 @@
               <h4>Contexto t&#233;cnico complementar</h4>
               <div class="grid-3">
                 <div><label>C&#243;digo de erro / protocolo</label><input type="text" id="issueCodigoErro" /></div>
-                <div><label>Ambiente</label><input type="text" id="issueAmbiente" placeholder="Produ&#231;&#227;o, homologa&#231;&#227;o, campo, linha..." /></div>
-                <div><label>Anexos</label><span class="hint">Use a &#225;rvore de documentos na aba 4 para enviar arquivos.</span></div>
-              </div>
-            </div>
-            <p class="hint">Plan — captura e registo da issue em qualquer ponto do ciclo de vida.</p>
-            <div class="grid-2">
-              <div>
-                <label>Setor</label>
-                <select id="issueSetor"></select>
-              </div>
-              <div>
-                <label>Processo</label>
-                <select id="issueProcesso"></select>
-              </div>
-              <div>
-                <label>Tipo</label>
-                <select id="issueTipo">
-                  <option value="nao_conformidade">Não conformidade</option>
-                  <option value="defeito">Defeito</option>
-                  <option value="ocorrencia">Ocorrência operacional</option>
-                  <option value="recurso">Recurso/requisição</option>
-                  <option value="outro">Outro</option>
-                </select>
-              </div>
-              <div class="hidden">
-                <label>Severidade</label>
-                <select id="issueSeveridade">
-                  <option value="baixa">Baixa</option>
-                  <option value="media">Média</option>
-                  <option value="alta">Alta</option>
-                  <option value="critica">Crítica</option>
-                </select>
-              </div>
-              <div>
-                <label>Etapa de captura</label>
-                <select id="issueEtapa">
-                  <option value="">—</option>
-                  <option value="fabricacao">Fabricação</option>
-                  <option value="inspecao">Inspeção</option>
-                  <option value="recebimento">Recebimento</option>
-                  <option value="expedicao">Expedição</option>
-                  <option value="outra">Outra</option>
-                </select>
-              </div>
-              <div>
-                <label>Descrição</label>
-                <textarea id="issueDescricao" rows="3"></textarea>
-                <label class="inline">Transcrever arquivo (TXT/PDF/DOCX) → descrição</label>
-                <input type="file" id="issueTranscricaoDescricao" accept=".txt,.pdf,.docx" />
-              </div>
-              <div>
-                <label>Origem</label>
-                <label class="inline"><input type="radio" name="issueOrigem" value="interno" /> Interno</label>
-                <label class="inline"><input type="radio" name="issueOrigem" value="externo" /> Externo</label>
-                <label>Produto</label>
-                <input type="text" id="issueProduto" />
-                <label>Norma</label>
-                <input type="text" id="issueNorma" />
-                <label class="inline"><input type="checkbox" id="issueReincidencia" /> Reincidência</label>
+                <div>
+                  <label>Ambiente</label>
+                  <select id="issueAmbiente">
+                    <option value="">Selecione</option>
+                    <option value="producao">Produ&#231;&#227;o</option>
+                    <option value="homologacao">Homologa&#231;&#227;o</option>
+                    <option value="campo">Campo</option>
+                    <option value="linha">Linha</option>
+                    <option value="outro">Outro</option>
+                  </select>
+                  <div id="issueAmbienteOutroBlock" class="hidden">
+                    <label>Qual ambiente?</label>
+                    <input type="text" id="issueAmbienteOutro" placeholder="Informe o ambiente" />
+                  </div>
+                </div>
+                <div><label>Anexos</label><span class="hint">Use a &#225;rvore de documentos abaixo para enviar arquivos.</span></div>
               </div>
             </div>
             <button id="btnIssueSalvar" class="btn primary">Salvar registro</button>
-          </div>
-
-          <div id="issue-tab-contencao" class="rnc-pane">
-            <p class="hint">Plan/Do — ação de contenção e bloqueio de lote.</p>
-            <h4>Rastreabilidade temporal</h4>
-            <div class="grid-3">
-              <div><label>Último OK em</label><input type="datetime-local" id="issueUltimoOk" /></div>
-              <div><label>Alarme em</label><input type="datetime-local" id="issueAlarme" /></div>
-              <div><label>Margem de segurança (min)</label><input type="text" id="issueMargem" /></div>
-            </div>
-            <h4>Identificação</h4>
-            <div class="grid-3">
-              <div><label>Código material (SKU/PN)</label><input type="text" id="issueCodigoMaterial" /></div>
-              <div><label>Lote</label><input type="text" id="issueLote" /></div>
-              <div><label>Ordem de produção</label><input type="text" id="issueOrdemProducao" /></div>
-              <div><label>Número de Série (SN) início</label><input type="text" id="issueSnInicio" /></div>
-              <div><label>Número de Série (SN) fim</label><input type="text" id="issueSnFim" /></div>
-            </div>
-            <h4>Localização</h4>
-            <div class="grid-3">
-              <div><label>Linha / posto</label><input type="text" id="issueLinhaPosto" /></div>
-              <div><label>Status do estoque</label><input type="text" id="issueStatusEstoque" /></div>
-              <div><label>Posição do estoque</label><input type="text" id="issuePosicaoEstoque" /></div>
-            </div>
-            <h4>Responsabilidade</h4>
-            <div class="grid-3">
-              <div><label>Operador</label><select id="issueOperador"></select></div>
-              <div><label>Inspetor</label><select id="issueInspetor"></select></div>
-              <div><label>Motivo do bloqueio</label><input type="text" id="issueMotivoBloqueio" /></div>
-            </div>
-            <div class="rnc-investigar">
-              <label class="inline"><input type="checkbox" id="issueInvestigar" /> Investigar a causa?</label>
-              <span id="issueInvestigarOpts" class="hidden">
-                <label class="inline"><input type="checkbox" id="issueUsarIshikawa" /> Ishikawa</label>
-                <label class="inline"><input type="checkbox" id="issueUsarPorques" /> 5 Porquês</label>
-              </span>
-            </div>
-            <button id="btnIssueSalvarContencao" class="btn primary">Salvar contenção</button>
-          </div>
-
-          <div id="issue-tab-investigacao" class="rnc-pane">
-            <p class="hint">Do — análise de causa raiz (Ishikawa e/ou 5 Porquês). Disponível quando "investigar a causa" está marcado na aba de contenção.</p>
-            <div id="issueIshiBlock" class="hidden">
-              <div class="grid-2">
-                <div><label>Nome do Ishikawa (automático = código da issue)</label><input type="text" id="issueIshiNome" readonly /></div>
-                <div><label>Efeito (problema)</label><input type="text" id="issueIshiEfeito" /></div>
-                <div><label>Ativo (equipamento)</label><input type="text" id="issueIshiAtivo" /></div>
-                <div><label>Descrição</label><textarea id="issueIshiDescricao" rows="2"></textarea></div>
-              </div>
-              <div class="grid-2">
-                <div><label id="issueIshiLabelMetodo">Método</label><textarea id="issueIshiMetodo" rows="3"></textarea></div>
-                <div><label id="issueIshiLabelMaquina">Máquina</label><textarea id="issueIshiMaquina" rows="3"></textarea></div>
-                <div><label id="issueIshiLabelMedida">Medida</label><textarea id="issueIshiMedida" rows="3"></textarea></div>
-                <div><label id="issueIshiLabelMeio">Meio Ambiente</label><textarea id="issueIshiMeio" rows="3"></textarea></div>
-                <div><label id="issueIshiLabelMaterial">Material</label><textarea id="issueIshiMaterial" rows="3"></textarea></div>
-                <div><label id="issueIshiLabelMao">Mão de Obra</label><textarea id="issueIshiMao" rows="3"></textarea></div>
-              </div>
-              <details class="card">
-                <summary>Editar nomes das categorias (6Ms)</summary>
-                <div class="grid-2">
-                  <div><label>1º M</label><input type="text" id="issueCatMetodo" placeholder="Método" /></div>
-                  <div><label>2º M</label><input type="text" id="issueCatMaquina" placeholder="Máquina" /></div>
-                  <div><label>3º M</label><input type="text" id="issueCatMedida" placeholder="Medida" /></div>
-                  <div><label>4º M</label><input type="text" id="issueCatMeio" placeholder="Meio Ambiente" /></div>
-                  <div><label>5º M</label><input type="text" id="issueCatMaterial" placeholder="Material" /></div>
-                  <div><label>6º M</label><input type="text" id="issueCatMao" placeholder="Mão de Obra" /></div>
-                </div>
-                <p class="hint">Deixe em branco para usar o nome sugerido. Salve o Ishikawa para aplicar.</p>
-              </details>
-              <button id="btnIssueSalvarIshi" class="btn primary">Salvar Ishikawa</button>
-              <button id="btnIssueGerarIshi" class="btn primary">Gerar</button>
-              <button id="btnIssueGerarAcoesIshi" class="btn primary">Gerar ações do Ishikawa</button>
-              <div id="issueIshiOut" class="chart"></div>
-            </div>
-            <div id="issuePorquesBlock" class="hidden">
-              <h4>5 Porquês</h4>
-              <p class="hint">Se ambos marcados, cada porquê usa um item distinto do Ishikawa.</p>
-              <div id="issuePorquesList"></div>
-              <div class="grid-2">
-                <div><label>Causa raiz</label><textarea id="issueCausaRaiz" rows="2"></textarea></div>
-              </div>
-              <button id="btnIssueSalvarPorques" class="btn primary">Salvar 5 Porquês</button>
-            </div>
-          </div>
-
-          <div id="issue-tab-acao" class="rnc-pane">
-            <p class="hint">Check/Act — plano de ação (5W2H).</p>
-            <div class="card">
-              <label>Resultado esperado do plano <small>(salvo automaticamente ao salvar uma ação)</small></label>
-              <textarea id="issueResultadoEsperado" rows="2"></textarea>
-            </div>
-            <div id="issueAcoes" class="rnc-acoes-container">
-              <table class="rnc-matrix">
-                <thead><tr>
-                  <th>#</th><th>O quê</th><th>Por quê</th><th>Onde</th><th>Como</th>
-                  <th>Quanto</th><th>Prazo</th><th>Resp.</th><th>Status</th>
-                  <th>Obs.</th><th></th>
-                </tr></thead>
-                <tbody></tbody>
-              </table>
-            </div>
-            <div class="card">
-              <h4 id="issueAcaoFormTitle">Nova ação (5W2H)</h4>
-              <div class="grid-2">
-                <div><label>Descrição (O quê?)</label><input type="text" id="issueAcaoDescricao" /></div>
-                <div><label>Responsável</label><select id="issueAcaoResponsavel"></select></div>
-                <div><label>Prazo limite</label><input type="date" id="issueAcaoPrazo" /></div>
-                <div><label>Por quê</label><input type="text" id="issueAcaoPorQue" /></div>
-                <div><label>Onde</label><input type="text" id="issueAcaoOnde" /></div>
-                <div><label>Como</label><input type="text" id="issueAcaoComo" /></div>
-                <div><label>Quanto</label><input type="text" id="issueAcaoQuanto" /></div>
-                <div><label>Observação</label><textarea id="issueAcaoObservacao" rows="2"></textarea></div>
-                <div>
-                  <label>Transcrever arquivo (TXT/PDF/DOCX) → observação</label>
-                  <input type="file" id="issueTranscricaoFile" accept=".txt,.pdf,.docx" />
-                </div>
-              </div>
-              <button id="btnIssueAddAcao" class="btn primary">Adicionar ação</button>
-              <button id="btnIssueCancelarAcao" class="btn hidden">Cancelar edição</button>
-            </div>
-            <div class="rnc-finalizar card">
-              <div class="grid-2">
-                <div><label>Resultado alcançado</label><textarea id="issueResultado" rows="2"></textarea></div>
-                <div>
-                  <label>Nota de atingimento (1–5)</label>
-                  <select id="issueNota">
-                    <option value="1">1 — não atingido</option>
-                    <option value="2">2 — pouco</option>
-                    <option value="3">3 — médio</option>
-                    <option value="4">4 — próximo do esperado</option>
-                    <option value="5">5 — 100%</option>
-                  </select>
-                </div>
-              </div>
-              <button id="btnIssueFinalizar" class="btn primary">Finalizar issue</button>
-            </div>
-          </div>
-
-          <div id="issue-tab-analise" class="rnc-pane">
-            <div class="card issue-rnc-emissao">
-              <h4>Emiss&#227;o formal da RNC</h4>
-              <p class="hint">A emiss&#227;o cria um n&#250;mero pr&#243;prio de RNC, preserva o c&#243;digo da Issue de origem e registra quem/quando fez a transi&#231;&#227;o.</p>
-              <div class="grid-3">
-                <div><label>C&#243;digo da Issue de origem</label><input id="issueRncIssueCodigo" readonly /></div>
-                <div><label>N&#250;mero da RNC</label><input id="issueRncCodigo" readonly placeholder="Gerado na emiss&#227;o" /></div>
-                <div><label>Classifica&#231;&#227;o *</label><select id="issueRncCriticidade"><option value="">Selecione</option><option value="maior">Maior</option><option value="menor">Menor</option></select></div>
-                <div><label>Enquadramento normativo/contratual *</label><textarea id="issueRncEnquadramento" rows="2" placeholder="Ex.: ISO 9001, item 8.7; contrato, cl&#225;usula..."></textarea></div>
-                <div><label>Origem do gatilho *</label><select id="issueRncOrigem"><option value="">Selecione</option><option value="auditoria_interna">Auditoria interna</option><option value="auditoria_externa">Auditoria externa</option><option value="reclamacao_cliente">Reclama&#231;&#227;o de cliente</option><option value="inspecao_rotina">Inspe&#231;&#227;o de rotina</option></select></div>
-                <div><label>Disposi&#231;&#227;o inicial *</label><select id="issueRncDisposicao"><option value="">Selecione</option><option value="refugo">Refugo</option><option value="retrabalho">Retrabalho</option><option value="devolucao_fornecedor">Devolu&#231;&#227;o ao fornecedor</option><option value="liberacao_concessao">Libera&#231;&#227;o sob concess&#227;o</option></select></div>
-              </div>
-              <div class="grid-2">
-                <div><label>A&#231;&#227;o de conten&#231;&#227;o definitiva *</label><textarea id="issueRncContencao" rows="3" placeholder="Como o risco foi isolado e impedido de avan&#231;ar?"></textarea></div>
-                <div><label>Respons&#225;vel pela conten&#231;&#227;o *</label><select id="issueRncContencaoResponsavel"></select><label>Data/hora da conten&#231;&#227;o *</label><input type="datetime-local" id="issueRncContencaoEm" /></div>
-                <div><label>L&#237;der da investiga&#231;&#227;o *</label><select id="issueRncLider"></select></div>
-                <div><label>Auditor da efic&#225;cia *</label><select id="issueRncAuditor"></select></div>
-                <div><label>Equipe de investiga&#231;&#227;o * (selecione pelo menos 2)</label><select id="issueRncEquipe" multiple size="4"></select></div>
-                <div><label>Metodologia de an&#225;lise *</label><select id="issueRncMetodologia"><option value="">Selecione</option><option value="5_porques">5 Porqu&#234;s</option><option value="ishikawa">Ishikawa</option><option value="fmea">FMEA</option></select></div>
-                <div><label>Prazo para conclus&#227;o da an&#225;lise *</label><input type="date" id="issueRncPrazoAnalise" /></div>
-                <div><label>Prazo do plano de a&#231;&#227;o *</label><input type="date" id="issueRncPrazoPlano" /></div>
-                <div><label>Prazo da verifica&#231;&#227;o de efic&#225;cia *</label><input type="date" id="issueRncPrazoEficacia" /></div>
-              </div>
-              <div id="issueRncAuditoria" class="hint"></div>
-              <button id="btnIssueEmitirRncForm" class="btn primary">Validar e emitir RNC</button>
-            </div>
-            <p class="hint">Check — consolidação e análise de tendências (Pareto automático por dimensão + tendência de criação/finalização).</p>
-            <div class="card">
-              <h4>Resumo</h4>
-              <div id="issueAnaliseResumo" class="fluxo-datas"></div>
-            </div>
-            <div class="card">
-              <h4>Pareto por dimensão</h4>
-              <label>Dimensão</label>
-              <select id="issueAnaliseDimensao">
-                <option value="status">Status</option>
-              </select>
-              <button id="btnIssueAnalise" class="btn primary">Gerar análise</button>
-              <div id="issueParetoOut" class="chart"></div>
-            </div>
-            <div class="card">
-              <h4>Tendência (criação vs finalização)</h4>
-              <div id="issueTrendsOut" class="chart"></div>
-            </div>
           </div>
 
           <div class="card">
@@ -494,15 +303,115 @@
 
           </div>
           <aside class="card issue-kanban-panel">
-          <h3>Kanban de tarefas (empresa)</h3>
+          <h3>Kanban de RNC's</h3>
           <p class="hint">Arraste um cartão entre as colunas. Sair do backlog define a data de início.</p>
           <div id="issueKanban" class="kanban"></div>
           </aside>
         </div>
+        </div>
+        <div id="issue-view-dashboard" class="issue-view hidden">
+          <h3>Dashboard de Issues</h3>
+          <div id="issueDashboardKpis" class="issue-kpis" aria-live="polite"></div>
+          <div class="grid-2">
+            <div class="card"><h4>Distribuição por status</h4><div id="issueDashboardStatus" class="chart"></div></div>
+            <div class="card"><h4>Impacto das Issues</h4><div id="issueDashboardImpacto" class="chart"></div></div>
+          </div>
+          <p class="hint">Distribuições por envolvidos, ambiente e usuário: Issues cadastradas, em tratamento e fechadas, de todos os períodos.</p>
+          <div class="grid-2">
+            <div class="card"><h4>Quem foi afetado ou envolvido</h4><div id="issueDashboardEnvolvidos" class="chart"></div></div>
+            <div class="card"><h4>Ambiente</h4><div id="issueDashboardAmbiente" class="chart"></div></div>
+          </div>
+          <div class="card"><h4>Usuário — autor do registro</h4><div id="issueDashboardUsuario" class="chart"></div></div>
+          <div class="card"><h4>Abertura e fechamento por mês</h4><div id="issueDashboardTendencia" class="chart"></div></div>
+          <div class="card"><h4>Issues abertas há mais de 15 dias</h4><div id="issueDashboardAtrasadas" class="list"></div></div>
+        </div>
+        <div id="issue-view-selecao" class="issue-view hidden">
+          <h3>Seleção de Issues para RNC</h3>
+          <div class="selecao-workspace">
+          <div class="selecao-entrada">
+          <div class="card">
+            <p class="hint">As Issues selecionadas serão enviadas ao provedor escolhido para triagem. Nenhuma RNC é gerada sem sua confirmação.</p>
+            <form id="selecaoAnaliseForm" novalidate>
+              <div class="grid-3">
+                <div><label for="selecaoAcesso">Acesso LLM ativo *</label><select id="selecaoAcesso" required></select></div>
+                <div><label for="selecaoStatusFiltro">Status</label><select id="selecaoStatusFiltro"><option value="">Todos os elegíveis</option><option value="cadastrada">Cadastrada</option><option value="em_tratamento">Em tratamento</option></select></div>
+                <div><label for="selecaoBusca">Código ou resumo</label><input id="selecaoBusca" type="search" maxlength="200" /></div>
+              </div>
+              <button id="selecaoFiltrar" type="button" class="btn">Filtrar / atualizar</button>
+              <label class="inline"><input id="selecaoTodos" type="checkbox" /> Selecionar todas as Issues desta página</label>
+              <p id="selecaoContador" class="hint" aria-live="polite"></p>
+              <div id="selecaoLista" class="selecao-lista"></div>
+              <div class="selecao-paginacao"><button id="selecaoAnterior" type="button" class="btn">Anterior</button><span id="selecaoPagina"></span><button id="selecaoProxima" type="button" class="btn">Próxima</button></div>
+              <label for="selecaoPrompt">Prompt para a IA — revise antes de enviar</label>
+              <textarea id="selecaoPrompt" rows="10" maxlength="20000" required style="width:100%;font-size:12px"></textarea>
+              <p class="hint">Você pode ajustar os critérios. Preserve o formato JSON solicitado para o retorno.</p>
+              <button id="selecaoRestaurarPrompt" type="button" class="btn">Restaurar prompt padrão</button>
+              <p id="selecaoMensagem" role="status" aria-live="polite"></p>
+              <p id="selecaoProgresso" class="hint" aria-label="Etapas da análise"></p>
+              <p id="selecaoEnvioHint" class="hint"></p>
+              <button id="selecaoAnalisar" type="submit" class="btn primary">Enviar para a IA</button>
+            </form>
+          </div>
+          <div class="card">
+            <label for="selecaoHistorico">Histórico de análises da empresa</label><select id="selecaoHistorico"></select>
+            <details><summary>Prompt utilizado na análise</summary><pre id="selecaoPromptUsado" style="white-space:pre-wrap;font-size:12px"></pre></details>
+          </div>
+          </div>
+          <aside class="card selecao-retorno" aria-label="Retorno da análise de IA">
+          <div class="hidden" id="selecaoCandidatasBloco">
+            <h4>Candidatas indicadas pela IA</h4>
+            <p class="hint">Revise as justificativas, selecione as candidatas e complete os campos obrigatórios. A sugestão BAIXA/MÉDIA/ALTA não substitui a classificação formal Maior/Menor. Gerar a RNC fecha a Issue.</p>
+            <form id="selecaoGerarForm"><div id="selecaoCandidatas"></div><button id="selecaoGerar" type="submit" class="btn primary" disabled>Gerar RNCs selecionadas</button></form>
+          </div>
+          <div class="card hidden" id="selecaoResultadoBloco"><h4>Resultado da geração</h4><div id="selecaoResultado" aria-live="polite"></div></div>
+          </aside>
+          </div>
+        </div>
+        <div id="issue-view-limpeza" class="issue-view hidden">
+          <h3>Limpeza da base de Issues</h3>
+          <div class="card issue-cleanup">
+            <p>Selecione quais registros da empresa serão removidos. Issues vinculadas a RNCs e os arquivos físicos serão preservados.</p>
+            <label for="issueLimpezaEscopo">Registros para limpar</label>
+            <select id="issueLimpezaEscopo">
+              <option value="fechadas">Issues fechadas sem RNC</option>
+              <option value="todas">Todas as Issues sem RNC</option>
+            </select>
+            <div id="issueLimpezaResumo" class="hint" aria-live="polite"></div>
+            <button id="btnIssueLimpeza" class="btn" disabled>Limpar registros selecionados</button>
+            <p id="issueLimpezaResultado" class="hint" aria-live="polite"></p>
+          </div>
+        </div>
+      </section>
+      <section id="section-configuracao" class="section">
+        <h2>Configuração</h2>
+        <div class="card">
+          <h3>Acessos às APIs de modelos LLM</h3>
+          <p class="hint">Cadastros da empresa selecionada. A chave não é exibida nas consultas.</p>
+          <form id="llmForm" autocomplete="off">
+            <input id="llmId" type="hidden" />
+            <div class="grid-3">
+              <div><label for="llmNome">Nome do acesso *</label><input id="llmNome" maxlength="120" required /></div>
+              <div><label for="llmProvedor">Provedor *</label><input id="llmProvedor" maxlength="120" required list="llmProvedores" /><datalist id="llmProvedores"><option value="Groq"></option><option value="OpenAI"></option><option value="OpenRouter"></option><option value="DeepSeek"></option><option value="Compatível"></option></datalist><span class="hint">Triagem: protocolo Chat Completions com retorno JSON. OpenRouter: https://openrouter.ai/api/v1. DeepSeek: https://api.deepseek.com.</span></div>
+              <div><label for="llmModelo">Modelo *</label><input id="llmModelo" maxlength="200" required /></div>
+            </div>
+            <div class="grid-2">
+              <div><label for="llmUrl">URL base da API *</label><input id="llmUrl" type="url" maxlength="1000" required placeholder="https://api.exemplo.com/v1" /></div>
+              <div><label for="llmChave">Chave de API</label><input id="llmChave" type="password" maxlength="8192" autocomplete="new-password" /><span class="hint">Obrigatória no cadastro. Ao editar, deixe em branco para manter a chave.</span></div>
+            </div>
+            <label class="inline"><input id="llmAtivo" type="checkbox" checked /> Acesso ativo</label>
+            <button id="llmSalvar" class="btn primary" type="submit">Salvar acesso</button>
+            <button id="llmNovo" class="btn" type="button">Novo / cancelar edição</button>
+          </form>
+          <p id="llmMensagem" class="hint" role="status"></p>
+        </div>
+        <div class="card"><h3>Acessos cadastrados</h3><div id="llmLista" class="list"></div></div>
       </section>
     </main>
   </div>
 
+  <script src="/static/js/configuracao.js"></script>
+  <script src="/static/js/issue_selecao.js"></script>
+  <script src="/static/js/rncs.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>
