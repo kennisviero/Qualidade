@@ -1,5 +1,7 @@
 import json
 import sqlite3
+import re
+import unicodedata
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -50,6 +52,58 @@ class GeracaoIn(RequestModel):
     def explicit_confirmation(cls,value):
         if value is not True: raise ValueError('Confirmação explícita obrigatória')
         return value
+
+
+class ManualGeracaoIn(RequestModel):
+    confirmar: Literal[True]
+    entrada_hash: str = Field(min_length=64,max_length=64)
+    dados_rnc: RncEmissaoIn
+
+    @field_validator('confirmar',mode='before')
+    @classmethod
+    def explicit_confirmation(cls,value):
+        if value is not True: raise ValueError('Confirmação explícita obrigatória')
+        return value
+
+
+def manual_validation(conn, issue_id, eid):
+    issue = conn.execute('SELECT * FROM issues WHERE id=? AND empresa_id=?',(issue_id,eid)).fetchone()
+    if not issue: raise HTTPException(404,'Issue não encontrada')
+    if issue['status'] not in ('cadastrada','em_tratamento') or conn.execute('SELECT 1 FROM rncs WHERE issue_id=?',(issue_id,)).fetchone():
+        raise HTTPException(409,'Issue fechada ou já vinculada a uma RNC')
+    missing=[]
+    for field,label in [('comportamento_esperado','requisito ou expectativa'),
+                        ('comportamento_observado','desvio observado'),('evidencias_objetivas','suporte factual ou evidência textual')]:
+        value=unicodedata.normalize('NFKD',issue[field] or '')
+        value=''.join(c for c in value if not unicodedata.combining(c)).lower()
+        value=re.sub(r'[^a-z0-9]+',' ',value).strip()
+        if value in ('','na','n a','nao','nenhum','nenhuma','nada','nao houve','nao se aplica','nao informado',
+                     'nao informada','sem evidencia','sem evidencias','sem desvio','sem requisito','a definir','a confirmar'):
+            missing.append(label)
+    return issue, {'permitida':not missing,'pendencias':missing,'entrada_hash':digest(snapshot(issue)),
+        'justificativa': {'requisito_violado':issue['comportamento_esperado'],
+            'fato_e_evidencia':f"{issue['comportamento_observado']} — {issue['evidencias_objetivas']}",
+            'criterios_ia':'Validação manual dos campos: requisito/expectativa, desvio e suporte factual. A consistência do conteúdo deve ser confirmada pelo usuário; nenhuma IA foi consultada.'}}
+
+
+@router.get('/manual/{issue_id}/validacao')
+def validate_manual(issue_id: int,empresa_id: int | None = None,user: dict = Depends(writer)):
+    eid=scope(user,empresa_id)
+    with get_connection() as conn:
+        _,result=manual_validation(conn,issue_id,eid)
+    return result
+
+
+@router.post('/manual/{issue_id}/gerar')
+def generate_manual(issue_id: int,body: ManualGeracaoIn,empresa_id: int | None = None,user: dict = Depends(writer)):
+    eid=scope(user,empresa_id)
+    with get_connection() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        issue,result=manual_validation(conn,issue_id,eid)
+        if not result['permitida']: raise HTTPException(422,'Seleção bloqueada: informe '+', '.join(result['pendencias']))
+        if body.entrada_hash!=result['entrada_hash']: raise HTTPException(409,'Os dados da Issue mudaram. Arraste novamente para validar')
+        rnc=emitir_rnc_transacao(conn,issue_id,body.dados_rnc,user)
+        return {'rnc_codigo':rnc['codigo'],'rnc_id':rnc['id']}
 
 
 def idem_key(value: str = Header(alias='Idempotency-Key')):

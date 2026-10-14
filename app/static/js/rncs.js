@@ -21,7 +21,7 @@ function updateRncKanbanStatus(actions) {
   })}));
 }
 
-async function renderRncTabs(target, item, activeTab='registro') {
+async function renderRncTabs(target, item, activeTab='registro', activeInvestigationStage='inicio') {
   const company=state.empresaId;
   target.replaceChildren();
   const header=document.createElement('div');header.className='rnc-header';
@@ -44,7 +44,7 @@ async function renderRncTabs(target, item, activeTab='registro') {
   const writable=isEditor() && !['concluida','fechada'].includes(item.rnc_status);
   const tabs=document.createElement('div');tabs.className='rnc-tabs';target.appendChild(tabs);
   const panes={};const tabButtons={};
-  for(const [key,label] of [['registro','1. Registro'],['contencao','2. Contenção'],['investigacao','3. Investigação'],['plano','4. Plano de Ação'],['pendencias','5. Pendências']]){
+  for(const [key,label] of [['registro','1. Registro'],['contencao','2. Contenção'],['investigacao','3. Investigação'],['plano','4. Plano de Ação'],['pendencias','5. Pendências'],['encerramento','6. Encerramento']]){
     const tab=document.createElement('button');tab.type='button';tab.className='rnc-tab';tab.textContent=label;tab.setAttribute('role','tab');
     const pane=document.createElement('div');pane.className='rnc-pane';pane.setAttribute('role','tabpanel');
     tabs.appendChild(tab);target.appendChild(pane);panes[key]=pane;tabButtons[key]=tab;
@@ -68,20 +68,20 @@ async function renderRncTabs(target, item, activeTab='registro') {
   }
   function read(pane){const data={};pane.querySelectorAll('[data-field]').forEach(input=>{if(input.readOnly)return;const key=input.dataset.field;data[key]=input.multiple?Array.from(input.selectedOptions).map(o=>key==='metodologias'?o.value:Number(o.value)):key.endsWith('_id')?(input.value?Number(input.value):null):input.value;});return data;}
   async function mutate(path,body,method='PUT'){
-    if(!writable)return;
+    if(!writable && !(path==='/reabrir' && isEditor()))return;
     message.textContent='Salvando…';
     try{
       const updated=await api(`/api/rncs/${item.rnc_id}${path}`,{method,body});
       if(company!==state.empresaId || String(item.id)!==document.getElementById('rncSelect').value)return;
       rncRecords=rncRecords.map(row=>row.rnc_id===updated.rnc_id?updated:row);
-      await renderRncTabs(target,updated,activeTab);
-      await loadIssueKanban();
+      await Promise.all([renderRncTabs(target,updated,activeTab,activeInvestigationStage),loadIssueKanban(updated)]);
     }catch(error){message.textContent=error.message;}
   }
   function save(pane,body){const button=document.createElement('button');button.type='button';button.className='btn primary';button.textContent='Salvar registro';button.disabled=!writable;button.onclick=()=>mutate('',body?body():read(pane));pane.appendChild(button);}
   const registration=panes.registro;
   let grid=block(registration,'Identificação da RNC',3);
   field(grid,'Código da RNC','codigo','text',item.rnc_codigo,[],true);
+  const summary=field(grid,'Resumo RNC (até 25 caracteres)','resumo','text',item.rnc_resumo||'');summary.maxLength=25;
   field(grid,'Issue de origem','codigo_issue','text',item.codigo,[],true);
   field(grid,'Data/hora da abertura','emitida_em','text',new Date(item.rnc_emitida_em).toLocaleString('pt-BR'),[],true);
   field(grid,'Emitida por','emitida_por_nome','text',item.rnc_emitida_por_nome,[],true);
@@ -117,7 +117,17 @@ async function renderRncTabs(target, item, activeTab='registro') {
   field(grid,'Validada por','contencao_validada_por_id','select',item.rnc_contencao_validada_por_id,userOptions);
   if(item.rnc_contencao_em)field(grid,'Data/hora da contenção (registro original)','contencao_em','text',item.rnc_contencao_em,[],true);
   field(grid,'Disposição do produto/serviço','disposicao_inicial','select',item.rnc_disposicao_inicial,[['refugo','Refugo'],['retrabalho','Retrabalho'],['devolucao_fornecedor','Devolução ao fornecedor'],['liberacao_concessao','Liberação por concessão'],['bloqueio_preventivo','Bloqueio preventivo']]);save(containment);
-  const investigation=panes.investigacao;
+  const investigationTabs=document.createElement('div');investigationTabs.className='rnc-tabs rnc-investigation-tabs';panes.investigacao.appendChild(investigationTabs);
+  const investigationStages={},investigationButtons={};
+  for(const [key,label] of [['inicio','3.1 — Início · Etapa 1'],['porques','3.2 — 5 Porquês · Etapa 2'],['ishikawa','3.3 — Ishikawa · Etapa 3']]){
+    const button=document.createElement('button');button.type='button';button.className='rnc-tab rnc-investigation-tab';button.textContent=label;button.setAttribute('role','tab');
+    const pane=document.createElement('div');pane.className='rnc-pane';pane.setAttribute('role','tabpanel');
+    investigationTabs.appendChild(button);panes.investigacao.appendChild(pane);investigationStages[key]=pane;investigationButtons[key]=button;
+    button.onclick=()=>selectInvestigationStage(key);
+  }
+  function selectInvestigationStage(key){activeInvestigationStage=key;Object.keys(investigationStages).forEach(k=>{investigationStages[k].classList.toggle('active',k===key);investigationButtons[k].classList.toggle('active',k===key);investigationButtons[k].setAttribute('aria-selected',String(k===key));});}
+  selectInvestigationStage(activeInvestigationStage);
+  const investigation=investigationStages.inicio;
   grid=block(investigation,'Investigação da causa',3);
   const methods=field(grid,'Metodologias','metodologias','multiple',item.rnc_metodologias || (item.rnc_metodologia?[item.rnc_metodologia]:[]),[['5_porques','5 Porquês'],['ishikawa','Ishikawa'],['fmea','FMEA']]);
   methods.size=3;
@@ -127,6 +137,7 @@ async function renderRncTabs(target, item, activeTab='registro') {
   grid=block(investigation,'Equipe e análise',2);
   field(grid,'Equipe de investigação','equipe_investigacao','multiple',item.rnc_equipe_investigacao,userOptions);
   const investigationData=item.rnc_investigacao_json||{};
+  const complementData=investigationData.complementos||{},complementControls={};
   const notes=field(grid,'Notas da investigação','analise_texto','textarea',investigationData.analise||'');
   const observation=item.observacao||{},observationControls={};
   grid=block(investigation,'Observação — frequência e período',3);
@@ -144,6 +155,14 @@ async function renderRncTabs(target, item, activeTab='registro') {
     const input=field(grid,label,'observacao_'+key,type,observation[key]??(key==='moeda'?'BRL':''));
     if(type==='number'){input.min='0';input.step='any';}observationControls[key]=input;
   }
+  for(const [title,fields] of [
+    ['Mudanças anteriores à ocorrência', [['mudancas','O que mudou?','textarea'],['mudancas_em','Data/hora da mudança','datetime-local'],['configuracao_anterior','Versão / configuração anterior','textarea'],['configuracao_atual','Versão / configuração atual','textarea']]],
+    ['Abrangência do problema', [['abrangencia_afetados','Produtos, lotes, pedidos ou versões afetados','textarea'],['abrangencia_sem_falha','Itens verificados sem falha','textarea']]],
+    ['Falha de detecção', [['controle_esperado','Qual controle deveria identificar o desvio?','textarea'],['motivo_nao_deteccao','Por que o controle não identificou?','textarea']]],
+  ]) {
+    grid=block(investigation,title,2);
+    fields.forEach(([key,label,type])=>complementControls[key]=field(grid,label,'complemento_'+key,type,complementData[key]||''));
+  }
   const hypothesesBlock=block(investigation,'Hipóteses e testes de validação',1);
   const hypothesisStates=[];
   function appendHypothesis(hypothesis={}){
@@ -159,22 +178,63 @@ async function renderRncTabs(target, item, activeTab='registro') {
         const options=key==='responsavel_id'?userOptions:key==='conclusao'?[['confirmada','Confirmada'],['descartada','Descartada'],['inconclusiva','Inconclusiva']]:[];
         testControls[key]=field(testGrid,label,`teste_${index}_${tests.length}_${key}`,type,test[key]??'',options);
       }tests.push(testControls);
+      for(const [key,label,type] of [['resultado_esperado','Resultado esperado','textarea'],['criterio_decisao','Critério para confirmar / descartar','textarea'],['repeticoes','Quantidade de repetições','number'],['configuracao','Equipamento / configuração usada','textarea'],['amostra','Amostra examinada','textarea']]){
+        const input=field(testGrid,label,`teste_${index}_${tests.length-1}_${key}`,type,test[key]??'');
+        if(type==='number'){input.min='1';input.step='1';}testControls[key]=input;
+      }
+      testControls.evidencias_ids=field(testGrid,'Arquivos de evidência vinculados ao teste',`teste_${index}_${tests.length-1}_evidencias_ids`,'multiple',test.evidencias_ids||[],(item.evidencias_investigacao||[]).map(e=>[e.id,e.nome]));
     }
     (hypothesis.testes||[]).forEach(test=>appendTest(test));
     const addTest=document.createElement('button');addTest.type='button';addTest.className='btn';addTest.textContent='Adicionar teste';addTest.disabled=!writable;addTest.onclick=()=>appendTest();card.appendChild(addTest);
   }
   (investigationData.hipoteses||[]).forEach(hypothesis=>appendHypothesis(hypothesis));
   const addHypothesis=document.createElement('button');addHypothesis.type='button';addHypothesis.className='btn';addHypothesis.textContent='Adicionar hipótese';addHypothesis.disabled=!writable;addHypothesis.onclick=()=>appendHypothesis();hypothesesBlock.appendChild(addHypothesis);
-  save(investigation,()=>{
-    const data=read(investigation);for(const key of Object.keys(data))if(key==='analise_texto'||/^(observacao_|hipotese_|teste_)/.test(key))delete data[key];
+  grid=block(investigation,'Síntese da investigação',2);
+  for(const [key,label] of [['hipoteses_confirmadas','Hipóteses confirmadas'],['hipoteses_descartadas','Hipóteses descartadas'],['hipoteses_inconclusivas','Hipóteses inconclusivas'],['conclusao_tecnica','Conclusão técnica'],['limitacoes_pendencias','Limitações e pendências da investigação']])
+    complementControls[key]=field(grid,label,'complemento_'+key,'textarea',complementData[key]||'');
+  grid=block(investigation,'Validação da conclusão',2);
+  for(const [key,label,type,options] of [['revisor_id','Revisor da investigação','select',userOptions],['revisao_em','Data/hora da revisão','datetime-local'],['parecer','Parecer da revisão','select',[['aceita','Aceita'],['complementar','Precisa de complementação']]],['observacoes_revisao','Observações do revisor','textarea']])
+    complementControls[key]=field(grid,label,'complemento_'+key,type,complementData[key]??'',options||[]);
+  const porquesData=investigationData.etapa_porques||{},porquesControls={},porquesSteps=[];
+  grid=block(investigationStages.porques,'5 Porquês — definição do problema',1);
+  porquesControls.problema=field(grid,'Problema analisado','etapa_porques_problema','textarea',porquesData.problema||'');
+  const stepsGrid=block(investigationStages.porques,'Sequência de perguntas e respostas',1);
+  function appendPorque(step={}){
+    const number=porquesSteps.length+1,g=block(stepsGrid,`Porquê ${number}`,3),controls={};
+    for(const [key,label] of [['pergunta','Pergunta'],['resposta','Resposta / relação causal'],['evidencia','Evidência que sustenta a resposta']])controls[key]=field(g,label,`etapa_porques_${number}_${key}`,'textarea',step[key]||(key==='pergunta'?'Por que isso ocorreu?':''));
+    porquesSteps.push(controls);
+  }
+  (porquesData.passos?.length?porquesData.passos:Array.from({length:5},()=>({}))).forEach(appendPorque);
+  const addPorque=document.createElement('button');addPorque.type='button';addPorque.className='btn';addPorque.textContent='Adicionar porquê';addPorque.disabled=!writable;addPorque.onclick=()=>{if(porquesSteps.length>=20){message.textContent='Limite de 20 perguntas.';return;}appendPorque();};investigationStages.porques.appendChild(addPorque);
+  grid=block(investigationStages.porques,'Conclusão dos 5 Porquês',1);
+  porquesControls.conclusao=field(grid,'Conclusão fundamentada','etapa_porques_conclusao','textarea',porquesData.conclusao||'');
+  const ishikawaData=investigationData.etapa_ishikawa||{},ishikawaControls={};
+  grid=block(investigationStages.ishikawa,'Ishikawa — efeito observado',1);
+  ishikawaControls.efeito=field(grid,'Problema / efeito analisado','etapa_ishikawa_efeito','textarea',ishikawaData.efeito||'');
+  grid=block(investigationStages.ishikawa,'Causas potenciais por categoria',2);
+  for(const [key,label] of [['metodo','Método'],['maquina','Máquina / equipamento / sistema'],['material','Material / insumos'],['mao_obra','Mão de obra / pessoas'],['medicao','Medição / controles'],['meio_ambiente','Meio ambiente / condições']])ishikawaControls[key]=field(grid,label,'etapa_ishikawa_'+key,'textarea',ishikawaData[key]||'');
+  grid=block(investigationStages.ishikawa,'Conclusão do Ishikawa',1);
+  ishikawaControls.conclusao=field(grid,'Causas a validar / conclusão fundamentada','etapa_ishikawa_conclusao','textarea',ishikawaData.conclusao||'');
+  const stageValues=controls=>Object.fromEntries(Object.entries(controls).map(([key,input])=>[key,input.value]));
+  const investigationBody=()=>{
+    const data=read(investigation);for(const key of Object.keys(data))if(key==='analise_texto'||/^(observacao_|hipotese_|teste_|complemento_)/.test(key))delete data[key];
     data.observacao={};for(const [key,input] of Object.entries(observationControls))data.observacao[key]=input.multiple?Array.from(input.selectedOptions).map(option=>Number(option.value)):numberFields.includes(key)?(input.value===''?null:Number(input.value)):input.value;
     const hypotheses=hypothesisStates.map(({controls,tests})=>({
       ...Object.fromEntries(Object.entries(controls).map(([key,input])=>[key,input.value])),
-      testes:tests.map(controls=>Object.fromEntries(Object.entries(controls).map(([key,input])=>[key,key==='responsavel_id'?(input.value?Number(input.value):null):input.value]))),
+      testes:tests.map(controls=>Object.fromEntries(Object.entries(controls).map(([key,input])=>[key,input.multiple?Array.from(input.selectedOptions).map(o=>Number(o.value)):['responsavel_id','repeticoes'].includes(key)?(input.value?Number(input.value):null):input.value]))),
     }));
-    data.investigacao_json={...investigationData,analise:notes.value,hipoteses:hypotheses};delete data.investigacao_json.porques;return data;
-  });
+    const complementos=Object.fromEntries(Object.entries(complementControls).map(([key,input])=>[key,key.endsWith('_id')?(input.value?Number(input.value):null):input.value]));
+    data.investigacao_json={...investigationData,analise:notes.value,hipoteses:hypotheses,complementos,
+      etapa_porques:{...stageValues(porquesControls),passos:porquesSteps.map(stageValues)},etapa_ishikawa:stageValues(ishikawaControls)};delete data.investigacao_json.porques;return data;
+  };
+  save(investigation,investigationBody);
   const evidenceGrid=block(investigation,'Arquivos de evidência',1);
+  function refreshTestEvidenceOptions(){
+    hypothesisStates.forEach(h=>h.tests.forEach(test=>{
+      const input=test.evidencias_ids,selected=new Set(Array.from(input.selectedOptions).map(o=>Number(o.value)));
+      input.replaceChildren();(item.evidencias_investigacao||[]).forEach(e=>{const option=new Option(e.nome,e.id);option.selected=selected.has(e.id);input.appendChild(option);});
+    }));
+  }
   const evidenceList=document.createElement('div');evidenceList.className='rnc-evidence-list';evidenceGrid.appendChild(evidenceList);
   function appendEvidence(evidence){
     const entry=document.createElement('p'),link=document.createElement('a');link.textContent=evidence.nome;
@@ -189,6 +249,7 @@ async function renderRncTabs(target, item, activeTab='registro') {
           await api(`/api/rncs/${item.rnc_id}/evidencias/${evidence.id}`,{method:'DELETE'});
           if(company!==state.empresaId || String(item.id)!==document.getElementById('rncSelect').value)return;
           item.evidencias_investigacao=(item.evidencias_investigacao||[]).filter(file=>file.id!==evidence.id);
+          refreshTestEvidenceOptions();
           rncRecords=rncRecords.map(record=>record.rnc_id===item.rnc_id?{...record,evidencias_investigacao:item.evidencias_investigacao}:record);
           entry.remove();message.textContent='Evidência excluída.';
         }catch(error){message.textContent=error.message;remove.disabled=false;}
@@ -209,12 +270,17 @@ async function renderRncTabs(target, item, activeTab='registro') {
         const evidence=await response.json();if(!response.ok)throw new Error(evidence.detail||'Não foi possível carregar o arquivo');
         if(company!==state.empresaId || String(item.id)!==document.getElementById('rncSelect').value)return;
         appendEvidence(evidence);item.evidencias_investigacao=[...(item.evidencias_investigacao||[]),evidence];
+        refreshTestEvidenceOptions();
         rncRecords=rncRecords.map(record=>record.rnc_id===item.rnc_id?{...record,evidencias_investigacao:item.evidencias_investigacao}:record);
       }
       files.value='';message.textContent='Evidências carregadas. Os dados da investigação são gravados em Salvar registro.';
     }catch(error){message.textContent=error.message;}
     finally{upload.disabled=!writable;files.disabled=!writable;}
   };
+  for(const stage of ['porques','ishikawa']){
+    const hint=document.createElement('p');hint.className='hint';hint.textContent='Salvar registro grava as três etapas da investigação, incluindo os campos preenchidos nas outras subabas.';investigationStages[stage].appendChild(hint);
+    save(investigationStages[stage],investigationBody);
+  }
   const plan=panes.plano;
   grid=block(plan,'Aprovação e prazo do plano',2);
   const planApprover=field(grid,'Aprovador do plano 5W2H','plano_aprovador_id','select',item.rnc_plano_aprovador_id,userOptions);
@@ -283,5 +349,44 @@ async function renderRncTabs(target, item, activeTab='registro') {
   const owner=field(grid,'Responsável','pendencia_responsavel_id','select','',userOptions);
   const deadline=field(grid,'Prazo','pendencia_prazo','date','');
   const add=document.createElement('button');add.type='button';add.className='btn primary';add.textContent='Adicionar pendência';add.disabled=!writable;add.onclick=()=>mutate('/pendencias',{descricao:description.value,responsavel_id:owner.value?Number(owner.value):null,prazo:deadline.value},'POST');pending.appendChild(add);
+  const closure=panes.encerramento;
+  if(['concluida','fechada'].includes(item.rnc_status) && isEditor()){
+    const reopen=document.createElement('button');reopen.type='button';reopen.className='btn';reopen.textContent='Reabrir RNC';
+    reopen.onclick=()=>{
+      const reason=prompt('Motivo da reativação (opcional):');
+      if(reason===null)return;
+      return mutate('/reabrir',{confirmar:true,motivo:reason.trim()},'POST');
+    };actions.appendChild(reopen);
+  }
+  grid=block(closure,'Encerramento da RNC',2);
+  const closureApprover=field(grid,'Aprovador do encerramento','encerramento_aprovador_id','select',item.rnc_encerramento_aprovador_id,userOptions);
+  const closureConclusion=field(grid,'Conclusão do encerramento','encerramento_conclusao','textarea',item.rnc_encerramento_conclusao||'');
+  grid=block(closure,'Lições aprendidas',1);
+  const lessons=field(grid,'O que aprendemos e recomendações para casos futuros','licoes_aprendidas','textarea',item.rnc_licoes_aprendidas||'');
+  save(closure);
+  const closureInfo=document.createElement('p');closureInfo.className='hint';
+  closureInfo.textContent=item.rnc_encerramento_aprovado_em ? `Encerramento aprovado por ${users.find(u=>u.id===item.rnc_encerramento_aprovado_por_id)?.nome||'Usuário registrado'} em ${new Date(item.rnc_encerramento_aprovado_em).toLocaleString('pt-BR')}.` : 'Selecione o aprovador. Aprovar e encerrar salva os dados e finaliza os cartões da RNC no Kanban. Conclua as pendências antes da aprovação. Conclusão e lições aprendidas são opcionais.';
+  closure.appendChild(closureInfo);
+  for(const event of item.rnc_encerramento_historico||[]){
+    const entry=document.createElement('p');entry.className='hint';entry.textContent=`Reaberta em ${new Date(event.em).toLocaleString('pt-BR')} por ${users.find(u=>u.id===event.usuario_id)?.nome||'Usuário registrado'}: ${event.motivo}. Encerramento anterior: ${event.encerramento_aprovado_em?new Date(event.encerramento_aprovado_em).toLocaleString('pt-BR'):'não informado'}.`;closure.appendChild(entry);
+  }
+  const closeButton=document.createElement('button');closeButton.type='button';closeButton.className='btn primary';closeButton.textContent='Aprovar e encerrar';
+  const globalAdmin=state.user.papel==='admin' && state.user.empresa_id===null;
+  const updateCloseButton=()=>{
+    const approver=closureApprover.value?Number(closureApprover.value):null;
+    closeButton.disabled=!writable || !approver || (approver!==state.user.id && !globalAdmin);
+    closeButton.title=!approver?'Identifique o aprovador do encerramento':closeButton.disabled&&writable?'Entre com o aprovador escolhido ou com o superusuário para encerrar':'';
+  };
+  closureApprover.addEventListener('change',updateCloseButton);updateCloseButton();
+  closeButton.onclick=async()=>{
+    if(closeButton.disabled)return;
+    const current=closureApprover.value?Number(closureApprover.value):null;
+    if(!current){message.textContent='Identifique o aprovador do encerramento.';return;}
+    if(confirm('Aprovar e encerrar esta RNC, finalizando seus cartões no Kanban? Após concluir, os registros da RNC ficam somente para consulta.')){
+      closeButton.disabled=true;
+      await mutate('/encerrar',{confirmar:true,encerramento_aprovador_id:current,encerramento_conclusao:closureConclusion.value,licoes_aprendidas:lessons.value},'POST');
+      if(closeButton.isConnected)updateCloseButton();
+    }
+  };closure.appendChild(closeButton);
   selectTab(activeTab);
 }

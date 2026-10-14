@@ -18,7 +18,7 @@ function escapeHtml(s) {
 }
 
 function api(path, options = {}) {
-  const opts = { credentials: "same-origin", headers: { "Content-Type": "application/json" }, ...options };
+  const opts = { credentials: "same-origin", cache: "no-store", headers: { "Content-Type": "application/json" }, ...options };
   if (opts.body && typeof opts.body !== "string") opts.body = JSON.stringify(opts.body);
   return fetch(path, opts).then(async (r) => {
     if (r.status === 204) return null;
@@ -68,6 +68,9 @@ function plot(target, layout, traces) {
 }
 
 async function onAuth() {
+  resetPareto();
+  resetHistograma();
+  resetDispersao();
   resetIssueSelecao();
   document.querySelectorAll(".editor-only").forEach((el) => el.classList.toggle("hidden", !isEditor()));
   resetLlmForm();
@@ -1253,16 +1256,52 @@ async function excluirIssue() {
   await loadIssueKanban();
 }
 
-async function loadIssueKanban() {
+async function loadIssueKanban(confirmedRnc=null) {
   const company=state.empresaId;
   const items = await api(issueApiUrl("/api/issues/kanban"));
+  if(confirmedRnc?.rnc_id){
+    const confirmedActions=new Map((confirmedRnc.acoes||[]).map(action=>[action.id,action]));
+    items.forEach(action=>{
+      if(String(action.rnc_id)!==String(confirmedRnc.rnc_id))return;
+      const current=confirmedActions.get(action.id);
+      if(current)Object.assign(action,current);
+      action.rnc_status=confirmedRnc.rnc_status;
+      action.rnc_resumo=confirmedRnc.rnc_resumo;
+      if(['concluida','fechada'].includes(confirmedRnc.rnc_status))action.status='finalizada';
+    });
+  }
   if(company!==state.empresaId)return;
   for (const id of ["issueKanban", "rncKanban"]) renderIssueKanban(document.getElementById(id), id==='rncKanban'?items.filter(action=>action.rnc_id && action.rnc_codigo):items);
   if(typeof updateRncKanbanStatus==='function')updateRncKanbanStatus(items);
 }
 
+function rncDeadlineColors(items, today=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())) {
+  const colors=new Map();
+  const dayNumber=value=>{
+    const match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(value||'');
+    if(!match)return null;
+    const date=new Date(0);date.setUTCFullYear(Number(match[1]),Number(match[2])-1,Number(match[3]));date.setUTCHours(0,0,0,0);
+    if(date.toISOString().slice(0,10)!==value)return null;
+    return date.getTime()/86400000;
+  };
+  const current=dayNumber(today);
+  for(const action of items){
+    if(!action.rnc_id)continue;
+    const key=String(action.rnc_id),existing=colors.get(key)||'green';colors.set(key,existing);
+    if(action.status==='finalizada')continue;
+    const deadline=dayNumber(action.prazo_limite);
+    if(deadline===null || current===null)continue;
+    const days=deadline-current;
+    if(days<=0)colors.set(key,'red');
+    else if(days<=3 && existing!=='red')colors.set(key,'yellow');
+  }
+  return colors;
+}
+
 function renderIssueKanban(container, items) {
+  items=items.map(action=>['concluida','fechada'].includes(action.rnc_status)?{...action,status:'finalizada'}:action);
   container.innerHTML = "";
+  const deadlineColors=rncDeadlineColors(items);
   KANBAN_COLS.forEach((col) => {
     const colEl = document.createElement("div");
     colEl.className = "kanban-col";
@@ -1280,6 +1319,7 @@ function renderIssueKanban(container, items) {
       if (!acaoId) return;
       const acao = items.find((a) => a.id === acaoId);
       if (!acao) return;
+      if(['concluida','fechada'].includes(acao.rnc_status))return;
       await api(`/api/issues/${acao.issue_id}/acoes/${acao.id}/status`, { method: "PUT", body: { status: col } });
       if (state.issueId && state.issueId === acao.issue_id) refreshIssue();
       await loadIssueKanban();
@@ -1287,10 +1327,13 @@ function renderIssueKanban(container, items) {
     items.filter((a) => a.status === col).forEach((a) => {
       const card = document.createElement("div");
       card.className = "kanban-card";
-      card.draggable = true;
+      const deadlineColor=a.rnc_id ? deadlineColors.get(String(a.rnc_id)) : null;
+      if(deadlineColor)card.classList.add('rnc-deadline-'+deadlineColor);
+      card.draggable = !['concluida','fechada'].includes(a.rnc_status);
       const descricao = a.descricao || a.issue_descricao || "";
-      const codigo = a.rnc_codigo || a.codigo;
+      const codigo = a.rnc_codigo ? a.rnc_codigo+(a.rnc_resumo?'-'+a.rnc_resumo:'') : a.codigo;
       card.title = `${codigo} · ${a.codigo} — ${descricao}\nResponsável: ${a.responsavel_nome || "—"}`;
+      if(deadlineColor)card.title+='\nPrazo da RNC: '+({red:'ação pendente vence hoje ou está atrasada',yellow:'ação pendente vence em até 3 dias',green:'sem ações pendentes vencendo nos próximos 3 dias'}[deadlineColor]);
       card.innerHTML = `<div class="kc-title">${escapeHtml(codigo)}</div>${container.id==='rncKanban'?'':`<div class="kc-sub">${escapeHtml(descricao)}</div>`}`;
       card.addEventListener("dragstart", (ev) => ev.dataTransfer.setData("text/plain", String(a.id)));
       colEl.appendChild(card);
@@ -1451,6 +1494,53 @@ async function transcreverArquivo(ev, targetId) {
 
 let rncRecords = [];
 let rncLoadEpoch = 0;
+let rncView='registros';
+async function showRncView(view='registros'){
+  rncView=view==='reativar'&&isEditor()?'reativar':'registros';
+  document.getElementById('rncReativar').classList.toggle('hidden',rncView!=='reativar');
+  document.querySelectorAll('[data-rnc-view]').forEach(link=>link.classList.toggle('active',link.dataset.rncView===rncView));
+  if(rncView==='reativar'){
+    const company=state.empresaId;
+    const records=await api(issueApiUrl('/api/rncs'));
+    if(company!==state.empresaId)return;
+    rncRecords=records.filter(item=>item.rnc_id);refreshRncReactivation();return;
+  }
+  await loadRncs();
+}
+function closeRncReactivation(){
+  rncView='registros';document.getElementById('rncReativar').classList.add('hidden');
+  document.querySelectorAll('[data-rnc-view]').forEach(link=>link.classList.toggle('active',link.dataset.rncView==='registros'));
+}
+function refreshRncReactivation(){
+  const select=document.getElementById('rncReativarSelect');const previous=select.value;
+  select.replaceChildren(new Option('Selecione uma RNC encerrada',''));
+  const closed=rncRecords.filter(item=>['concluida','fechada'].includes(item.rnc_status));
+  closed.forEach(item=>select.appendChild(new Option(item.rnc_codigo+(item.rnc_resumo?'-'+item.rnc_resumo:''),item.rnc_id)));
+  select.value=closed.some(item=>String(item.rnc_id)===previous)?previous:closed.length===1?String(closed[0].rnc_id):'';
+  document.getElementById('btnRncReativar').disabled=!isEditor()||!select.value;
+  document.getElementById('rncReativarMensagem').textContent=closed.length?'':'Nenhuma RNC encerrada para reativar.';
+}
+async function reactivateRncFromMenu(){
+  const id=Number(document.getElementById('rncReativarSelect').value),motivo=document.getElementById('rncReativarMotivo').value.trim();
+  const message=document.getElementById('rncReativarMensagem'),button=document.getElementById('btnRncReativar');
+  if(!isEditor())return;
+  if(!id){message.textContent='Selecione a RNC encerrada que deseja reativar.';return;}
+  if(!confirm('Reativar esta RNC e liberar sua edição?'))return;
+  button.disabled=true;
+  try{
+    const updated=await api(`/api/rncs/${id}/reabrir`,{method:'POST',body:{confirmar:true,motivo}});
+    ++rncLoadEpoch;
+    const previous=rncRecords.findIndex(record=>record.rnc_id===updated.rnc_id);
+    if(previous>=0)rncRecords[previous]=updated;else rncRecords.push(updated);
+    document.getElementById('rncReativarMotivo').value='';
+    rncView='registros';document.getElementById('rncReativar').classList.add('hidden');
+    document.querySelectorAll('[data-rnc-view]').forEach(link=>link.classList.toggle('active',link.dataset.rncView==='registros'));
+    document.getElementById('rncFilter').value='';refreshRncReactivation();filterRncSelect(String(updated.id),false);
+    await Promise.all([renderRncDetail(),loadIssueKanban(updated)]);
+    document.getElementById('rncMensagem').textContent='RNC reativada. Edição liberada.';
+  }catch(error){message.textContent=error.message;button.disabled=false;}
+}
+
 async function loadRncs() {
   const epoch = ++rncLoadEpoch;
   const company = state.empresaId;
@@ -1463,6 +1553,7 @@ async function loadRncs() {
   const records = await api(issueApiUrl("/api/rncs"));
   if (epoch !== rncLoadEpoch || company !== state.empresaId) return;
   rncRecords = records.filter(item => item.rnc_id);
+  refreshRncReactivation();
   filterRncSelect(previous,false);
   renderRncDetail();
   await loadIssueKanban();
@@ -1488,7 +1579,7 @@ function renderRncDetail() {
   const item = rncRecords.find(row => String(row.id) === document.getElementById("rncSelect").value);
   target.classList.toggle("hidden", !item);
   if (!item) return;
-  if (typeof renderRncTabs === 'function') { renderRncTabs(target,item); return; }
+  if (typeof renderRncTabs === 'function') { return renderRncTabs(target,item); }
   const header=document.createElement("div");header.className="rnc-header";
   const heading = document.createElement("h3");heading.textContent=item.rnc_codigo;
   const status=document.createElement("span");status.className="meta-chip";status.textContent=item.rnc_status==='emitida'?'Emitida':item.rnc_status;
@@ -1566,17 +1657,29 @@ document.querySelectorAll(".sidebar a").forEach((a) => {
     navigate(a.dataset.section);
     if (a.dataset.section === "issues") showIssueView(a.dataset.issueView || "capturar");
     if (a.dataset.section === "configuracao") loadLlmAcessos().catch((e) => alert(e.message));
-    if (a.dataset.section === "rncs") loadRncs().catch((e) => { document.getElementById("rncMensagem").textContent=e.message; });
+    if (a.dataset.section === "pareto") loadPareto();
+    if (a.dataset.section === "histograma") loadHistograma();
+    if (a.dataset.section === "dispersao") loadDispersao();
+    if (a.dataset.section === "rncs") showRncView(a.dataset.rncView||'registros').catch((e) => { document.getElementById("rncMensagem").textContent=e.message; });
   });
 });
 
 document.getElementById("btnLogin").addEventListener("click", login);
+document.getElementById('rncReativarSelect').addEventListener('change',()=>{document.getElementById('btnRncReativar').disabled=!isEditor()||!document.getElementById('rncReativarSelect').value;});
+document.getElementById('btnRncReativar').addEventListener('click',reactivateRncFromMenu);
+document.getElementById('btnRncReativarCancelar').addEventListener('click',closeRncReactivation);
 document.getElementById("btnLogout").addEventListener("click", logout);
 document.getElementById("empresaForm").addEventListener("submit", createEmpresa);
 document.getElementById("usuarioForm").addEventListener("submit", createUsuario);
 document.getElementById("usuarioEmpresa").addEventListener("change", loadUsuarioSetores);
 document.getElementById("empresaSelect").addEventListener("change", async (e) => {
   state.empresaId = Number(e.target.value) || null;
+  resetDispersao();
+  if (document.getElementById("section-dispersao").classList.contains("active")) await loadDispersao();
+  resetPareto();
+  resetHistograma();
+  if (document.getElementById("section-histograma").classList.contains("active")) await loadHistograma();
+  if (document.getElementById("section-pareto").classList.contains("active")) await loadPareto();
   resetIssueSelecao();
   if (state.issueView === "selecao") await loadIssueSelecao();
   resetLlmForm();

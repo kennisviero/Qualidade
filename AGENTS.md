@@ -1,5 +1,26 @@
 # Qualidade — Gestão da Qualidade em Ciclo Fechado (Issues + PDCA)
 
+## Base didática autorizada (2026-10-14)
+
+- Adicionado 3-Diagrama de Dispersão em Ferramentas. Filtros e elegibilidade de Pareto/Histograma, seleção de dois eixos, pares numéricos do mesmo registro, Pearson quando aplicável, contagens de exclusões, tabela por clique e Consultar IA com snapshot assinado. Unidades/moedas compatíveis e números exibidos com duas casas; sem inferência de causalidade. Operação em `documentos/specs/DISPERSAO.md`.
+
+- Consulta textual das ferramentas com DeepSeek define `thinking.type=disabled` explicitamente, conforme documentação oficial do `deepseek-flash`, que habilita thinking por padrão. Ajuste visa resposta vazia ao atingir limite de saída, sem aumentar tokens nem alterar triagem JSON. Teste simulado verifica parâmetros de ambos os fluxos; sem nova chamada real ao provedor.
+
+- Consulta IA das ferramentas preserva texto interrompido por limite de saída (`finish_reason=length`), identificando resposta parcial na interface. Sem texto ou filtro de conteúdo recebem mensagens específicas. Triagem JSON continua estrita; nenhuma repetição automática/chamada real na verificação.
+
+- Padrão autorizado para todas as ferramentas: Consultar IA abre instruções editáveis e envia prompt + dados da análise somente após Enviar à IA. Componente compartilhado em `ferramentas_ia.js`; snapshot assinado por empresa/usuário, acessos LLM existentes, saída textual. Aplicado a Pareto/Histograma; novas ferramentas devem seguir o mesmo fluxo. Operação em `documentos/specs/CONSULTA_IA_FERRAMENTAS.md`. Sem chamada real ao provedor durante implementação/verificação.
+
+- Ferramentas numeradas em 1-Pareto e 2-Histograma. Histograma reutiliza filtros/tenancy/elegibilidade de Pareto, com medidas temporais de Issues abertas sem RNC e medidas temporais/impacto das RNCs. Intervalos iguais automáticos/manuais, estatísticas e consulta por intervalo. Consulta somente leitura `/api/ferramentas/histograma`; operação em `documentos/specs/HISTOGRAMA.md`. Radios de cada ferramenta isolados por formulário para preservar Pareto.
+
+- Estratificação do Pareto autorizada: base Issues somente `cadastrada`/`em_tratamento`, sem `finalizado_em` e sem RNC vinculada. Exclusão aplicada no backend antes de opções/filtros/totais/detalhamento; vínculo com RNC ocultado na tela. Base RNC mantém análise própria. Testes de filtros, exclusão de fechadas/vinculadas, status inconsistente com RNC, tenancy e interface passaram.
+
+- Implementado menu Ferramentas → Pareto, com radio buttons Issues/RNCs, filtros por empresa/período/contexto, agrupamento e medidas. Categoria usa o campo factual `o_que` da Issue (snapshot na RNC), sem nova inferência ou alteração dos dados. RNC admite quantidade/horas/prejuízo com unidade/moeda compatível; ausências exibidas separadamente. Endpoint autenticado somente leitura `/api/ferramentas/pareto`, com tenancy. Operação em `documentos/specs/PARETO.md`; verificações em `tests/test_pareto.py` e `tests/check_pareto.cjs`.
+
+- Toda RNC criada deve ter uma Issue de origem; nas cargas didáticas, criar a Issue antes de emitir a RNC pelo serviço existente. Nunca inserir RNC isolada.
+- Adicionadas 40 Issues simuladas (ISSUE-0038 a ISSUE-0077), das quais 30 originaram RNC-2026-002 a RNC-2026-031; 10 ficaram abertas. Adicionadas 30 ações 5W2H, 30 observações e 30 pendências. Dados identificados por `SIM-FERR-20261014`; registros anteriores preservados.
+- Carga idempotente em `_popular_ferramentas.py`: ensaio em memória sem argumentos; `--apply` grava após backup. Integridade/FKs, renderização dos objetos pela API e preservação das linhas anteriores verificadas antes do commit. Backup: `data/backups/qualidade_antes_ferramentas_20261014T125345103801Z.db`.
+- Medições didáticas em `documentos/exemplos_ferramentas/amostras_simuladas.json`; orientações em `documentos/exemplos_ferramentas/README.md`. Nenhuma chamada LLM, aprovação ou conclusão de RNC realizada.
+
 ## Atualização autorizada (2026-10-11) — campos duplicados da Issue
 
 - A pedido do usuário, restauradas as larguras anteriores do formulário RNC e matriz 5W2H, com rolagem horizontal quando necessária. Exclusão dos anexos e cartões do Kanban exibindo somente código permanecem.

@@ -27,6 +27,9 @@ for(const match of html.matchAll(/id="([^"]+)"/g)){assert.ok(!elements[match[1]]
 for(const match of script.matchAll(/selEl\('([^']+)'\)/g))assert.ok(elements[match[1]],'Elemento ausente '+match[1]);
 assert.ok(html.indexOf('/static/js/issue_selecao.js')<html.indexOf('/static/js/app.js'));
 const requests=[];
+elements.selecaoCandidatasBloco.append(Object.assign(new Element('h4'),{}),Object.assign(new Element('p'),{}));
+const originalQuery=elements.selecaoCandidatasBloco.querySelector.bind(elements.selecaoCandidatasBloco);
+elements.selecaoCandidatasBloco.querySelector=selector=>selector==='.hint' ? elements.selecaoCandidatasBloco.children[1] : originalQuery(selector);
 const opened=[];
 const candidate={id:11,id_issue:101,codigo_issue:'ISSUE-0101',resumo:'Desvio <script>alert(1)</script>',criticidade_sugerida:'ALTA',
   justificativa:{requisito_violado:'IT-04',fato_e_evidencia:'Inspeção',criterios_ia:'Tríade presente'}};
@@ -39,6 +42,8 @@ const context=vm.createContext({document:{getElementById:id=>elements[id],create
   ISSUE_STATUS_LABELS:{cadastrada:'Cadastrada',em_tratamento:'Em tratamento'},loadIssueList:async()=>{},loadIssueKanban:async()=>{},
   showIssueView:async(view)=>opened.push(view),selectIssue:async(id)=>opened.push(id),
   api:async(path,options={})=>{requests.push({path,options});
+    if(path==='/api/issues/selecao/manual/103/gerar')return {rnc_codigo:'RNC-2026-002'};
+    if(path.endsWith('/validacao'))return {permitida:!path.includes('/104/'),pendencias:['suporte factual'],entrada_hash:'a'.repeat(64),justificativa:{requisito_violado:'Padrão',fato_e_evidencia:'Medição',criterios_ia:'Campos preenchidos'}};
     if(path.endsWith('/geracoes'))return result;
     if(path==='/api/issues/selecao/analises/1')return analysis;
     if(path.startsWith('/api/issues/selecao/elegiveis'))return {itens:[],total:0};
@@ -57,6 +62,8 @@ assert.equal(context.issueRegisteredTime(null),'Data de cadastro não informada'
 (async()=>{
   assert.match(html,/<form id="selecaoAnaliseForm" novalidate>/);
   await context.loadIssueSelecao();
+  assert.equal(elements.selecaoAnalisar.disabled,true);
+  vm.runInContext("selecaoState.mode='ia'",context);
   assert.equal(elements.selecaoAcesso.value,'1');
   vm.runInContext('for(let id=101;id<119;id++)selecaoState.selected.add(id);',context);
   context.selecaoCount();assert.equal(elements.selecaoAnalisar.disabled,false);
@@ -78,7 +85,7 @@ assert.equal(context.issueRegisteredTime(null),'Data de cadastro não informada'
   context.selecaoCount();assert.equal(elements.selecaoAnalisar.disabled,false);
   await context.selecaoAnalyze({preventDefault(){}});
   assert.match(elements.selecaoMensagem.textContent,/Selecione o acesso LLM/);
-  vm.runInContext('resetIssueSelecao(); selecaoState.users=[{id:1,nome:"A"},{id:2,nome:"B"}];',context);
+  vm.runInContext('resetIssueSelecao(); selecaoState.mode="ia"; selecaoState.users=[{id:1,nome:"A"},{id:2,nome:"B"}];',context);
   context.renderSelecaoCandidates([candidate]);
   const card=elements.selecaoCandidatas.children[0], check=card.querySelector('[data-candidate-check]');
   assert.equal(check.checked,false);
@@ -103,5 +110,30 @@ assert.equal(context.issueRegisteredTime(null),'Data de cadastro não informada'
   assert.equal(elements.selecaoResultado.children.length,1);
   context.resetIssueSelecao();assert.equal(vm.runInContext('selecaoState.selected.size',context),0);
   context.renderSelecaoCandidates([]);assert.match(elements.selecaoCandidatas.textContent,/Nenhuma Issue/);
+  vm.runInContext('selecaoState.mode="manual"; selecaoState.items=[{id:102,codigo:"ISSUE-0102",resumo:"Teste manual"}];',context);
+  context.selecaoCount();assert.equal(elements.selecaoAnalisar.disabled,true);
+  const requestCount=requests.length;
+  await context.selecaoAnalyze({preventDefault(){}});
+  assert.equal(requests.length,requestCount,'Modo manual bloqueia chamadas à IA');
+  await context.selecaoManualMove(102,true);
+  assert.equal(vm.runInContext('selecaoState.candidates.length',context),1);
+  assert.equal(elements.selecaoCandidatas.children[0].draggable,true);
+  await context.selecaoManualMove(102,false);
+  assert.equal(vm.runInContext('selecaoState.candidates.length',context),0);
+  vm.runInContext('selecaoState.items=[{id:103,codigo:"ISSUE-0103",resumo:"Emissão manual"}];',context);
+  await context.selecaoManualMove(103,true);
+  const manualCheck=elements.selecaoCandidatas.children[0].querySelector('[data-candidate-check]');
+  manualCheck.checked=true;manualCheck.onchange();
+  await context.selecaoGenerate({preventDefault(){}});
+  assert.ok(requests.some(r=>r.path==='/api/issues/selecao/manual/103/gerar' && r.options.method==='POST' && r.options.body.confirmar && r.options.body.entrada_hash==='a'.repeat(64)));
+  assert.ok(manualCheck.disabled && !manualCheck.checked);
+  vm.runInContext('selecaoState.items=[{id:104,codigo:"ISSUE-0104",resumo:"Sem evidência"}];',context);
+  await context.selecaoManualMove(104,true);
+  assert.equal(vm.runInContext('selecaoState.candidates.length',context),1,'Issue sem evidência não entra');
+  assert.match(elements.selecaoMensagem.textContent,/bloqueada/);
+  await elements.selecaoModoIA.onchange();
+  assert.equal(vm.runInContext('selecaoState.mode',context),'ia');
+  assert.equal(vm.runInContext('selecaoState.candidates.length',context),0);
+  const dragCard=new Element();context.selecaoDrag(dragCard,{id:102},'right');assert.equal(dragCard.draggable,false);
   console.log('OK: IDs, ordem dos scripts, checklist, campos obrigatórios, aprovação explícita, geração e reset de empresa.');
 })().catch(e=>{console.error(e);process.exitCode=1;});

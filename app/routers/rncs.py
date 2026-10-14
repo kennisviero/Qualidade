@@ -40,6 +40,12 @@ class TesteHipotese(SafeModel):
     responsavel_id: int | None = None
     data: str = ''
     resultado: str = ''
+    resultado_esperado: str = ''
+    criterio_decisao: str = ''
+    repeticoes: int | None = Field(default=None,ge=1,strict=True)
+    configuracao: str = ''
+    amostra: str = ''
+    evidencias_ids: list[int] = Field(default_factory=list)
     conclusao: Literal['','confirmada','descartada','inconclusiva'] = ''
 
 class HipoteseIn(SafeModel):
@@ -49,8 +55,55 @@ class HipoteseIn(SafeModel):
     evidencias_contrarias: str = ''
     testes: list[TesteHipotese] = Field(default_factory=list)
 
+class ComplementosInvestigacao(SafeModel):
+    model_config=ConfigDict(extra='forbid')
+    mudancas: str = ''
+    mudancas_em: str = ''
+    configuracao_anterior: str = ''
+    configuracao_atual: str = ''
+    abrangencia_afetados: str = ''
+    abrangencia_sem_falha: str = ''
+    controle_esperado: str = ''
+    motivo_nao_deteccao: str = ''
+    hipoteses_confirmadas: str = ''
+    hipoteses_descartadas: str = ''
+    hipoteses_inconclusivas: str = ''
+    conclusao_tecnica: str = ''
+    limitacoes_pendencias: str = ''
+    revisor_id: int | None = None
+    revisao_em: str = ''
+    parecer: Literal['','aceita','complementar'] = ''
+    observacoes_revisao: str = ''
+
+class PorquePasso(SafeModel):
+    model_config=ConfigDict(extra='forbid')
+    pergunta: str = ''
+    resposta: str = ''
+    evidencia: str = ''
+
+class EtapaPorques(SafeModel):
+    model_config=ConfigDict(extra='forbid')
+    problema: str = ''
+    passos: list[PorquePasso] = Field(default_factory=list,max_length=20)
+    conclusao: str = ''
+
+class EtapaIshikawa(SafeModel):
+    model_config=ConfigDict(extra='forbid')
+    efeito: str = ''
+    metodo: str = ''
+    maquina: str = ''
+    material: str = ''
+    mao_obra: str = ''
+    medicao: str = ''
+    meio_ambiente: str = ''
+    conclusao: str = ''
+
 class RncUpdate(SafeModel):
     model_config=ConfigDict(extra='forbid')
+    encerramento_aprovador_id: int | None = None
+    encerramento_conclusao: str | None = None
+    licoes_aprendidas: str | None = None
+    resumo: str = Field(default='',max_length=25)
     impacto: str | None = None
     ambiente: str | None = None
     emitente_id: int | None = None
@@ -84,6 +137,16 @@ class PendenciaIn(SafeModel):
 class PendenciaStatus(SafeModel):
     status: str
 
+class EncerramentoIn(SafeModel):
+    model_config=ConfigDict(extra='forbid',strict=True)
+    confirmar: Literal[True]
+    encerramento_aprovador_id: int | None = None
+    encerramento_conclusao: str | None = None
+    licoes_aprendidas: str | None = None
+
+class ReaberturaIn(EncerramentoIn):
+    motivo: str = Field(default='',max_length=2000)
+
 def fetch(conn,rnc_id,user):
     row=conn.execute('SELECT * FROM rncs WHERE id=?',(rnc_id,)).fetchone()
     if not row:raise HTTPException(404,'RNC não encontrada')
@@ -109,6 +172,7 @@ def view(conn,row):
     result['rnc_equipe_investigacao']=json.loads(row['equipe_investigacao'] or '[]')
     result['rnc_investigacao_json']=json.loads(row['investigacao_json'] or '{}')
     result['rnc_metodologias']=json.loads(row['metodologias_json'] or '[]')
+    result['rnc_encerramento_historico']=json.loads(row['encerramento_historico_json'] or '[]')
     result['rnc_fatos_snapshot_json']=snapshot
     result['acoes']=[acao_to_dict(conn,a) for a in conn.execute('SELECT * FROM acoes WHERE rnc_id=? ORDER BY ordem,id',(row['id'],))]
     result['pendencias']=[dict(p) for p in conn.execute('SELECT * FROM rnc_pendencias WHERE rnc_id=? ORDER BY id',(row['id'],))]
@@ -133,6 +197,7 @@ def get_rnc(rnc_id: int,user: dict=Depends(get_current_user)):
 @router.put('/{rnc_id}')
 def update_rnc(rnc_id: int,body:RncUpdate,user:dict=Depends(editor)):
     data=body.model_dump(exclude_unset=True)
+    if 'resumo' in data:data['resumo']=data['resumo'].strip()
     if 'metodologias' in data:
         methods=list(dict.fromkeys(data.pop('metodologias') or []))
         if any(method not in RNC_METODOLOGIAS for method in methods):
@@ -165,6 +230,16 @@ def update_rnc(rnc_id: int,body:RncUpdate,user:dict=Depends(editor)):
             elif key=='investigacao_json' and value:
                 if 'porques' in value or ('analise' in value and not isinstance(value['analise'],str)):
                     raise HTTPException(422,'Investigação inválida: informe apenas os dados da análise desta aba')
+                for stage,model in [('etapa_porques',EtapaPorques),('etapa_ishikawa',EtapaIshikawa)]:
+                    if stage in value:
+                        try:value[stage]=model.model_validate(value[stage]).model_dump()
+                        except (ValidationError,ValueError,TypeError):raise HTTPException(422,'Dados da etapa de investigação inválidos') from None
+                if 'complementos' in value:
+                    try:complement=ComplementosInvestigacao.model_validate(value['complementos'])
+                    except (ValidationError,ValueError,TypeError):raise HTTPException(422,'Complementos da investigação inválidos') from None
+                    validate_date(complement.mudancas_em);validate_date(complement.revisao_em)
+                    _validar_usuario_empresa(conn,complement.revisor_id,row['empresa_id'],'Revisor da investigação')
+                    value['complementos']=complement.model_dump()
                 if 'hipoteses' in value:
                     try:
                         if not isinstance(value['hipoteses'],list):raise ValueError()
@@ -173,7 +248,14 @@ def update_rnc(rnc_id: int,body:RncUpdate,user:dict=Depends(editor)):
                     for hypothesis in hypotheses:
                         for test in hypothesis.testes:
                             _validar_usuario_empresa(conn,test.responsavel_id,row['empresa_id'],'Responsável pelo teste');validate_date(test.data)
+                            for evidence_id in test.evidencias_ids:
+                                if not conn.execute('SELECT 1 FROM rnc_evidencias WHERE id=? AND rnc_id=?',(evidence_id,rnc_id)).fetchone():
+                                    raise HTTPException(422,'Evidência do teste não pertence à RNC')
                     value['hipoteses']=[h.model_dump() for h in hypotheses]
+                    for hypothesis,saved in zip(hypotheses,value['hipoteses']):
+                        for test,saved_test in zip(hypothesis.testes,saved['testes']):
+                            for added in ('resultado_esperado','criterio_decisao','repeticoes','configuracao','amostra','evidencias_ids'):
+                                if added not in test.model_fields_set:saved_test.pop(added,None)
             elif key.startswith(('data_','prazo_')):validate_date(value)
             elif key in ('impacto','ambiente'):
                 choices={'impacto':('baixo','medio','alto','critico'),'ambiente':('producao','homologacao','campo','linha','outro')}[key]
@@ -192,6 +274,53 @@ def update_rnc(rnc_id: int,body:RncUpdate,user:dict=Depends(editor)):
 
 def invalidate_plan(conn,rnc_id):
     conn.execute('UPDATE rncs SET plano_aprovado_por_id=NULL,plano_aprovado_em=NULL,atualizado_em=? WHERE id=?',(now(),rnc_id))
+
+@router.post('/{rnc_id}/encerrar')
+def close_rnc(rnc_id:int,body:EncerramentoIn,user:dict=Depends(editor)):
+    with get_connection() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        row=fetch(conn,rnc_id,user)
+        if row['status'] not in ('concluida','fechada'):
+            details=body.model_dump(exclude_unset=True,exclude={'confirmar'})
+            approver=details.get('encerramento_aprovador_id',row['encerramento_aprovador_id'])
+            if not approver:raise HTTPException(422,'Identifique o aprovador do encerramento')
+            _validar_usuario_empresa(conn,approver,row['empresa_id'],'Aprovador do encerramento')
+            if approver!=user['id'] and not is_superuser(user):raise HTTPException(403,'Somente o aprovador escolhido ou o superusuário pode encerrar a RNC')
+            if details:
+                for key in ('encerramento_conclusao','licoes_aprendidas'):
+                    if key in details:details[key]=details[key] or ''
+                conn.execute('UPDATE rncs SET '+','.join(f'{key}=?' for key in details)+' WHERE id=?',(*details.values(),rnc_id))
+                row=fetch(conn,rnc_id,user)
+        if not row['encerramento_aprovador_id']:raise HTTPException(422,'Identifique e salve o aprovador do encerramento antes de aprovar')
+        _validar_usuario_empresa(conn,row['encerramento_aprovador_id'],row['empresa_id'],'Aprovador do encerramento')
+        if row['encerramento_aprovador_id']!=user['id'] and not is_superuser(user):raise HTTPException(403,'Somente o aprovador escolhido ou o superusuário pode encerrar a RNC')
+        if row['status']=='concluida':
+            conn.execute("UPDATE acoes SET status='finalizada',rnc_id=? WHERE rnc_id=? OR (issue_id=? AND rnc_id IS NULL)",(rnc_id,rnc_id,row['issue_id']))
+            return view(conn,row)
+        editable(row)
+        if not conn.execute('SELECT 1 FROM acoes WHERE rnc_id=?',(rnc_id,)).fetchone():raise HTTPException(422,'Inclua e execute o plano de ação antes de encerrar')
+        if conn.execute("SELECT 1 FROM rnc_pendencias WHERE rnc_id=? AND status='aberta'",(rnc_id,)).fetchone():raise HTTPException(422,'Conclua as pendências antes de encerrar')
+        stamp=now()
+        conn.execute("UPDATE acoes SET status='finalizada',rnc_id=? WHERE rnc_id=? OR (issue_id=? AND rnc_id IS NULL)",(rnc_id,rnc_id,row['issue_id']))
+        conn.execute("UPDATE rncs SET status='concluida',encerramento_aprovado_por_id=?,encerramento_aprovado_em=?,atualizado_em=? WHERE id=?",(user['id'],stamp,stamp,rnc_id))
+        return view(conn,fetch(conn,rnc_id,user))
+
+@router.post('/{rnc_id}/reabrir')
+def reopen_rnc(rnc_id:int,body:ReaberturaIn,user:dict=Depends(editor)):
+    motivo=body.motivo.strip() or 'Reativação solicitada pelo usuário.'
+    with get_connection() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        row=fetch(conn,rnc_id,user)
+        if row['status'] not in ('concluida','fechada'):raise HTTPException(409,'Somente uma RNC encerrada pode ser reaberta')
+        history=json.loads(row['encerramento_historico_json'] or '[]')
+        stamp=now()
+        history.append({'evento':'reabertura','usuario_id':user['id'],'em':stamp,'motivo':motivo,
+            'encerramento_aprovado_por_id':row['encerramento_aprovado_por_id'],
+            'encerramento_aprovado_em':row['encerramento_aprovado_em'],
+            'conclusao':row['encerramento_conclusao'],'licoes_aprendidas':row['licoes_aprendidas']})
+        conn.execute("UPDATE rncs SET status='reaberta',encerramento_aprovado_por_id=NULL,encerramento_aprovado_em=NULL,encerramento_historico_json=?,atualizado_em=? WHERE id=?",(json.dumps(history,ensure_ascii=False),stamp,rnc_id))
+        conn.execute("UPDATE acoes SET status='em_andamento',data_inicio=COALESCE(data_inicio,?) WHERE rnc_id=? AND status='finalizada'",(stamp,rnc_id))
+        return view(conn,fetch(conn,rnc_id,user))
 
 @router.post('/{rnc_id}/acoes',status_code=201)
 def create_task(rnc_id:int,body:AcaoIn,user:dict=Depends(editor)):
@@ -304,6 +433,11 @@ def delete_evidence(rnc_id:int,evidencia_id:int,user:dict=Depends(editor)):
             except ValueError:raise HTTPException(400,'Caminho de evidência inválido') from None
             if path.is_file():original=path.read_bytes()
             conn.execute('DELETE FROM rnc_evidencias WHERE id=?',(evidencia_id,))
+            investigation=json.loads(row['investigacao_json'] or '{}')
+            for hypothesis in investigation.get('hipoteses',[]):
+                for test in hypothesis.get('testes',[]):
+                    if 'evidencias_ids' in test:test['evidencias_ids']=[eid for eid in test['evidencias_ids'] if eid!=evidencia_id]
+            conn.execute('UPDATE rncs SET investigacao_json=? WHERE id=?',(json.dumps(investigation,ensure_ascii=False),rnc_id))
             if original is not None:path.unlink();removed=True
     except Exception:
         if removed and original is not None:path.write_bytes(original)

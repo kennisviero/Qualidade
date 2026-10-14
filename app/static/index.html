@@ -46,9 +46,34 @@
         <a href="#" data-section="issues" data-issue-view="limpeza" class="admin-only hidden">Limpeza da base de Issues</a>
       </div>
       <a href="#" data-section="rncs">RNC</a>
+      <div class="sidebar-submenu" aria-label="Submenu de RNC">
+        <a href="#" data-section="rncs" data-rnc-view="registros">Consultar RNCs</a>
+        <a href="#" data-section="rncs" data-rnc-view="reativar" class="editor-only hidden">Reativar RNC</a>
+      </div>
+      <a href="#" data-section="pareto">Ferramentas</a>
+      <div class="sidebar-submenu" aria-label="Submenu de Ferramentas">
+        <a href="#" data-section="pareto">1-Pareto</a>
+        <a href="#" data-section="histograma">2-Histograma</a>
+        <a href="#" data-section="dispersao">3-Diagrama de Dispersão</a>
+      </div>
     </nav>
 
     <main class="content">
+      <section id="section-dispersao" class="section">
+        <h2>Diagrama de Dispersão</h2>
+        <p class="hint">Explore a relação entre duas medidas do mesmo registro. Empresa: a selecionada no cabeçalho.</p>
+        <div id="dispersaoWorkspace"></div>
+      </section>
+      <section id="section-histograma" class="section">
+        <h2>Histograma</h2>
+        <p class="hint">Selecione uma medida numérica para examinar sua distribuição em intervalos. Empresa: a selecionada no cabeçalho.</p>
+        <div id="histogramaWorkspace"></div>
+      </section>
+      <section id="section-pareto" class="section">
+        <h2>Pareto</h2>
+        <p class="hint">Selecione Issues ou RNCs e filtre as ocorrências. Empresa: a selecionada no cabeçalho.</p>
+        <div id="paretoWorkspace"></div>
+      </section>
       <section id="section-rncs" class="section">
         <h2>RNC</h2>
         <div class="issues-workspace rnc-workspace">
@@ -326,6 +351,14 @@
           <div class="card"><h4>Issues abertas há mais de 15 dias</h4><div id="issueDashboardAtrasadas" class="list"></div></div>
         </div>
         <div id="issue-view-selecao" class="issue-view hidden">
+          <div class="card">
+            <div class="selecao-modos" role="radiogroup" aria-label="Abordagem de seleção">
+              <strong>Abordagem de seleção:</strong>
+              <label><input id="selecaoModoIA" type="radio" name="selecaoModo" value="ia" /> Usar IA</label>
+              <label><input id="selecaoModoManual" type="radio" name="selecaoModo" value="manual" /> Arrastar e soltar</label>
+            </div>
+            <p class="hint">Trocar de abordagem reinicia a seleção e descarta os complementos não salvos. No modo manual, arraste as Issues para a direita; para retirar, arraste de volta para a esquerda.</p>
+          </div>
           <h3>Seleção de Issues para RNC</h3>
           <div class="selecao-workspace">
           <div class="selecao-entrada">
@@ -409,9 +442,23 @@
     </main>
   </div>
 
+  <div id="rncReativar" class="overlay hidden">
+    <div class="card" role="dialog" aria-modal="true" aria-labelledby="rncReativarTitulo" style="width:520px;max-width:90vw">
+      <h3 id="rncReativarTitulo">Reativar RNC encerrada</h3>
+      <label for="rncReativarSelect">RNC encerrada</label><select id="rncReativarSelect"><option value="">Selecione uma RNC</option></select>
+      <label for="rncReativarMotivo">Motivo da reativação (opcional)</label><textarea id="rncReativarMotivo" rows="3" maxlength="2000"></textarea>
+      <button id="btnRncReativar" type="button" class="btn primary" disabled>Reativar RNC</button>
+      <button id="btnRncReativarCancelar" type="button" class="btn">Cancelar</button>
+      <p id="rncReativarMensagem" class="hint" role="status"></p>
+    </div>
+  </div>
   <script src="/static/js/configuracao.js"></script>
   <script src="/static/js/issue_selecao.js"></script>
   <script src="/static/js/rncs.js"></script>
+  <script src="/static/js/pareto.js"></script>
+  <script src="/static/js/ferramentas_ia.js"></script>
+  <script src="/static/js/histograma.js"></script>
+  <script src="/static/js/dispersao.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

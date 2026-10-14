@@ -6,6 +6,13 @@ FACT_FIELDS = ('codigo', 'detectado_em', 'autor_registro_id', 'comportamento_esp
     'por_que_inicial', 'ambiente', 'codigo_erro', 'codigo_material', 'lote',
     'ordem_producao', 'sn_inicio', 'sn_fim')
 COLUMNS = {
+    'encerramento_historico_json': "TEXT NOT NULL DEFAULT '[]'",
+    'encerramento_aprovador_id': 'INTEGER REFERENCES usuarios(id)',
+    'encerramento_aprovado_por_id': 'INTEGER REFERENCES usuarios(id)',
+    'encerramento_aprovado_em': 'TEXT',
+    'encerramento_conclusao': "TEXT NOT NULL DEFAULT ''",
+    'licoes_aprendidas': "TEXT NOT NULL DEFAULT ''",
+    'resumo': "TEXT NOT NULL DEFAULT ''",
     'impacto': "TEXT NOT NULL DEFAULT ''",
     'ambiente': "TEXT NOT NULL DEFAULT ''",
     'emitente_id': 'INTEGER REFERENCES usuarios(id)',

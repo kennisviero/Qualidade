@@ -9,6 +9,10 @@ from fastapi.staticfiles import StaticFiles
 from app.db import init_db
 from app.routers import (
     auth,
+    pareto,
+    histograma,
+    dispersao,
+    ferramentas_ia,
     llm_acessos,
     datasets,
     documentos,
@@ -53,7 +57,7 @@ app.add_middleware(
 @app.middleware("http")
 async def no_cache_static(request, call_next):
     response = await call_next(request)
-    if request.url.path.startswith("/static/"):
+    if request.url.path=='/' or request.url.path.startswith("/static/"):
         response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         response.headers["Pragma"] = "no-cache"
     return response
@@ -71,6 +75,10 @@ app.include_router(issue_limpeza.router)
 app.include_router(issue_selecao.router)
 app.include_router(issues.router)
 app.include_router(rncs.router)
+app.include_router(pareto.router)
+app.include_router(histograma.router)
+app.include_router(dispersao.router)
+app.include_router(ferramentas_ia.router)
 app.include_router(transcricao.router)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 

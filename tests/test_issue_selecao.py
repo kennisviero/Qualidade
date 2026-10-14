@@ -54,6 +54,197 @@ def candidate(issue_id):
         'criticidade_sugerida':'ALTA'}
 
 
+def test_manual_valida_e_revalida_sem_llm(setup):
+    s=setup;issue_id=s.issues[0]['id'];url=PREFIX+f'/manual/{issue_id}'
+    with get_connection() as conn:
+        conn.execute('UPDATE issues SET comportamento_esperado=?,comportamento_observado=?,evidencias_objetivas=? WHERE id=?',
+            ('Pedido exige entrega em 10/10','Entrega ocorreu em 12/10','Protocolo 123 de 12/10',issue_id))
+    validation=s.c.get(url+'/validacao')
+    assert validation.status_code==200 and validation.json()['permitida']
+    for field,value in [('comportamento_esperado','Pedido exige entrega em 10/10'),
+                        ('comportamento_observado','Entrega ocorreu em 12/10')]:
+        with get_connection() as conn:conn.execute(f'UPDATE issues SET {field}=? WHERE id=?',('',issue_id))
+        assert not s.c.get(url+'/validacao').json()['permitida']
+        with get_connection() as conn:conn.execute(f'UPDATE issues SET {field}=? WHERE id=?',(value,issue_id))
+    body={'confirmar':True,'entrada_hash':validation.json()['entrada_hash'],'dados_rnc':{}}
+    assert s.c.post(url+'/gerar',json={**body,'confirmar':False}).status_code==422
+    with get_connection() as conn:
+        conn.execute('UPDATE issues SET evidencias_objetivas=? WHERE id=?',('Não informado',issue_id))
+    blocked=s.c.get(url+'/validacao').json()
+    assert not blocked['permitida'] and blocked['pendencias']==['suporte factual ou evidência textual']
+    assert s.c.post(url+'/gerar',json=body).status_code==422
+    with get_connection() as conn:
+        assert not conn.execute('SELECT 1 FROM rncs WHERE issue_id=?',(issue_id,)).fetchone()
+        conn.execute('UPDATE issues SET evidencias_objetivas=? WHERE id=?',('Protocolo 456 de 12/10 (simulado)',issue_id))
+    assert s.c.post(url+'/gerar',json=body).status_code==409
+    body['entrada_hash']=s.c.get(url+'/validacao').json()['entrada_hash']
+    emitted=s.c.post(url+'/gerar',json=body)
+    assert emitted.status_code==200 and emitted.json()['rnc_codigo'].startswith('RNC-')
+    assert s.c.post(url+'/gerar',json=body).status_code==409
+    assert s.calls==[]
+    login(s.c,'admin','admin')
+    other=criar_empresa(s.c,'Manual outra '+uuid.uuid4().hex)['id']
+    assert s.c.get(PREFIX+f'/manual/{s.issues[1]["id"]}/validacao?empresa_id={other}').status_code==404
+    login(s.c,s.emails[1],'teste')
+    assert s.c.get(PREFIX+f'/manual/{s.issues[1]["id"]}/validacao?empresa_id={other}').status_code==403
+    with get_connection() as conn:conn.execute("UPDATE usuarios SET papel='visualizador' WHERE id=?",(s.users[1],))
+    assert s.c.get(PREFIX+f'/manual/{s.issues[1]["id"]}/validacao').status_code==403
+
+
+def test_investigacao_complementos_e_rastreabilidade(setup):
+    s=setup;rid=s.c.post(f"/api/issues/{s.issues[0]['id']}/emitir-rnc",json={}).json()['rnc_id'];url=f'/api/rncs/{rid}'
+    evidence=s.c.post(url+'/evidencias',files={'file':('teste.txt',b'resultado do teste','text/plain')}).json()['id']
+    investigation={'analise':'Notas preservadas','complementos':{'mudancas':'Atualização',
+        'mudancas_em':'2026-10-12T10:00','configuracao_anterior':'1.0','configuracao_atual':'2.0',
+        'abrangencia_afetados':'Lote A','abrangencia_sem_falha':'Lote B','controle_esperado':'Inspeção',
+        'motivo_nao_deteccao':'Amostra insuficiente','hipoteses_confirmadas':'Configuração',
+        'hipoteses_descartadas':'Material','hipoteses_inconclusivas':'Temperatura',
+        'conclusao_tecnica':'Falha reproduzida','limitacoes_pendencias':'Repetir em outro turno',
+        'revisor_id':s.users[1],'revisao_em':'2026-10-12T12:00','parecer':'complementar','observacoes_revisao':'Ampliar amostra'},
+        'hipoteses':[{'descricao':'Configuração','testes':[{'procedimento':'Reproduzir falha',
+        'resultado_esperado':'Sem falha','criterio_decisao':'3 falhas reproduzidas','repeticoes':3,
+        'configuracao':'Máquina A, versão 2.0','amostra':'3 peças','evidencias_ids':[evidence]}]}]}
+    saved=s.c.put(url,json={'investigacao_json':investigation})
+    assert saved.status_code==200,saved.text
+    detail=s.c.get(url).json()['rnc_investigacao_json']
+    assert detail['complementos']==investigation['complementos']
+    assert detail['hipoteses'][0]['testes'][0]['repeticoes']==3
+    with get_connection() as conn:
+        stored=json.loads(conn.execute('SELECT investigacao_json FROM rncs WHERE id=?',(rid,)).fetchone()[0])
+        assert stored==detail
+    for invalid in [{'revisor_id':99999999},{'revisao_em':'invalida'},{'parecer':'outro'}]:
+        assert s.c.put(url,json={'investigacao_json':{'complementos':invalid}}).status_code==422
+    for invalid in [{'repeticoes':0},{'repeticoes':1.5},{'evidencias_ids':[99999999]}]:
+        assert s.c.put(url,json={'investigacao_json':{'hipoteses':[{'testes':[invalid]}]}}).status_code==422
+    assert s.c.delete(url+f'/evidencias/{evidence}').status_code==204
+    detail=s.c.get(url).json()['rnc_investigacao_json']
+    assert detail['hipoteses'][0]['testes'][0]['evidencias_ids']==[]
+    assert detail['analise']=='Notas preservadas' and detail['complementos']==investigation['complementos']
+    init_db();assert s.c.get(url).json()['rnc_investigacao_json']==detail
+
+
+def test_investigacao_etapas_porques_ishikawa(setup):
+    s=setup;rid=s.c.post(f"/api/issues/{s.issues[0]['id']}/emitir-rnc",json={}).json()['rnc_id'];url=f'/api/rncs/{rid}'
+    data={'analise':'Etapa 1 preservada','hipoteses':[],
+        'etapa_porques':{'problema':'Falha na entrega','passos':[{'pergunta':'Por quê?','resposta':'Configuração','evidencia':'Log 123'}],'conclusao':'Revisar parâmetro'},
+        'etapa_ishikawa':{'efeito':'Atraso','metodo':'Instrução antiga','maquina':'Parâmetro','material':'Lote A',
+            'mao_obra':'Treinamento','medicao':'Amostragem','meio_ambiente':'Turno','conclusao':'Testar parâmetro'}}
+    saved=s.c.put(url,json={'investigacao_json':data})
+    assert saved.status_code==200,saved.text
+    assert s.c.get(url).json()['rnc_investigacao_json']==data
+
+
+def test_encerramento_rnc_aprovador_pendencias_e_historico(setup):
+    s=setup;rid=s.c.post(f"/api/issues/{s.issues[0]['id']}/emitir-rnc",json={}).json()['rnc_id'];url=f'/api/rncs/{rid}'
+    assert s.c.put(url,json={'encerramento_aprovador_id':9999999}).status_code==422
+    assert s.c.post(url+'/encerrar',json={'confirmar':True}).status_code==422
+    data={'encerramento_aprovador_id':s.users[1],'encerramento_conclusao':'Plano concluído e resultados verificados','licoes_aprendidas':'Conferir configuração antes da produção'}
+    assert s.c.put(url,json=data).status_code==200
+    assert s.c.post(url+'/encerrar',json={'confirmar':True}).status_code==403
+    login(s.c,s.emails[1],'teste')
+    assert s.c.post(url+'/encerrar',json={'confirmar':False}).status_code==422
+    pending=s.c.post(url+'/pendencias',json={'descricao':'Conferir documento'}).json()['pendencias'][0]['id']
+    assert s.c.post(url+'/encerrar',json={'confirmar':True}).status_code==422
+    assert s.c.put(url+f'/pendencias/{pending}',json={'status':'concluida'}).status_code==200
+    closed=s.c.post(url+'/encerrar',json={'confirmar':True})
+    assert closed.status_code==200,closed.text
+    record=closed.json();assert record['rnc_status']=='concluida'
+    assert record['rnc_encerramento_aprovado_por_id']==s.users[1]
+    assert record['rnc_encerramento_aprovado_em'] and record['rnc_licoes_aprendidas']==data['licoes_aprendidas']
+    repeated=s.c.post(url+'/encerrar',json={'confirmar':True}).json()
+    assert repeated['rnc_encerramento_aprovado_em']==record['rnc_encerramento_aprovado_em']
+    assert s.c.put(url,json={'licoes_aprendidas':'Alteração'}).status_code==409
+    card=next(a for a in s.c.get('/api/issues/kanban').json() if a['rnc_id']==rid)
+    assert card['rnc_status']=='concluida'
+    assert card['status']=='finalizada'
+    assert s.c.put(f"/api/issues/{s.issues[0]['id']}/acoes/{card['id']}/status",json={'status':'backlog'}).status_code==409
+    init_db();assert s.c.get(url).json()['rnc_licoes_aprendidas']==data['licoes_aprendidas']
+    action_url=f"/api/issues/{s.issues[0]['id']}/acoes/{card['id']}"
+    assert s.c.put(action_url,json={'descricao':'Alteração indevida'}).status_code==409
+    assert s.c.delete(action_url).status_code==409
+    assert s.c.post(f"/api/issues/{s.issues[0]['id']}/acoes",json={'descricao':'Nova indevida'}).status_code==409
+    assert s.c.delete(f"/api/issues/{s.issues[0]['id']}").status_code==409
+    reopened=s.c.post(url+'/reabrir',json={'confirmar':True,'motivo':'Recorrência da falha'})
+    assert reopened.status_code==200,reopened.text
+    state=reopened.json();assert state['rnc_status']=='reaberta' and state['rnc_encerramento_aprovado_em'] is None
+    assert state['acoes'] and all(a['status']=='em_andamento' for a in state['acoes'])
+    assert next(a for a in s.c.get('/api/issues/kanban').json() if a['rnc_id']==rid)['status']=='em_andamento'
+    history=state['rnc_encerramento_historico'];assert history[0]['usuario_id']==s.users[1]
+    assert history[0]['encerramento_aprovado_em']==record['rnc_encerramento_aprovado_em']
+    assert s.c.put(url,json={'licoes_aprendidas':'Novos testes'}).status_code==200
+    assert s.c.put(action_url+'/status',json={'status':'em_andamento'}).status_code==200
+    assert s.c.post(url+'/reabrir',json={'confirmar':True,'motivo':'Outra'}).status_code==409
+    assert s.c.post(url+'/encerrar',json={'confirmar':True}).json()['rnc_status']=='concluida'
+    assert next(a for a in s.c.get('/api/issues/kanban').json() if a['rnc_id']==rid)['status']=='finalizada'
+
+
+def test_encerramento_direto_sem_salvar_e_rollback(setup):
+    s=setup;rid=s.c.post(f"/api/issues/{s.issues[0]['id']}/emitir-rnc",json={}).json()['rnc_id'];url=f'/api/rncs/{rid}'
+    body={'confirmar':True,'encerramento_aprovador_id':s.users[0],
+          'encerramento_conclusao':'Concluído','licoes_aprendidas':'Revisar parâmetro'}
+    pending=s.c.post(url+'/pendencias',json={'descricao':'Pendente'}).json()['pendencias'][0]['id']
+    assert s.c.post(url+'/encerrar',json=body).status_code==422
+    assert s.c.get(url).json()['rnc_encerramento_aprovador_id'] is None
+    assert s.c.put(url+f'/pendencias/{pending}',json={'status':'concluida'}).status_code==200
+    response=s.c.post(url+'/encerrar',json=body)
+    assert response.status_code==200,response.text
+    record=response.json();assert record['rnc_status']=='concluida'
+    assert record['rnc_encerramento_aprovador_id']==s.users[0]
+    assert record['acoes'] and all(action['status']=='finalizada' for action in record['acoes'])
+    assert s.c.put(url,json={'resumo':'Alterar'}).status_code==409
+    assert s.c.post(url+'/reabrir',json={'confirmar':True,'motivo':'Investigar novamente'}).status_code==200
+    assert s.c.put(url,json={'resumo':'Reaberta'}).status_code==200
+
+
+def test_kanban_rnc_encerrada_nunca_fica_backlog(setup):
+    s=setup;rid=s.c.post(f"/api/issues/{s.issues[0]['id']}/emitir-rnc",json={}).json()['rnc_id']
+    with get_connection() as conn:
+        conn.execute("UPDATE rncs SET status='concluida' WHERE id=?",(rid,))
+        conn.execute("UPDATE acoes SET status='backlog' WHERE rnc_id=?",(rid,))
+    cards=s.c.get('/api/issues/kanban').json()
+    assert next(a for a in cards if a['rnc_id']==rid)['status']=='finalizada'
+    assert s.c.post(f'/api/rncs/{rid}/reabrir',json={'confirmar':True}).status_code==200
+    assert next(a for a in s.c.get('/api/issues/kanban').json() if a['rnc_id']==rid)['status']=='backlog'
+
+
+def test_superusuario_encerra_com_aprovador_identificado(setup):
+    s=setup;rid=s.c.post(f"/api/issues/{s.issues[0]['id']}/emitir-rnc",json={}).json()['rnc_id']
+    login(s.c,'admin','admin')
+    url=f'/api/rncs/{rid}'
+    assert s.c.post(url+'/encerrar',json={'confirmar':True}).status_code==422
+    closed=s.c.post(url+'/encerrar',json={'confirmar':True,'encerramento_aprovador_id':s.users[1]})
+    assert closed.status_code==200,closed.text
+    record=closed.json();assert record['rnc_status']=='concluida'
+    assert record['rnc_encerramento_aprovador_id']==s.users[1]
+    assert record['rnc_encerramento_aprovado_por_id']==s.c.get('/api/auth/me').json()['id']
+    assert all(a['status']=='finalizada' for a in record['acoes'])
+
+
+def test_resumo_rnc_persistencia_limite_e_kanban(setup):
+    s=setup;rid=s.c.post(f"/api/issues/{s.issues[0]['id']}/emitir-rnc",json={}).json()['rnc_id'];url=f'/api/rncs/{rid}'
+    assert s.c.get(url).json()['rnc_resumo']==''
+    text='Falha entrega'
+    assert s.c.put(url,json={'resumo':text}).json()['rnc_resumo']==text
+    assert s.c.put(url,json={'resumo':'x'*26}).status_code==422
+    assert s.c.put(url,json={'resumo':'x'*25}).json()['rnc_resumo']=='x'*25
+    assert s.c.put(url,json={'resumo':text}).status_code==200
+    cards=s.c.get('/api/issues/kanban').json()
+    assert next(c for c in cards if c['rnc_id']==rid)['rnc_resumo']==text
+    init_db();assert s.c.get(url).json()['rnc_resumo']==text
+    assert s.c.put(url,json={'resumo':''}).json()['rnc_resumo']==''
+
+
+def test_investigacao_etapas_rejeita_dados_invalidos(setup):
+    s=setup;rid=s.c.post(f"/api/issues/{s.issues[0]['id']}/emitir-rnc",json={}).json()['rnc_id'];url=f'/api/rncs/{rid}'
+    data={'analise':'Dados preservados'}
+    assert s.c.put(url,json={'investigacao_json':data}).status_code==200
+    init_db();assert s.c.get(url).json()['rnc_investigacao_json']==data
+    for bad in [{'etapa_porques':{'passos':[{'resposta':42}]}},{'etapa_ishikawa':{'invalido':'x'}},
+                {'etapa_porques':{'passos':[{}]*21}}]:
+        assert s.c.put(url,json={'investigacao_json':bad}).status_code==422
+    assert s.c.get(url).json()['rnc_investigacao_json']==data
+
+
 def test_prompt_editado_enviado_e_preservado(setup,monkeypatch):
     s=setup
     assert s.c.get(PREFIX+'/prompt').json()['prompt']==issue_triagem.PROMPT

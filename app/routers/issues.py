@@ -318,6 +318,11 @@ def acao_to_dict(conn, row):
     d["responsavel_nome"] = user_nome(conn, d.get("responsavel_id"))
     return d
 
+def _validar_rnc_aberta_para_acao(conn,issue_id):
+    rnc=conn.execute('SELECT status FROM rncs WHERE issue_id=?',(issue_id,)).fetchone()
+    if rnc and rnc['status'] in ('concluida','fechada'):
+        raise HTTPException(409,'Reative a RNC antes de alterar suas ações')
+
 
 def issue_to_dict(conn, row, include_acoes=False):
     d = dict(row)
@@ -483,13 +488,13 @@ def list_kanban(empresa_id: int | None = None, user: dict = Depends(get_current_
     with get_connection() as conn:
         if empresa_id is None and is_superuser(user):
             rows = conn.execute(
-                "SELECT a.*, n.codigo, r.codigo AS rnc_codigo, n.empresa_id, n.status AS issue_status, n.comportamento_observado AS issue_descricao "
+                "SELECT a.*, n.codigo, r.codigo AS rnc_codigo, r.resumo AS rnc_resumo, r.status AS rnc_status, n.empresa_id, n.status AS issue_status, n.comportamento_observado AS issue_descricao "
                 "FROM acoes a JOIN issues n ON n.id = a.issue_id LEFT JOIN rncs r ON r.issue_id = n.id "
                 "ORDER BY a.status, a.ordem, a.id"
             ).fetchall()
         else:
             rows = conn.execute(
-                "SELECT a.*, n.codigo, r.codigo AS rnc_codigo, n.empresa_id, n.status AS issue_status, n.comportamento_observado AS issue_descricao "
+                "SELECT a.*, n.codigo, r.codigo AS rnc_codigo, r.resumo AS rnc_resumo, r.status AS rnc_status, n.empresa_id, n.status AS issue_status, n.comportamento_observado AS issue_descricao "
                 "FROM acoes a JOIN issues n ON n.id = a.issue_id LEFT JOIN rncs r ON r.issue_id = n.id "
                 "WHERE n.empresa_id = ? ORDER BY a.status, a.ordem, a.id",
                 (empresa_id,),
@@ -497,6 +502,8 @@ def list_kanban(empresa_id: int | None = None, user: dict = Depends(get_current_
         result = []
         for r in rows:
             d = dict(r)
+            if d.get('rnc_status') in ('concluida','fechada'):
+                d['status']='finalizada'
             d["responsavel_nome"] = user_nome(conn, d.get("responsavel_id"))
             result.append(d)
     return result
@@ -651,7 +658,10 @@ def fechar_issue(issue_id: int, user: dict = Depends(editor_dep)):
 @router.delete("/{issue_id}", status_code=204)
 def delete_issue(issue_id: int, user: dict = Depends(editor_dep)):
     with get_connection() as conn:
+        conn.execute('BEGIN IMMEDIATE')
         row = fetch_issue(conn, issue_id, user)
+        linked=conn.execute('SELECT status FROM rncs WHERE issue_id=?',(issue_id,)).fetchone()
+        if linked and linked['status'] in ('concluida','fechada'):raise HTTPException(409,'Reabra a RNC antes de excluir sua Issue de origem')
         pasta = row["pasta"] or ""
         ishikawa_id = row["ishikawa_id"]
         ishikawa_pasta = None
@@ -838,7 +848,9 @@ def list_acoes(issue_id: int, user: dict = Depends(get_current_user)):
 @router.post("/{issue_id}/acoes", status_code=201)
 def create_acao(issue_id: int, acao: AcaoIn, user: dict = Depends(editor_dep)):
     with get_connection() as conn:
+        conn.execute('BEGIN IMMEDIATE')
         row = fetch_issue(conn, issue_id, user)
+        _validar_rnc_aberta_para_acao(conn,issue_id)
         _validar_usuario_empresa(conn, acao.responsavel_id, row["empresa_id"], "Responsavel")
         maxordem = conn.execute(
             "SELECT COALESCE(MAX(ordem), 0) FROM acoes WHERE issue_id = ?", (issue_id,)
@@ -874,12 +886,17 @@ def create_acao(issue_id: int, acao: AcaoIn, user: dict = Depends(editor_dep)):
 @router.put("/{issue_id}/acoes/{acao_id}")
 def update_acao(issue_id: int, acao_id: int, acao: AcaoUpdate, user: dict = Depends(editor_dep)):
     with get_connection() as conn:
+        conn.execute('BEGIN IMMEDIATE')
         row = fetch_issue(conn, issue_id, user)
+        _validar_rnc_aberta_para_acao(conn,issue_id)
         arow = conn.execute(
             "SELECT * FROM acoes WHERE id = ? AND issue_id = ?", (acao_id, issue_id)
         ).fetchone()
         if arow is None:
             raise HTTPException(status_code=404, detail="Ação não encontrada")
+        if arow['rnc_id']:
+            from app.routers.rncs import fetch,editable
+            editable(fetch(conn,arow['rnc_id'],user))
         fields = [
             "descricao", "responsavel_id", "prazo_limite",
             "observacao", "por_que", "onde", "como", "quanto",
@@ -908,12 +925,17 @@ def update_acao(issue_id: int, acao_id: int, acao: AcaoUpdate, user: dict = Depe
 @router.delete("/{issue_id}/acoes/{acao_id}", status_code=204)
 def delete_acao(issue_id: int, acao_id: int, user: dict = Depends(editor_dep)):
     with get_connection() as conn:
+        conn.execute('BEGIN IMMEDIATE')
         fetch_issue(conn, issue_id, user)
+        _validar_rnc_aberta_para_acao(conn,issue_id)
         arow = conn.execute(
             "SELECT * FROM acoes WHERE id = ? AND issue_id = ?", (acao_id, issue_id)
         ).fetchone()
         if arow is None:
             raise HTTPException(status_code=404, detail="Ação não encontrada")
+        if arow['rnc_id']:
+            from app.routers.rncs import fetch,editable
+            editable(fetch(conn,arow['rnc_id'],user))
         conn.execute("DELETE FROM acoes WHERE id = ?", (acao_id,))
         if arow['rnc_id']:
             from app.routers.rncs import invalidate_plan
@@ -926,12 +948,17 @@ def update_acao_status(issue_id: int, acao_id: int, body: AcaoStatusIn, user: di
     if body.status not in ACAO_STATUSES:
         raise HTTPException(status_code=422, detail="Status inválido")
     with get_connection() as conn:
+        conn.execute('BEGIN IMMEDIATE')
         row = fetch_issue(conn, issue_id, user)
+        _validar_rnc_aberta_para_acao(conn,issue_id)
         arow = conn.execute(
             "SELECT * FROM acoes WHERE id = ? AND issue_id = ?", (acao_id, issue_id)
         ).fetchone()
         if arow is None:
             raise HTTPException(status_code=404, detail="Ação não encontrada")
+        if arow['rnc_id']:
+            rnc=conn.execute('SELECT status FROM rncs WHERE id=?',(arow['rnc_id'],)).fetchone()
+            if rnc and rnc['status'] in ('concluida','fechada'):raise HTTPException(409,'RNC concluída não pode ter suas ações movimentadas')
         data_inicio = arow["data_inicio"]
         if body.status != "backlog" and data_inicio is None:
             data_inicio = now()

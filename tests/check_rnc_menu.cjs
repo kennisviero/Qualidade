@@ -10,17 +10,21 @@ class Element {
 }
 const source=fs.readFileSync('app/static/js/app.js','utf8');
 const html=fs.readFileSync('app/static/index.html','utf8');
+const rncSection=html.slice(html.indexOf('<section id="section-rncs"'),html.indexOf('<section id="section-empresas"'));
+assert.ok(!rncSection.includes('id="rncReativar"'),'Reativação não deve alterar o workspace da RNC');
+assert.match(html,/<div id="rncReativar" class="overlay hidden">/);
 const elements={};for(const m of html.matchAll(/id="([^"]+)"/g)){assert.ok(!elements[m[1]]);elements[m[1]]=new Element();}
 const layout=new Element(),stored=new Map(),requests=[],opened=[];
 let records=[{id:1,rnc_id:null},{id:2,rnc_id:7,rnc_codigo:'RNC-2026-001',codigo:'ISSUE-0002',comportamento_observado:'<script>exemplo</script>'}];
 let kanbanLoads=0;
-const context=vm.createContext({document:{getElementById:id=>elements[id],querySelector:()=>layout,createElement:()=>new Element()},
+const context=vm.createContext({document:{getElementById:id=>elements[id],querySelector:()=>layout,querySelectorAll:()=>[],createElement:()=>new Element()},
   Option:function(text,value){const e=new Element();e.textContent=text;e.value=String(value);return e;},
-  state:{empresaId:4},api:async path=>{requests.push(path);return records;},issueApiUrl:path=>path+'?empresa_id=4',
+  state:{empresaId:4},isEditor:()=>true,api:async path=>{requests.push(path);return records;},issueApiUrl:path=>path+'?empresa_id=4',
   loadIssueKanban:async()=>kanbanLoads++,navigate:view=>opened.push(view),showIssueView:async view=>opened.push(view),selectIssue:async id=>opened.push(id),
   localStorage:{getItem:key=>stored.get(key),setItem:(key,value)=>stored.set(key,value)},window:{dispatchEvent(){}},Event:function(){}});
 vm.runInContext(source.slice(source.indexOf('let rncRecords ='),source.indexOf('document.querySelectorAll(".sidebar a").forEach((a) => {')),context);
 (async()=>{
+  assert.match(html,/data-rnc-view="reativar"/);
   const menu=elements.btnMenuToggle;assert.equal(menu.getAttribute('aria-expanded'),'true');menu.listeners.click();
   assert.ok(layout.classes.has('menu-collapsed'));assert.equal(stored.get('qualidade.menuCollapsed'),'true');
   menu.listeners.click();assert.ok(!layout.classes.has('menu-collapsed'));
@@ -43,6 +47,20 @@ vm.runInContext(source.slice(source.indexOf('let rncRecords ='),source.indexOf('
   assert.ok(all.some(e=>e.textContent==='Registro da ocorrência'));
   assert.equal(all.filter(e=>e.readOnly).length,24);
   await detail[0].children[3].onclick();assert.deepEqual(opened,['issues','capturar',2]);
+  const oldApi=context.api;records=[{id:2,rnc_id:7,rnc_codigo:'RNC-2026-001',codigo:'ISSUE-0002',rnc_status:'concluida'}];
+  await context.showRncView('reativar');assert.equal(elements.rncReativarSelect.children.length,2);
+  assert.equal(elements.rncReativarSelect.value,'7');assert.equal(elements.btnRncReativar.disabled,false);
+  elements.rncReativarSelect.value='7';elements.rncReativarMotivo.value='Recorrência';elements.rncFilter.value='filtro que esconde a RNC';
+  context.confirm=()=>true;
+  const reopened={...records[0],rnc_status:'reaberta',acoes:[{id:1,rnc_id:7,status:'em_andamento'}]};
+  context.api=async(path,options)=>{assert.equal(path,'/api/rncs/7/reabrir');assert.equal(options.body.motivo,'Recorrência');return reopened;};
+  let displayed,board;
+  context.renderRncTabs=async(target,item)=>{displayed=item;};context.loadIssueKanban=async(item)=>{board=item;};
+  await context.reactivateRncFromMenu();
+  assert.equal(elements.rncSelect.value,'2');assert.equal(elements.rncFilter.value,'');
+  assert.equal(displayed.rnc_status,'reaberta');assert.equal(board.acoes[0].status,'em_andamento');
+  assert.ok(elements.rncReativar.classes.has('hidden'));assert.match(elements.rncMensagem.textContent,/reativada/);
+  context.api=oldApi;
   records=[];await context.loadRncs();assert.ok(elements.rncDetail.classes.has('hidden'));assert.match(elements.rncMensagem.textContent,/Nenhuma RNC/);
   console.log('OK: menu retrátil, RNCs emitidas, filtro de empresa, consulta segura, lista vazia e Kanban.');
 })().catch(e=>{console.error(e);process.exitCode=1;});
