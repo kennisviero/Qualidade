@@ -187,5 +187,27 @@ vm.runInContext(fs.readFileSync('app/static/js/rncs.js','utf8'),ctx);
   ctx.renderIssueKanban(rncBoard,cards.filter(a=>a.rnc_id));
   assert.equal(rncBoard.children.find(e=>e.dataset.col==='backlog').children.length,1);
   assert.equal(rncBoard.children.find(e=>e.dataset.col==='finalizada').children.length,2);
-  console.log('OK: abas RNC, usuários da empresa, fatos readonly, salvamento, investigação, aprovador e visualizador.');
+  await ctx.renderRncTabs(target,item,'investigacao','ishikawa');
+  const ishFields=flatten(target);
+  assert.ok(!ishFields.some(e=>e.textContent==='Criar Diagrama de Árvore'));
+  for(const key of ['metodo','maquina','material','mao_obra','medicao','meio_ambiente']){
+    ishFields.find(e=>e.dataset.field==='etapa_ishikawa_'+key+'_titulo').value='Título personalizado '+key;
+    ishFields.find(e=>e.dataset.field==='etapa_ishikawa_'+key).value='Conteúdo '+key;
+  }
+  ishFields.find(e=>e.dataset.field==='etapa_ishikawa_efeito').value='Reduzir erros a 1%';
+  let ishPayload;
+  ctx.api=async(path,options)=>{
+    if(path==='/api/usuarios')return [{id:1,nome:'A',empresa_id:4}];
+    ishPayload=options.body;return {...item,rnc_investigacao_json:ishPayload.investigacao_json};
+  };
+  const effectControl=ishFields.find(e=>e.dataset.field==='etapa_ishikawa_efeito');
+  const ishPane=effectControl.parent.parent.parent.parent.parent;
+  await ishPane.children.find(e=>e.textContent==='Salvar registro').onclick();
+  assert.equal(ishPayload.investigacao_json.etapa_ishikawa.efeito,'Reduzir erros a 1%');
+  const reloaded=flatten(target);
+  for(const key of ['metodo','maquina','material','mao_obra','medicao','meio_ambiente']){
+    assert.equal(reloaded.find(e=>e.dataset.field==='etapa_ishikawa_'+key+'_titulo').value,'Título personalizado '+key);
+    assert.equal(reloaded.find(e=>e.dataset.field==='etapa_ishikawa_'+key).value,'Conteúdo '+key);
+  }
+  console.log('OK: abas RNC, títulos Ishikawa, usuários da empresa, fatos readonly, salvamento, investigação, aprovador e visualizador.');
 })().catch(error=>{console.error(error);process.exitCode=1;});

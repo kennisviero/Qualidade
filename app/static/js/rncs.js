@@ -210,9 +210,14 @@ async function renderRncTabs(target, item, activeTab='registro', activeInvestiga
   porquesControls.conclusao=field(grid,'Conclusão fundamentada','etapa_porques_conclusao','textarea',porquesData.conclusao||'');
   const ishikawaData=investigationData.etapa_ishikawa||{},ishikawaControls={};
   grid=block(investigationStages.ishikawa,'Ishikawa — efeito observado',1);
-  ishikawaControls.efeito=field(grid,'Problema / efeito analisado','etapa_ishikawa_efeito','textarea',ishikawaData.efeito||'');
+  ishikawaControls.efeito=field(grid,'Objetivo RNC','etapa_ishikawa_efeito','textarea',ishikawaData.efeito||'');
   grid=block(investigationStages.ishikawa,'Causas potenciais por categoria',2);
-  for(const [key,label] of [['metodo','Método'],['maquina','Máquina / equipamento / sistema'],['material','Material / insumos'],['mao_obra','Mão de obra / pessoas'],['medicao','Medição / controles'],['meio_ambiente','Meio ambiente / condições']])ishikawaControls[key]=field(grid,label,'etapa_ishikawa_'+key,'textarea',ishikawaData[key]||'');
+  for(const [key,label] of [['metodo','Método'],['maquina','Máquina / equipamento / sistema'],['material','Material / insumos'],['mao_obra','Mão de obra / pessoas'],['medicao','Medição / controles'],['meio_ambiente','Meio ambiente / condições']]){
+    const category=document.createElement('div');grid.appendChild(category);
+    const title=field(category,'Título da categoria','etapa_ishikawa_'+key+'_titulo','text',ishikawaData[key+'_titulo']??label);
+    title.maxLength=200;ishikawaControls[key+'_titulo']=title;
+    ishikawaControls[key]=field(category,'Conteúdo','etapa_ishikawa_'+key,'textarea',ishikawaData[key]||'');
+  }
   grid=block(investigationStages.ishikawa,'Conclusão do Ishikawa',1);
   ishikawaControls.conclusao=field(grid,'Causas a validar / conclusão fundamentada','etapa_ishikawa_conclusao','textarea',ishikawaData.conclusao||'');
   const stageValues=controls=>Object.fromEntries(Object.entries(controls).map(([key,input])=>[key,input.value]));

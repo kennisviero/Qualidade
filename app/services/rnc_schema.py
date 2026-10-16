@@ -6,6 +6,8 @@ FACT_FIELDS = ('codigo', 'detectado_em', 'autor_registro_id', 'comportamento_esp
     'por_que_inicial', 'ambiente', 'codigo_erro', 'codigo_material', 'lote',
     'ordem_producao', 'sn_inicio', 'sn_fim')
 COLUMNS = {
+    'objetivo': "TEXT NOT NULL DEFAULT ''",
+    'arvore_json': "TEXT NOT NULL DEFAULT '[]'",
     'encerramento_historico_json': "TEXT NOT NULL DEFAULT '[]'",
     'encerramento_aprovador_id': 'INTEGER REFERENCES usuarios(id)',
     'encerramento_aprovado_por_id': 'INTEGER REFERENCES usuarios(id)',

@@ -89,6 +89,12 @@ class EtapaPorques(SafeModel):
 
 class EtapaIshikawa(SafeModel):
     model_config=ConfigDict(extra='forbid')
+    metodo_titulo: str = Field(default='Método',max_length=200)
+    maquina_titulo: str = Field(default='Máquina / equipamento / sistema',max_length=200)
+    material_titulo: str = Field(default='Material / insumos',max_length=200)
+    mao_obra_titulo: str = Field(default='Mão de obra / pessoas',max_length=200)
+    medicao_titulo: str = Field(default='Medição / controles',max_length=200)
+    meio_ambiente_titulo: str = Field(default='Meio ambiente / condições',max_length=200)
     efeito: str = ''
     metodo: str = ''
     maquina: str = ''
@@ -98,8 +104,20 @@ class EtapaIshikawa(SafeModel):
     meio_ambiente: str = ''
     conclusao: str = ''
 
+class ArvoreNo(SafeModel):
+    model_config=ConfigDict(extra='forbid')
+    id: int = Field(gt=0,strict=True)
+    pai_id: int | None = Field(default=None,gt=0,strict=True)
+    descricao: str = Field(max_length=2000)
+    responsavel_id: int | None = None
+    prazo: str = ''
+    recursos: str = Field(default='',max_length=2000)
+    criterio_aceite: str = Field(default='',max_length=2000)
+
 class RncUpdate(SafeModel):
     model_config=ConfigDict(extra='forbid')
+    objetivo: str = Field(default='',max_length=4000)
+    arvore: list[ArvoreNo] = Field(default_factory=list,max_length=200)
     encerramento_aprovador_id: int | None = None
     encerramento_conclusao: str | None = None
     licoes_aprendidas: str | None = None
@@ -171,6 +189,7 @@ def view(conn,row):
     for key in row.keys():result['rnc_'+key]=row[key]
     result['rnc_equipe_investigacao']=json.loads(row['equipe_investigacao'] or '[]')
     result['rnc_investigacao_json']=json.loads(row['investigacao_json'] or '{}')
+    result['rnc_arvore']=json.loads(row['arvore_json'] or '[]')
     result['rnc_metodologias']=json.loads(row['metodologias_json'] or '[]')
     result['rnc_encerramento_historico']=json.loads(row['encerramento_historico_json'] or '[]')
     result['rnc_fatos_snapshot_json']=snapshot
@@ -209,6 +228,25 @@ def update_rnc(rnc_id: int,body:RncUpdate,user:dict=Depends(editor)):
     with get_connection() as conn:
         conn.execute('BEGIN IMMEDIATE')
         row=fetch(conn,rnc_id,user);editable(row)
+        if 'objetivo' in data and not data['objetivo'].strip() and data.get('arvore',json.loads(row['arvore_json'] or '[]')):
+            raise HTTPException(422,'Informe o objetivo da RNC')
+        if 'arvore' in data:
+            data.pop('arvore')
+            nodes=[node.model_dump() for node in body.arvore]
+            ids={node['id'] for node in nodes}
+            if len(ids)!=len(nodes):raise HTTPException(422,'Identificadores duplicados na árvore')
+            parents={node['id']:node['pai_id'] for node in nodes}
+            for node in nodes:
+                if not node['descricao'].strip():raise HTTPException(422,'Descreva cada entrega ou tarefa')
+                _validar_usuario_empresa(conn,node['responsavel_id'],row['empresa_id'],'Responsável pela tarefa')
+                validate_date(node['prazo'])
+                visited={node['id']};parent=node['pai_id']
+                while parent is not None:
+                    if parent not in ids or parent in visited:raise HTTPException(422,'Hierarquia da árvore inválida')
+                    visited.add(parent);parent=parents[parent]
+            if nodes and not (data.get('objetivo',row['objetivo']) or '').strip():
+                raise HTTPException(422,'Informe o objetivo da RNC')
+            data['arvore_json']=json.dumps(nodes,ensure_ascii=False)
         observation=data.pop('observacao',None)
         if observation is not None:
             current=conn.execute('SELECT * FROM rnc_observacoes WHERE rnc_id=?',(rnc_id,)).fetchone()
