@@ -1,0 +1,11 @@
+{
+  "name": "check_histograma",
+  "started": "2026-10-16T16:24:21.596Z",
+  "command": "node.exe",
+  "args": [
+    "tests/check_histograma.cjs"
+  ]
+}
+OK: menus numerados, bases independentes, filtros, medidas, intervalos, gráfico, detalhamento seguro e respostas obsoletas.
+
+[QA] exit_code=0

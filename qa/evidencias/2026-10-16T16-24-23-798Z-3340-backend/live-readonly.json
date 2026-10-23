@@ -1,0 +1,314 @@
+{
+  "readonly": true,
+  "origin": "http://127.0.0.1:8000",
+  "cases": [
+    {
+      "name": "SQL.integridade_e_FKs",
+      "status": "passed",
+      "detail": {
+        "integrity": "ok",
+        "foreign_keys": "ok",
+        "mode": "ro/query_only"
+      },
+      "seconds": 0.0
+    },
+    {
+      "name": "HTTP.sessao_existente",
+      "status": "passed",
+      "detail": {
+        "existing_session": true,
+        "authentication_writes": false
+      },
+      "seconds": 0.0
+    },
+    {
+      "name": "HTTP.pagina",
+      "status": "passed",
+      "detail": {
+        "html": true
+      },
+      "seconds": 0.265
+    },
+    {
+      "name": "HTTP.identidade",
+      "status": "passed",
+      "detail": {
+        "identity_matches_database": true
+      },
+      "seconds": 0.016
+    },
+    {
+      "name": "HTTP.empresas",
+      "status": "passed",
+      "detail": {
+        "companies": 1,
+        "ids_match_database": true
+      },
+      "seconds": 0.0
+    },
+    {
+      "name": "HTTP.usuarios",
+      "status": "passed",
+      "detail": {
+        "records": 3,
+        "ids_and_fields_match_database": true
+      },
+      "seconds": 0.015
+    },
+    {
+      "name": "empresa_4/api/issues",
+      "status": "passed",
+      "detail": {
+        "records": 77,
+        "ids_and_fields_match_database": true
+      },
+      "seconds": 0.125
+    },
+    {
+      "name": "empresa_4/api/rncs",
+      "status": "passed",
+      "detail": {
+        "records": 31,
+        "ids_and_fields_match_database": true
+      },
+      "seconds": 0.11
+    },
+    {
+      "name": "empresa_4/api/setores",
+      "status": "passed",
+      "detail": {
+        "records": 1,
+        "ids_and_fields_match_database": true
+      },
+      "seconds": 0.015
+    },
+    {
+      "name": "empresa_4/api/processos",
+      "status": "passed",
+      "detail": {
+        "records": 0,
+        "ids_and_fields_match_database": true
+      },
+      "seconds": 0.0
+    },
+    {
+      "name": "empresa_4/api/issues/kpis",
+      "status": "passed",
+      "detail": {
+        "response_type": "dict"
+      },
+      "seconds": 0.016
+    },
+    {
+      "name": "empresa_4/api/issues/stats",
+      "status": "passed",
+      "detail": {
+        "response_type": "dict"
+      },
+      "seconds": 0.0
+    },
+    {
+      "name": "empresa_4/api/issues/trends",
+      "status": "passed",
+      "detail": {
+        "response_type": "dict"
+      },
+      "seconds": 0.016
+    },
+    {
+      "name": "empresa_4/api/issues/kanban",
+      "status": "passed",
+      "detail": {
+        "response_type": "list"
+      },
+      "seconds": 0.0
+    },
+    {
+      "name": "empresa_4.issues.pareto",
+      "status": "passed",
+      "detail": {
+        "base": "issues",
+        "records": 34,
+        "eligible_records": 34
+      },
+      "seconds": 0.016
+    },
+    {
+      "name": "empresa_4.issues.histograma",
+      "status": "passed",
+      "detail": {
+        "base": "issues",
+        "records": 34,
+        "eligible_records": 34
+      },
+      "seconds": 0.031
+    },
+    {
+      "name": "empresa_4.issues.dispersao",
+      "status": "passed",
+      "detail": {
+        "base": "issues",
+        "records": 34,
+        "eligible_records": 34
+      },
+      "seconds": 0.031
+    },
+    {
+      "name": "empresa_4.issues.afinidades",
+      "status": "passed",
+      "detail": {
+        "base": "issues",
+        "records": 34,
+        "eligible_records": 34
+      },
+      "seconds": 0.016
+    },
+    {
+      "name": "empresa_4.issues.relacoes",
+      "status": "passed",
+      "detail": {
+        "base": "issues",
+        "records": 34,
+        "eligible_records": 34
+      },
+      "seconds": 0.031
+    },
+    {
+      "name": "empresa_4.issues.afinidades.salvos",
+      "status": "passed",
+      "detail": {
+        "saved_diagrams": 0,
+        "ids_match_database": true
+      },
+      "seconds": 0.016
+    },
+    {
+      "name": "empresa_4.issues.relacoes.salvos",
+      "status": "passed",
+      "detail": {
+        "saved_diagrams": 0,
+        "ids_match_database": true
+      },
+      "seconds": 0.0
+    },
+    {
+      "name": "empresa_4.rncs.pareto",
+      "status": "passed",
+      "detail": {
+        "base": "rncs",
+        "records": 31,
+        "eligible_records": 31
+      },
+      "seconds": 0.031
+    },
+    {
+      "name": "empresa_4.rncs.histograma",
+      "status": "passed",
+      "detail": {
+        "base": "rncs",
+        "records": 31,
+        "eligible_records": 31
+      },
+      "seconds": 0.016
+    },
+    {
+      "name": "empresa_4.rncs.dispersao",
+      "status": "passed",
+      "detail": {
+        "base": "rncs",
+        "records": 30,
+        "eligible_records": 31
+      },
+      "seconds": 0.031
+    },
+    {
+      "name": "empresa_4.rncs.afinidades",
+      "status": "passed",
+      "detail": {
+        "base": "rncs",
+        "records": 31,
+        "eligible_records": 31
+      },
+      "seconds": 0.031
+    },
+    {
+      "name": "empresa_4.rncs.relacoes",
+      "status": "passed",
+      "detail": {
+        "base": "rncs",
+        "records": 31,
+        "eligible_records": 31
+      },
+      "seconds": 0.032
+    },
+    {
+      "name": "empresa_4.rncs.afinidades.salvos",
+      "status": "passed",
+      "detail": {
+        "saved_diagrams": 0,
+        "ids_match_database": true
+      },
+      "seconds": 0.0
+    },
+    {
+      "name": "empresa_4.rncs.relacoes.salvos",
+      "status": "passed",
+      "detail": {
+        "saved_diagrams": 0,
+        "ids_match_database": true
+      },
+      "seconds": 0.015
+    },
+    {
+      "name": "empresa_4.matriz.fontes",
+      "status": "passed",
+      "detail": {
+        "sources": 31,
+        "ids_match_database": true
+      },
+      "seconds": 0.016
+    },
+    {
+      "name": "empresa_4.matriz.rnc",
+      "status": "passed",
+      "detail": {
+        "context": "rnc",
+        "rncs": 1,
+        "actions": 1,
+        "assessed": 0
+      },
+      "seconds": 0.015
+    },
+    {
+      "name": "empresa_4.matriz.geral",
+      "status": "passed",
+      "detail": {
+        "context": "geral",
+        "rncs": 2,
+        "actions": 2,
+        "assessed": 0
+      },
+      "seconds": 0.0
+    },
+    {
+      "name": "empresa_4.matriz.salvas.rnc",
+      "status": "passed",
+      "detail": {
+        "saved_matrices": 0,
+        "ids_match_database": true
+      },
+      "seconds": 0.016
+    },
+    {
+      "name": "empresa_4.matriz.salvas.geral",
+      "status": "passed",
+      "detail": {
+        "saved_matrices": 0,
+        "ids_match_database": true
+      },
+      "seconds": 0.0
+    }
+  ],
+  "failures": 0,
+  "concurrent_changes_possible": true
+}

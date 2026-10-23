@@ -7,7 +7,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException
-from app.auth import get_current_user
+from app.auth import get_current_user, is_superuser
 from app.calculations import pareto
 from app.db import get_connection
 from app.routers.issues import _empresa_scope
@@ -75,6 +75,8 @@ def analysis(base:Literal['issues','rncs']='issues',empresa_id:int|None=None,
     medida:Literal['registros','quantidade','horas','prejuizo']='registros',unidade:str='',moeda:str='',
     user:dict=Depends(get_current_user)):
     scope=_empresa_scope(user,empresa_id)
+    if scope is None and not is_superuser(user):
+        raise HTTPException(403,'Usuário sem empresa não pode consultar as ferramentas.')
     if inicio and fim and inicio>fim:raise HTTPException(422,'A data inicial deve ser anterior ou igual à final.')
     if base=='issues' and (medida!='registros' or agrupar=='classificacao' or data_referencia=='emitida_em' or classificacao):
         raise HTTPException(422,'Esta medida, classificação ou data de emissão está disponível somente para RNCs.')

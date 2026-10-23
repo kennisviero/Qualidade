@@ -1,0 +1,11 @@
+{
+  "name": "inventory",
+  "started": "2026-10-16T15:55:36.240Z",
+  "command": "python.exe",
+  "args": [
+    "qa/inventory.py"
+  ]
+}
+{"rules": 299, "endpoints": 115, "functions": 235, "scenarios": 153, "rules_with_explicit_scenarios": 17}
+
+[QA] exit_code=0

@@ -1,0 +1,11 @@
+{
+  "name": "check_issue_selecao",
+  "started": "2026-10-16T16:24:21.696Z",
+  "command": "node.exe",
+  "args": [
+    "tests/check_issue_selecao.cjs"
+  ]
+}
+OK: IDs, ordem dos scripts, checklist, campos obrigatórios, aprovação explícita, geração e reset de empresa.
+
+[QA] exit_code=0

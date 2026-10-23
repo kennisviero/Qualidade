@@ -1,0 +1,307 @@
+{
+  "name": "e2e",
+  "started": "2026-10-16T15:48:30.488Z",
+  "command": "node.exe",
+  "args": [
+    "C:\\produttare\\qualidade\\node_modules\\@playwright\\test\\cli.js",
+    "test",
+    "--config=qa/playwright.config.cjs"
+  ]
+}
+[WebServer] 
+[WebServer] > qualidade-qa@1.0.0 qa:serve
+[WebServer] > node qa/server.cjs
+[WebServer] 
+[WebServer] INFO:     Started server process [15428]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:18765 (Press CTRL+C to quit)
+[WebServer] INFO:     127.0.0.1:55598 - "GET / HTTP/1.1" 200 OK
+
+Running 3 tests using 1 worker
+
+(node:6132) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+[WebServer] INFO:     127.0.0.1:55606 - "GET / HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55606 - "GET /static/css/style.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55609 - "GET /static/js/configuracao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55607 - "GET /static/css/afinidades.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55610 - "GET /static/js/rncs.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55608 - "GET /static/css/relacoes.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55611 - "GET /static/js/issue_selecao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55606 - "GET /static/js/pareto.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55609 - "GET /static/js/dispersao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55607 - "GET /static/js/histograma.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55610 - "GET /static/js/ferramentas_ia.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55611 - "GET /static/js/afinidades.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55608 - "GET /static/js/relacoes.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55609 - "GET /static/js/app.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55609 - "GET /api/auth/me HTTP/1.1" 401 Unauthorized
+[WebServer] INFO:     127.0.0.1:55609 - "POST /api/auth/login HTTP/1.1" 401 Unauthorized
+[WebServer] INFO:     127.0.0.1:55609 - "GET / HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55609 - "GET /static/css/style.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55608 - "GET /static/js/issue_selecao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55609 - "GET /static/css/afinidades.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55607 - "GET /static/css/relacoes.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55606 - "GET /static/js/pareto.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55611 - "GET /static/js/rncs.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55610 - "GET /static/js/configuracao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55609 - "GET /static/js/ferramentas_ia.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55606 - "GET /static/js/dispersao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55611 - "GET /static/js/afinidades.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55608 - "GET /static/js/histograma.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55607 - "GET /static/js/relacoes.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55610 - "GET /static/js/app.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55610 - "GET /api/auth/me HTTP/1.1" 401 Unauthorized
+[WebServer] INFO:     127.0.0.1:55610 - "POST /api/auth/login HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55610 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55610 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55610 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55608 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55607 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55611 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55606 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55606 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55611 - "GET /api/issues/kpis?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55607 - "GET /api/processos?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55606 - "GET /api/issues?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55606 - "GET /api/issues/kanban?empresa_id=1 HTTP/1.1" 200 OK
+  ok 1 qa\e2e\critical.spec.cjs:41:1 › RG-AUT-001 login inválido e login válido (2.5s)
+[WebServer] INFO:     127.0.0.1:55612 - "GET / HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /static/css/style.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /static/css/afinidades.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /static/css/relacoes.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55615 - "GET /static/js/configuracao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /static/js/rncs.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55618 - "GET /static/js/pareto.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55616 - "GET /static/js/issue_selecao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55619 - "GET /static/js/ferramentas_ia.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /static/js/histograma.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55615 - "GET /static/js/dispersao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55618 - "GET /static/js/afinidades.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55616 - "GET /static/js/relacoes.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /static/js/app.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/auth/me HTTP/1.1" 401 Unauthorized
+[WebServer] INFO:     127.0.0.1:55617 - "POST /api/auth/login HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55618 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55615 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55619 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55616 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55621 - "POST /api/empresas HTTP/1.1" 201 Created
+[WebServer] INFO:     127.0.0.1:55618 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55615 - "GET /api/issues/kpis?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55619 - "GET /api/issues?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55616 - "GET /api/processos?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55616 - "GET / HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55619 - "GET /api/issues/kanban?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55619 - "GET /static/css/style.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55619 - "GET /static/css/afinidades.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55619 - "GET /static/css/relacoes.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55615 - "GET /static/js/issue_selecao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /static/js/ferramentas_ia.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55616 - "GET /static/js/configuracao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /static/js/pareto.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55618 - "GET /static/js/rncs.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55619 - "GET /static/js/histograma.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /static/js/dispersao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55615 - "GET /static/js/afinidades.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /static/js/relacoes.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55618 - "GET /static/js/app.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55618 - "GET /api/auth/me HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55618 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55618 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55618 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55619 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55615 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55615 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /api/issues/kpis?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55615 - "GET /api/processos?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55619 - "GET /api/issues?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55619 - "GET /api/setores?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55615 - "GET /api/setores?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /api/setores?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/issues/kanban?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/processos?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/issues?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /api/issues/kpis?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /api/issues/kanban?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/issues/kpis?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /api/issues?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "POST /api/issues HTTP/1.1" 201 Created
+[WebServer] INFO:     127.0.0.1:55612 - "GET /api/issues?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/issues/kpis?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/issues/kanban?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "POST /api/issues/1/fechar HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55612 - "GET /api/issues/kpis?empresa_id=2 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55617 - "GET /api/issues?empresa_id=2 HTTP/1.1" 200 OK
+  ok 2 qa\e2e\critical.spec.cjs:46:1 › RG-ISS-003 captura real pela SPA e RG-EST-005 fechamento (2.4s)
+[WebServer] INFO:     127.0.0.1:55624 - "GET / HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /static/css/style.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /static/css/afinidades.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /static/css/relacoes.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /static/js/issue_selecao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /static/js/pareto.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /static/js/configuracao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /static/js/rncs.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /static/js/ferramentas_ia.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /static/js/histograma.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /static/js/dispersao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /static/js/relacoes.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /static/js/afinidades.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /static/js/app.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/auth/me HTTP/1.1" 401 Unauthorized
+[WebServer] INFO:     127.0.0.1:55629 - "POST /api/auth/login HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/processos?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/issues?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /api/issues/kpis?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /api/issues/kanban?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55631 - "POST /api/empresas HTTP/1.1" 201 Created
+[WebServer] INFO:     127.0.0.1:55626 - "GET / HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /static/css/style.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /static/css/afinidades.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /static/css/relacoes.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /static/js/configuracao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /static/js/rncs.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /static/js/issue_selecao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /static/js/pareto.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /static/js/ferramentas_ia.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /static/js/histograma.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /static/js/dispersao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /static/js/app.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /static/js/afinidades.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /static/js/relacoes.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/auth/me HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/setores?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/setores?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/setores?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/setores?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/issues/kpis?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/issues?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/processos?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/processos?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues/kanban?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/issues/kpis?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/issues/kanban?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/issues?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues/kpis?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "POST /api/issues HTTP/1.1" 201 Created
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/issues/kpis?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues/kanban?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/afinidades?empresa_id=3&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/afinidades/diagramas?empresa_id=3&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/afinidades?base=issues&data_referencia=detectado_em&simulados=todos&empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "POST /api/ferramentas/afinidades/diagramas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/afinidades/diagramas?empresa_id=3&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET / HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /static/css/style.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /static/css/relacoes.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /static/css/afinidades.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /static/js/issue_selecao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /static/js/configuracao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /static/js/histograma.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /static/js/pareto.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /static/js/ferramentas_ia.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /static/js/rncs.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /static/js/dispersao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /static/js/afinidades.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /static/js/relacoes.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /static/js/app.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /api/auth/me HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues/kpis?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/issues?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/processos?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues/kanban?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/afinidades?empresa_id=1&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55631 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/afinidades/diagramas?empresa_id=1&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/afinidades?empresa_id=3&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/afinidades/diagramas?empresa_id=3&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/setores?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/setores?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/setores?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/processos?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/issues?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues/kpis?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues/kanban?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/afinidades/diagramas/1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/relacoes?empresa_id=3&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/relacoes/diagramas?empresa_id=3&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/relacoes?base=issues&data_referencia=detectado_em&simulados=todos&empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "POST /api/ferramentas/relacoes/diagramas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/relacoes/diagramas?empresa_id=3&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET / HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /static/css/style.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /static/css/afinidades.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /static/css/relacoes.css HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /static/js/configuracao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /static/js/pareto.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /static/js/rncs.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /static/js/ferramentas_ia.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /static/js/issue_selecao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /static/js/histograma.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /static/js/dispersao.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /static/js/afinidades.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /static/js/relacoes.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /static/js/app.js HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /api/auth/me HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55624 - "GET /api/empresas HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /api/setores?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/setores?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /api/setores?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55628 - "GET /api/setores?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/setores?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55626 - "GET /api/issues/kpis?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55629 - "GET /api/issues?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/processos?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/processos?empresa_id=1 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues/kanban?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/usuarios HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55627 - "GET /api/issues?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues/kpis?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/issues/kanban?empresa_id=3 HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/relacoes?empresa_id=3&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/relacoes/diagramas?empresa_id=3&base=issues HTTP/1.1" 200 OK
+[WebServer] INFO:     127.0.0.1:55625 - "GET /api/ferramentas/relacoes/diagramas/1 HTTP/1.1" 200 OK
+  ok 3 qa\e2e\critical.spec.cjs:53:1 › RG-AFI-007 e RG-REL-010 persistem após recarregar a página (5.0s)
+
+  3 passed (3.4m)
+
+[QA] exit_code=0

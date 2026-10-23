@@ -1,0 +1,15 @@
+{
+  "suite": "backend",
+  "finished": "2026-10-16T15:49:56.687Z",
+  "exit_code": 1,
+  "results": [
+    {
+      "name": "backend",
+      "started": "2026-10-16T15:46:33.388Z",
+      "finished": "2026-10-16T15:49:56.686Z",
+      "exit_code": 1,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T15-46-33-385Z-684-backend\\backend.txt"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "suite": "inventory",
+  "scope": "complete",
+  "finished": "2026-10-16T15:55:36.802Z",
+  "exit_code": 0,
+  "results": [
+    {
+      "name": "inventory",
+      "started": "2026-10-16T15:55:36.240Z",
+      "finished": "2026-10-16T15:55:36.800Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T15-55-36-237Z-4392-inventory\\inventory.txt"
+    }
+  ]
+}

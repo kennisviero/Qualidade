@@ -1,0 +1,3 @@
+Banco temporário: C:\Users\User\AppData\Local\Temp\qualidade_test_e754aecab90046b783ff4502da59a51f.db
+Vault temporário: C:\Users\User\AppData\Local\Temp\qualidade_docs_a72998f185c64b4aad850ec64a3f3fa3
+HTTP externo: bloqueado

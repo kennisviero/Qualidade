@@ -268,6 +268,14 @@ def init_db():
     with get_connection() as conn:
         _migrar_nao_conformidades(conn)
         conn.executescript(SCHEMA)
+        from app.routers.afinidades import DDL as AFINIDADES_DDL
+        conn.executescript(AFINIDADES_DDL)
+        from app.routers.relacoes import DDL as RELACOES_DDL
+        conn.executescript(RELACOES_DDL)
+        from app.routers.matriz import DDL as MATRIZ_DDL
+        conn.executescript(MATRIZ_DDL)
+        from app.routers.planejamento import DDL as PLANEJAMENTO_DDL
+        conn.executescript(PLANEJAMENTO_DDL)
         cols = [r[1] for r in conn.execute("PRAGMA table_info(projects)").fetchall()]
         if "empresa_id" not in cols:
             conn.execute(

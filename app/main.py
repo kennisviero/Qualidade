@@ -12,6 +12,10 @@ from app.routers import (
     pareto,
     histograma,
     dispersao,
+    afinidades,
+    relacoes,
+    matriz,
+    planejamento,
     ferramentas_ia,
     llm_acessos,
     datasets,
@@ -78,6 +82,11 @@ app.include_router(rncs.router)
 app.include_router(pareto.router)
 app.include_router(histograma.router)
 app.include_router(dispersao.router)
+app.include_router(afinidades.router)
+app.include_router(relacoes.router)
+app.include_router(matriz.router)
+app.include_router(planejamento.pdpc_router)
+app.include_router(planejamento.setas_router)
 app.include_router(ferramentas_ia.router)
 app.include_router(transcricao.router)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")

@@ -1,0 +1,16 @@
+{
+  "suite": "e2e",
+  "scope": "complete",
+  "finished": "2026-10-16T16:22:08.444Z",
+  "exit_code": 0,
+  "results": [
+    {
+      "name": "e2e",
+      "started": "2026-10-16T16:21:48.286Z",
+      "finished": "2026-10-16T16:22:08.442Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-21-48-283Z-9112-e2e\\e2e.txt"
+    }
+  ]
+}

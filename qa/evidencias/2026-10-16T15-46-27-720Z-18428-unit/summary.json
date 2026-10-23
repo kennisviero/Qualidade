@@ -1,0 +1,15 @@
+{
+  "suite": "unit",
+  "finished": "2026-10-16T15:46:29.950Z",
+  "exit_code": 0,
+  "results": [
+    {
+      "name": "unit",
+      "started": "2026-10-16T15:46:27.724Z",
+      "finished": "2026-10-16T15:46:29.949Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T15-46-27-720Z-18428-unit\\unit.txt"
+    }
+  ]
+}

@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>7 Ferramentas da Qualidade</title>
   <link rel="stylesheet" href="/static/css/style.css" />
+  <link rel="stylesheet" href="/static/css/afinidades.css" />
+  <link rel="stylesheet" href="/static/css/relacoes.css" />
+  <link rel="stylesheet" href="/static/css/matriz.css" />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 <body>
@@ -55,10 +58,25 @@
         <a href="#" data-section="pareto">1-Pareto</a>
         <a href="#" data-section="histograma">2-Histograma</a>
         <a href="#" data-section="dispersao">3-Diagrama de Dispersão</a>
+        <a href="#" data-section="afinidades">4-Diagrama de Afinidades</a>
+        <a href="#" data-section="relacoes">5-Diagrama de Relações</a>
+        <a href="#" data-section="matriz">6-Diagrama de Matriz</a>
       </div>
     </nav>
 
     <main class="content">
+      <section id="section-afinidades" class="section">
+        <h2>Diagrama de Afinidades</h2>
+        <div id="afinidadesWorkspace"></div>
+      </section>
+      <section id="section-relacoes" class="section">
+        <h2>Diagrama de Relações</h2>
+        <div id="relacoesWorkspace"></div>
+      </section>
+      <section id="section-matriz" class="section">
+        <h2>Diagrama de Matriz — Problemas/Fatores × Plano de Ação</h2>
+        <div id="matrizWorkspace"></div>
+      </section>
       <section id="section-dispersao" class="section">
         <h2>Diagrama de Dispersão</h2>
         <p class="hint">Explore a relação entre duas medidas do mesmo registro. Empresa: a selecionada no cabeçalho.</p>
@@ -459,6 +477,9 @@
   <script src="/static/js/ferramentas_ia.js"></script>
   <script src="/static/js/histograma.js"></script>
   <script src="/static/js/dispersao.js"></script>
+  <script src="/static/js/afinidades.js"></script>
+  <script src="/static/js/relacoes.js"></script>
+  <script src="/static/js/matriz.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

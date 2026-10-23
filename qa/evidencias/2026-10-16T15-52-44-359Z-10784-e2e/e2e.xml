@@ -1,0 +1,10 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="0" errors="0" time="15.084876">
+<testsuite name="critical.spec.cjs" timestamp="2026-10-16T15:52:49.434Z" hostname="" tests="3" failures="0" skipped="0" time="8.943" errors="0">
+<testcase name="RG-AUT-001 login inválido e login válido" classname="critical.spec.cjs" time="1.868">
+</testcase>
+<testcase name="RG-ISS-003 captura real pela SPA e RG-EST-005 fechamento" classname="critical.spec.cjs" time="2.702">
+</testcase>
+<testcase name="RG-AFI-007 e RG-REL-010 persistem após recarregar a página" classname="critical.spec.cjs" time="4.373">
+</testcase>
+</testsuite>
+</testsuites>

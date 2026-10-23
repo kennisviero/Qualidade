@@ -1,0 +1,11 @@
+{
+  "name": "check_pareto",
+  "started": "2026-10-16T15:48:24.800Z",
+  "command": "node.exe",
+  "args": [
+    "tests/check_pareto.cjs"
+  ]
+}
+OK: menu, seleção Issues/RNCs, filtros, unidades, gráfico/tabelas, conteúdo seguro e resposta obsoleta.
+
+[QA] exit_code=0

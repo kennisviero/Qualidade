@@ -131,7 +131,11 @@ def test_investigacao_etapas_porques_ishikawa(setup):
             'mao_obra':'Treinamento','medicao':'Amostragem','meio_ambiente':'Turno','conclusao':'Testar parâmetro'}}
     saved=s.c.put(url,json={'investigacao_json':data})
     assert saved.status_code==200,saved.text
-    assert s.c.get(url).json()['rnc_investigacao_json']==data
+    expected={**data,'etapa_ishikawa':{**data['etapa_ishikawa'],
+        'metodo_titulo':'Método','maquina_titulo':'Máquina / equipamento / sistema',
+        'material_titulo':'Material / insumos','mao_obra_titulo':'Mão de obra / pessoas',
+        'medicao_titulo':'Medição / controles','meio_ambiente_titulo':'Meio ambiente / condições'}}
+    assert s.c.get(url).json()['rnc_investigacao_json']==expected
 
 
 def test_encerramento_rnc_aprovador_pendencias_e_historico(setup):

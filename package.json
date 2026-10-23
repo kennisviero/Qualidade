@@ -1,0 +1,18 @@
+{
+  "name": "qualidade-qa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Comandos de QA; não altera o build da aplicação FastAPI",
+  "scripts": {
+    "test": "node qa/run.cjs all",
+    "qa:unit": "node qa/run.cjs unit",
+    "qa:backend": "node qa/run.cjs backend",
+    "qa:ui": "node qa/run.cjs ui",
+    "qa:e2e": "node qa/run.cjs e2e",
+    "qa:serve": "node qa/server.cjs",
+    "qa:inventory": "node qa/run.cjs inventory"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0"
+  }
+}

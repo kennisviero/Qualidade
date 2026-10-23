@@ -1,0 +1,11 @@
+{
+  "name": "check_dispersao",
+  "started": "2026-10-16T16:21:45.976Z",
+  "command": "node.exe",
+  "args": [
+    "tests/check_dispersao.cjs"
+  ]
+}
+OK: menu, bases, eixos, filtros, pares, correlação, detalhamento seguro, consulta IA e respostas obsoletas.
+
+[QA] exit_code=0

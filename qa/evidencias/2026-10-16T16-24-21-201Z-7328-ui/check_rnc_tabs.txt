@@ -1,0 +1,11 @@
+{
+  "name": "check_rnc_tabs",
+  "started": "2026-10-16T16:24:22.121Z",
+  "command": "node.exe",
+  "args": [
+    "tests/check_rnc_tabs.cjs"
+  ]
+}
+OK: abas RNC, títulos Ishikawa, usuários da empresa, fatos readonly, salvamento, investigação, aprovador e visualizador.
+
+[QA] exit_code=0

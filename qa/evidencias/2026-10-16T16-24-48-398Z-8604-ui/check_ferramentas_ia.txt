@@ -1,0 +1,11 @@
+{
+  "name": "check_ferramentas_ia",
+  "started": "2026-10-16T16:24:48.649Z",
+  "command": "node.exe",
+  "args": [
+    "tests/check_ferramentas_ia.cjs"
+  ]
+}
+OK: prompt editável, envio explícito com dados exatos, sem duplicação, texto seguro e reset de empresa/análise.
+
+[QA] exit_code=0

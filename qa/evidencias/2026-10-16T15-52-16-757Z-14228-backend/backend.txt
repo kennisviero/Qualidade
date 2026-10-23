@@ -1,0 +1,35 @@
+{
+  "name": "backend",
+  "started": "2026-10-16T15:52:16.761Z",
+  "command": "python.exe",
+  "args": [
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "qa.pytest_guard",
+    "tests",
+    "--ignore=tests/qa/test_unit_rules.py",
+    "--junitxml=C:\\produttare\\qualidade\\qa\\evidencias\\2026-10-16T15-52-16-757Z-14228-backend\\backend.xml"
+  ]
+}
+........................................................................ [ 40%]
+........................................................................ [ 81%]
+.................................                                        [100%]
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\produttare\qualidade\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+.venv\Lib\site-packages\_pytest\cacheprovider.py:469
+  C:\produttare\qualidade\.venv\Lib\site-packages\_pytest\cacheprovider.py:469: PytestCacheWarning: cache could not write path C:\produttare\qualidade\.pytest_cache\v\cache\nodeids: [Errno 13] Permission denied: 'C:\\produttare\\qualidade\\.pytest_cache\\v\\cache\\nodeids'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+.venv\Lib\site-packages\_pytest\cacheprovider.py:423
+  C:\produttare\qualidade\.venv\Lib\site-packages\_pytest\cacheprovider.py:423: PytestCacheWarning: cache could not write path C:\produttare\qualidade\.pytest_cache\v\cache\lastfailed: [Errno 13] Permission denied: 'C:\\produttare\\qualidade\\.pytest_cache\\v\\cache\\lastfailed'
+    config.cache.set("cache/lastfailed", self.lastfailed)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+177 passed, 3 warnings in 187.99s (0:03:07)
+
+[QA] exit_code=0

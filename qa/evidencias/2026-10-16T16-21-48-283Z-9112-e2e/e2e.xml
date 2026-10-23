@@ -1,0 +1,14 @@
+<testsuites id="" name="" tests="4" failures="0" skipped="0" errors="0" time="19.234381">
+<testsuite name="critical.spec.cjs" timestamp="2026-10-16T16:21:53.456Z" hostname="" tests="3" failures="0" skipped="0" time="8.557" errors="0">
+<testcase name="RG-AUT-001 login inválido e login válido" classname="critical.spec.cjs" time="1.776">
+</testcase>
+<testcase name="RG-ISS-003 captura real pela SPA e RG-EST-005 fechamento" classname="critical.spec.cjs" time="2.36">
+</testcase>
+<testcase name="RG-AFI-007 e RG-REL-010 persistem após recarregar a página" classname="critical.spec.cjs" time="4.421">
+</testcase>
+</testsuite>
+<testsuite name="matriz.spec.cjs" timestamp="2026-10-16T16:21:53.456Z" hostname="" tests="1" failures="0" skipped="0" time="3.798" errors="0">
+<testcase name="Matriz: Uma RNC/Geral, avaliar, salvar e reabrir sem alterar planos" classname="matriz.spec.cjs" time="3.798">
+</testcase>
+</testsuite>
+</testsuites>

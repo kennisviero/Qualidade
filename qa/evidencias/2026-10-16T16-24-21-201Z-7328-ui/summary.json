@@ -1,0 +1,96 @@
+{
+  "suite": "ui",
+  "scope": "complete",
+  "finished": "2026-10-16T16:24:22.277Z",
+  "exit_code": 0,
+  "results": [
+    {
+      "name": "check_afinidades",
+      "started": "2026-10-16T16:24:21.204Z",
+      "finished": "2026-10-16T16:24:21.276Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-24-21-201Z-7328-ui\\check_afinidades.txt"
+    },
+    {
+      "name": "check_api_errors",
+      "started": "2026-10-16T16:24:21.277Z",
+      "finished": "2026-10-16T16:24:21.351Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-24-21-201Z-7328-ui\\check_api_errors.txt"
+    },
+    {
+      "name": "check_dispersao",
+      "started": "2026-10-16T16:24:21.352Z",
+      "finished": "2026-10-16T16:24:21.513Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-24-21-201Z-7328-ui\\check_dispersao.txt"
+    },
+    {
+      "name": "check_ferramentas_ia",
+      "started": "2026-10-16T16:24:21.515Z",
+      "finished": "2026-10-16T16:24:21.594Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-24-21-201Z-7328-ui\\check_ferramentas_ia.txt"
+    },
+    {
+      "name": "check_histograma",
+      "started": "2026-10-16T16:24:21.596Z",
+      "finished": "2026-10-16T16:24:21.694Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-24-21-201Z-7328-ui\\check_histograma.txt"
+    },
+    {
+      "name": "check_issue_selecao",
+      "started": "2026-10-16T16:24:21.696Z",
+      "finished": "2026-10-16T16:24:21.786Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-24-21-201Z-7328-ui\\check_issue_selecao.txt"
+    },
+    {
+      "name": "check_matriz",
+      "started": "2026-10-16T16:24:21.787Z",
+      "finished": "2026-10-16T16:24:21.858Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-24-21-201Z-7328-ui\\check_matriz.txt"
+    },
+    {
+      "name": "check_pareto",
+      "started": "2026-10-16T16:24:21.859Z",
+      "finished": "2026-10-16T16:24:21.959Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-24-21-201Z-7328-ui\\check_pareto.txt"
+    },
+    {
+      "name": "check_relacoes",
+      "started": "2026-10-16T16:24:21.961Z",
+      "finished": "2026-10-16T16:24:22.037Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-24-21-201Z-7328-ui\\check_relacoes.txt"
+    },
+    {
+      "name": "check_rnc_menu",
+      "started": "2026-10-16T16:24:22.039Z",
+      "finished": "2026-10-16T16:24:22.119Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-24-21-201Z-7328-ui\\check_rnc_menu.txt"
+    },
+    {
+      "name": "check_rnc_tabs",
+      "started": "2026-10-16T16:24:22.121Z",
+      "finished": "2026-10-16T16:24:22.275Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-24-21-201Z-7328-ui\\check_rnc_tabs.txt"
+    }
+  ]
+}

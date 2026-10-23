@@ -1,0 +1,509 @@
+{
+  "simulado": true,
+  "empresa_id": 5,
+  "issues": [
+    {
+      "issue_id": 79,
+      "issue_codigo": "ISSUE-0001",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-001",
+      "rnc_id": 32,
+      "rnc_codigo": "RNC-2026-001",
+      "fase": "historico_rnc",
+      "data": "2026-04-01T09:00:00+00:00"
+    },
+    {
+      "issue_id": 80,
+      "issue_codigo": "ISSUE-0002",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-002",
+      "rnc_id": 33,
+      "rnc_codigo": "RNC-2026-002",
+      "fase": "historico_rnc",
+      "data": "2026-04-05T11:00:00+00:00"
+    },
+    {
+      "issue_id": 81,
+      "issue_codigo": "ISSUE-0003",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-003",
+      "rnc_id": 34,
+      "rnc_codigo": "RNC-2026-003",
+      "fase": "historico_rnc",
+      "data": "2026-04-09T13:00:00+00:00"
+    },
+    {
+      "issue_id": 82,
+      "issue_codigo": "ISSUE-0004",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-004",
+      "rnc_id": 35,
+      "rnc_codigo": "RNC-2026-004",
+      "fase": "historico_rnc",
+      "data": "2026-04-13T09:00:00+00:00"
+    },
+    {
+      "issue_id": 83,
+      "issue_codigo": "ISSUE-0005",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-005",
+      "rnc_id": 36,
+      "rnc_codigo": "RNC-2026-005",
+      "fase": "historico_rnc",
+      "data": "2026-04-13T11:00:00+00:00"
+    },
+    {
+      "issue_id": 84,
+      "issue_codigo": "ISSUE-0006",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-006",
+      "rnc_id": 37,
+      "rnc_codigo": "RNC-2026-006",
+      "fase": "historico_rnc",
+      "data": "2026-04-17T13:00:00+00:00"
+    },
+    {
+      "issue_id": 85,
+      "issue_codigo": "ISSUE-0007",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-007",
+      "rnc_id": 38,
+      "rnc_codigo": "RNC-2026-007",
+      "fase": "historico_rnc",
+      "data": "2026-04-21T09:00:00+00:00"
+    },
+    {
+      "issue_id": 86,
+      "issue_codigo": "ISSUE-0008",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-008",
+      "rnc_id": 39,
+      "rnc_codigo": "RNC-2026-008",
+      "fase": "historico_rnc",
+      "data": "2026-04-25T11:00:00+00:00"
+    },
+    {
+      "issue_id": 87,
+      "issue_codigo": "ISSUE-0009",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-009",
+      "rnc_id": 40,
+      "rnc_codigo": "RNC-2026-009",
+      "fase": "historico_rnc",
+      "data": "2026-04-25T13:00:00+00:00"
+    },
+    {
+      "issue_id": 88,
+      "issue_codigo": "ISSUE-0010",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-010",
+      "rnc_id": 41,
+      "rnc_codigo": "RNC-2026-010",
+      "fase": "historico_rnc",
+      "data": "2026-04-29T09:00:00+00:00"
+    },
+    {
+      "issue_id": 89,
+      "issue_codigo": "ISSUE-0011",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-011",
+      "rnc_id": 42,
+      "rnc_codigo": "RNC-2026-011",
+      "fase": "historico_rnc",
+      "data": "2026-05-03T11:00:00+00:00"
+    },
+    {
+      "issue_id": 90,
+      "issue_codigo": "ISSUE-0012",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-012",
+      "rnc_id": 43,
+      "rnc_codigo": "RNC-2026-012",
+      "fase": "historico_rnc",
+      "data": "2026-05-07T13:00:00+00:00"
+    },
+    {
+      "issue_id": 91,
+      "issue_codigo": "ISSUE-0013",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-013",
+      "rnc_id": 44,
+      "rnc_codigo": "RNC-2026-013",
+      "fase": "historico_rnc",
+      "data": "2026-05-07T09:00:00+00:00"
+    },
+    {
+      "issue_id": 92,
+      "issue_codigo": "ISSUE-0014",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-014",
+      "rnc_id": 45,
+      "rnc_codigo": "RNC-2026-014",
+      "fase": "historico_rnc",
+      "data": "2026-05-11T11:00:00+00:00"
+    },
+    {
+      "issue_id": 93,
+      "issue_codigo": "ISSUE-0015",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-015",
+      "rnc_id": 46,
+      "rnc_codigo": "RNC-2026-015",
+      "fase": "historico_rnc",
+      "data": "2026-05-15T13:00:00+00:00"
+    },
+    {
+      "issue_id": 94,
+      "issue_codigo": "ISSUE-0016",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-016",
+      "rnc_id": 47,
+      "rnc_codigo": "RNC-2026-016",
+      "fase": "historico_rnc",
+      "data": "2026-05-19T09:00:00+00:00"
+    },
+    {
+      "issue_id": 95,
+      "issue_codigo": "ISSUE-0017",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-017",
+      "rnc_id": 48,
+      "rnc_codigo": "RNC-2026-017",
+      "fase": "historico_rnc",
+      "data": "2026-05-19T11:00:00+00:00"
+    },
+    {
+      "issue_id": 96,
+      "issue_codigo": "ISSUE-0018",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-018",
+      "rnc_id": 49,
+      "rnc_codigo": "RNC-2026-018",
+      "fase": "historico_rnc",
+      "data": "2026-05-23T13:00:00+00:00"
+    },
+    {
+      "issue_id": 97,
+      "issue_codigo": "ISSUE-0019",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-019",
+      "rnc_id": 50,
+      "rnc_codigo": "RNC-2026-019",
+      "fase": "historico_rnc",
+      "data": "2026-05-27T09:00:00+00:00"
+    },
+    {
+      "issue_id": 98,
+      "issue_codigo": "ISSUE-0020",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-020",
+      "rnc_id": 51,
+      "rnc_codigo": "RNC-2026-020",
+      "fase": "historico_rnc",
+      "data": "2026-05-31T11:00:00+00:00"
+    },
+    {
+      "issue_id": 99,
+      "issue_codigo": "ISSUE-0021",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-021",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-05-31T13:00:00+00:00"
+    },
+    {
+      "issue_id": 100,
+      "issue_codigo": "ISSUE-0022",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-022",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-06-04T09:00:00+00:00"
+    },
+    {
+      "issue_id": 101,
+      "issue_codigo": "ISSUE-0023",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-023",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-06-08T11:00:00+00:00"
+    },
+    {
+      "issue_id": 102,
+      "issue_codigo": "ISSUE-0024",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-024",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-06-12T13:00:00+00:00"
+    },
+    {
+      "issue_id": 103,
+      "issue_codigo": "ISSUE-0025",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-025",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-06-12T09:00:00+00:00"
+    },
+    {
+      "issue_id": 104,
+      "issue_codigo": "ISSUE-0026",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-026",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-06-16T11:00:00+00:00"
+    },
+    {
+      "issue_id": 105,
+      "issue_codigo": "ISSUE-0027",
+      "categoria": "Dimensão fora da tolerância",
+      "amostra_id": "SIM-TURMA1-20261023-027",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-06-20T13:00:00+00:00"
+    },
+    {
+      "issue_id": 106,
+      "issue_codigo": "ISSUE-0028",
+      "categoria": "Dimensão fora da tolerância",
+      "amostra_id": "SIM-TURMA1-20261023-028",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-06-24T09:00:00+00:00"
+    },
+    {
+      "issue_id": 107,
+      "issue_codigo": "ISSUE-0029",
+      "categoria": "Dimensão fora da tolerância",
+      "amostra_id": "SIM-TURMA1-20261023-029",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-06-24T11:00:00+00:00"
+    },
+    {
+      "issue_id": 108,
+      "issue_codigo": "ISSUE-0030",
+      "categoria": "Dimensão fora da tolerância",
+      "amostra_id": "SIM-TURMA1-20261023-030",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-06-28T13:00:00+00:00"
+    },
+    {
+      "issue_id": 109,
+      "issue_codigo": "ISSUE-0031",
+      "categoria": "Dimensão fora da tolerância",
+      "amostra_id": "SIM-TURMA1-20261023-031",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-07-02T09:00:00+00:00"
+    },
+    {
+      "issue_id": 110,
+      "issue_codigo": "ISSUE-0032",
+      "categoria": "Dimensão fora da tolerância",
+      "amostra_id": "SIM-TURMA1-20261023-032",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-07-06T11:00:00+00:00"
+    },
+    {
+      "issue_id": 111,
+      "issue_codigo": "ISSUE-0033",
+      "categoria": "Dimensão fora da tolerância",
+      "amostra_id": "SIM-TURMA1-20261023-033",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-07-06T13:00:00+00:00"
+    },
+    {
+      "issue_id": 112,
+      "issue_codigo": "ISSUE-0034",
+      "categoria": "Dimensão fora da tolerância",
+      "amostra_id": "SIM-TURMA1-20261023-034",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-07-10T09:00:00+00:00"
+    },
+    {
+      "issue_id": 113,
+      "issue_codigo": "ISSUE-0035",
+      "categoria": "Dimensão fora da tolerância",
+      "amostra_id": "SIM-TURMA1-20261023-035",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-07-14T11:00:00+00:00"
+    },
+    {
+      "issue_id": 114,
+      "issue_codigo": "ISSUE-0036",
+      "categoria": "Atraso de entrega interna",
+      "amostra_id": "SIM-TURMA1-20261023-036",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-07-18T13:00:00+00:00"
+    },
+    {
+      "issue_id": 115,
+      "issue_codigo": "ISSUE-0037",
+      "categoria": "Atraso de entrega interna",
+      "amostra_id": "SIM-TURMA1-20261023-037",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-07-18T09:00:00+00:00"
+    },
+    {
+      "issue_id": 116,
+      "issue_codigo": "ISSUE-0038",
+      "categoria": "Atraso de entrega interna",
+      "amostra_id": "SIM-TURMA1-20261023-038",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-07-22T11:00:00+00:00"
+    },
+    {
+      "issue_id": 117,
+      "issue_codigo": "ISSUE-0039",
+      "categoria": "Atraso de entrega interna",
+      "amostra_id": "SIM-TURMA1-20261023-039",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-07-26T13:00:00+00:00"
+    },
+    {
+      "issue_id": 118,
+      "issue_codigo": "ISSUE-0040",
+      "categoria": "Atraso de entrega interna",
+      "amostra_id": "SIM-TURMA1-20261023-040",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-07-30T09:00:00+00:00"
+    },
+    {
+      "issue_id": 119,
+      "issue_codigo": "ISSUE-0041",
+      "categoria": "Atraso de entrega interna",
+      "amostra_id": "SIM-TURMA1-20261023-041",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-07-30T11:00:00+00:00"
+    },
+    {
+      "issue_id": 120,
+      "issue_codigo": "ISSUE-0042",
+      "categoria": "Atraso de entrega interna",
+      "amostra_id": "SIM-TURMA1-20261023-042",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-08-03T13:00:00+00:00"
+    },
+    {
+      "issue_id": 121,
+      "issue_codigo": "ISSUE-0043",
+      "categoria": "Atraso de entrega interna",
+      "amostra_id": "SIM-TURMA1-20261023-043",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-08-07T09:00:00+00:00"
+    },
+    {
+      "issue_id": 122,
+      "issue_codigo": "ISSUE-0044",
+      "categoria": "Mistura de componentes",
+      "amostra_id": "SIM-TURMA1-20261023-044",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-08-11T11:00:00+00:00"
+    },
+    {
+      "issue_id": 123,
+      "issue_codigo": "ISSUE-0045",
+      "categoria": "Mistura de componentes",
+      "amostra_id": "SIM-TURMA1-20261023-045",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-08-11T13:00:00+00:00"
+    },
+    {
+      "issue_id": 124,
+      "issue_codigo": "ISSUE-0046",
+      "categoria": "Falha de vedação",
+      "amostra_id": "SIM-TURMA1-20261023-046",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-08-15T09:00:00+00:00"
+    },
+    {
+      "issue_id": 125,
+      "issue_codigo": "ISSUE-0047",
+      "categoria": "Erro de identificação",
+      "amostra_id": "SIM-TURMA1-20261023-047",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-08-19T11:00:00+00:00"
+    },
+    {
+      "issue_id": 126,
+      "issue_codigo": "ISSUE-0048",
+      "categoria": "Dimensão fora da tolerância",
+      "amostra_id": "SIM-TURMA1-20261023-048",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-08-23T13:00:00+00:00"
+    },
+    {
+      "issue_id": 127,
+      "issue_codigo": "ISSUE-0049",
+      "categoria": "Atraso de entrega interna",
+      "amostra_id": "SIM-TURMA1-20261023-049",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-08-23T09:00:00+00:00"
+    },
+    {
+      "issue_id": 128,
+      "issue_codigo": "ISSUE-0050",
+      "categoria": "Mistura de componentes",
+      "amostra_id": "SIM-TURMA1-20261023-050",
+      "rnc_id": null,
+      "rnc_codigo": null,
+      "fase": "aberta_para_exercicio",
+      "data": "2026-08-27T11:00:00+00:00"
+    }
+  ],
+  "total_issues": 50,
+  "rncs_historicas": 20,
+  "issues_para_exercicio": 30
+}

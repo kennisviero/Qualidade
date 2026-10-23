@@ -1,0 +1,5785 @@
+{
+  "rules": [
+    {
+      "id": "RG-AUT-001",
+      "rule": "O login usa email/identificador e senha. Credenciais incorretas são recusadas com 401."
+    },
+    {
+      "id": "RG-AUT-002",
+      "rule": "Usuário inativo não pode entrar nem continuar usando uma sessão existente."
+    },
+    {
+      "id": "RG-AUT-003",
+      "rule": "Usuário de empresa desativada não pode entrar nem continuar usando uma sessão existente."
+    },
+    {
+      "id": "RG-AUT-004",
+      "rule": "Senhas são armazenadas como hash bcrypt e verificadas por comparação com o hash. Respostas públicas de usuário não retornam o hash."
+    },
+    {
+      "id": "RG-AUT-005",
+      "rule": "A sessão é identificada por token aleatório, persistida no banco e válida por oito horas contadas da criação. Ausência, expiração ou invalidade da sessão resulta em 401."
+    },
+    {
+      "id": "RG-AUT-006",
+      "rule": "O cookie de sessão é HTTP-only e SameSite=Lax. O logout apaga todas as sessões do usuário autenticado e remove o cookie."
+    },
+    {
+      "id": "RG-AUT-007",
+      "rule": "Os papéis aceitos no cadastro/edição de usuários são `admin`, `editor` e `visualizador`."
+    },
+    {
+      "id": "RG-AUT-008",
+      "rule": "Superusuário global é exatamente o usuário com papel `admin` e `empresa_id = NULL`."
+    },
+    {
+      "id": "RG-AUT-009",
+      "rule": "Administração de usuários/empresas e configuração LLM exige admin; escrita de setores, processos, Issues, RNCs e diagramas exige admin/editor. As exceções de aprovação nominal são descritas nos módulos."
+    },
+    {
+      "id": "RG-AUT-010",
+      "rule": "Visualizador pode consultar os recursos liberados a autenticados; não pode usar as rotas protegidas por admin/editor. Selecionar para RNC é exclusivo de admin/editor, inclusive suas consultas."
+    },
+    {
+      "id": "RG-AUT-011",
+      "rule": "Usuários comuns acessam entidades conforme empresa e verificações próprias de cada rota. O superusuário dispõe de consultas globais ou seleção explícita de empresa conforme o recurso."
+    },
+    {
+      "id": "RG-AUT-012",
+      "rule": "Na SPA, empresa de usuário comum fica fixa; controles administrativos e de edição são apresentados conforme papel. Ocultar controle não substitui a permissão do backend."
+    },
+    {
+      "id": "RG-EMP-001",
+      "rule": "Somente o superusuário pode criar ou excluir empresas. Empresa nova é criada ativa."
+    },
+    {
+      "id": "RG-EMP-002",
+      "rule": "Admin de empresa lista, consulta e atualiza somente sua própria empresa; superusuário pode administrar todas."
+    },
+    {
+      "id": "RG-EMP-003",
+      "rule": "Cadastro de empresa contém razão social e CNPJ textual; a atualização também permite alterar o indicador ativo. Não há validação de dígitos do CNPJ nessas rotas."
+    },
+    {
+      "id": "RG-EMP-004",
+      "rule": "A interface pede confirmação para desativar/excluir empresa e informa o bloqueio de acesso na desativação."
+    },
+    {
+      "id": "RG-EMP-005",
+      "rule": "Exclusão da empresa remove registros dependentes conforme FKs/gatilhos e tenta remover sua pasta física depois da exclusão SQL. Não é uma exclusão lógica."
+    },
+    {
+      "id": "RG-EMP-006",
+      "rule": "Cada setor pertence a uma empresa. Criar setor exige empresa existente; para usuário comum a empresa é a do usuário."
+    },
+    {
+      "id": "RG-EMP-007",
+      "rule": "Admin/editor podem criar, renomear e excluir setores do escopo permitido; autenticados podem listar."
+    },
+    {
+      "id": "RG-EMP-008",
+      "rule": "Renomear empresa/setor não move automaticamente suas pastas físicas."
+    },
+    {
+      "id": "RG-EMP-009",
+      "rule": "Excluir setor tenta apagar a pasta física correspondente; usuários e processos vinculados ao setor têm o vínculo de setor removido por FK, preservando seu vínculo com a empresa. Ishikawas do setor têm exclusão em cascata."
+    },
+    {
+      "id": "RG-USU-001",
+      "rule": "Qualquer autenticado pode listar usuários: superusuário vê todos; os demais recebem usuários da própria empresa. Isso alimenta os seletores de responsáveis."
+    },
+    {
+      "id": "RG-USU-002",
+      "rule": "Somente admin cria, edita, ativa/desativa ou exclui usuários. Admin comum só altera usuários da própria empresa."
+    },
+    {
+      "id": "RG-USU-003",
+      "rule": "Email é único no banco. Nome, email e senha fazem parte da entrada de criação; papel padrão é editor e usuário novo é ativo."
+    },
+    {
+      "id": "RG-USU-004",
+      "rule": "Na criação, setor é opcional. Quando informado, deve existir e ser acessível; a empresa do usuário criado é derivada desse setor. Sem setor, pode ser usada a empresa informada pelo superusuário ou a empresa do admin comum."
+    },
+    {
+      "id": "RG-USU-005",
+      "rule": "Na edição, informar um setor válido atualiza setor e empresa do usuário. A empresa não possui campo independente no modelo de edição."
+    },
+    {
+      "id": "RG-USU-006",
+      "rule": "Posição aceita vazio ou um de: Presidente, Diretoria, Gerente, Supervisor, Encarregado, Colaborador. Outro valor é recusado."
+    },
+    {
+      "id": "RG-USU-007",
+      "rule": "Senha omitida ou vazia na edição preserva o hash existente."
+    },
+    {
+      "id": "RG-USU-008",
+      "rule": "Exclusão de usuário é física e sujeita às FKs existentes. Não há regra universal de apagar todos os registros dos quais ele foi responsável. Sessões são dependentes do usuário."
+    },
+    {
+      "id": "RG-USU-009",
+      "rule": "Seletores de responsáveis respeitam as listas do módulo: seleção para RNC oferece ativos; as abas RNC filtram usuários da empresa, sem exigir atividade em todas as validações do servidor."
+    },
+    {
+      "id": "RG-PRO-001",
+      "rule": "Processo pertence diretamente à empresa. Setor é opcional e, se informado, deve pertencer à mesma empresa."
+    },
+    {
+      "id": "RG-PRO-002",
+      "rule": "Nome do processo é único dentro da empresa; mudar de setor não cria uma nova identidade de processo."
+    },
+    {
+      "id": "RG-PRO-003",
+      "rule": "Para superusuário, a empresa pode ser explícita ou derivada do setor na criação. Usuário comum cria na própria empresa."
+    },
+    {
+      "id": "RG-PRO-004",
+      "rule": "Guardião/responsável e aprovador, quando preenchidos, precisam ser usuários da empresa do processo."
+    },
+    {
+      "id": "RG-PRO-005",
+      "rule": "Criar processo grava autor, status rascunho, pasta física e revisão inicial número 1."
+    },
+    {
+      "id": "RG-PRO-006",
+      "rule": "Estados aceitos na edição cadastral são `rascunho`, `em_revisao` e `aprovado`."
+    },
+    {
+      "id": "RG-PRO-007",
+      "rule": "Criar revisão incrementa o maior número existente, preserva a sintaxe e registra autor/data da revisão; atualiza a sintaxe corrente e coloca o processo em revisão."
+    },
+    {
+      "id": "RG-PRO-008",
+      "rule": "Aprovar exige uma revisão existente. Com aprovador definido, só esse usuário ou superusuário aprova; sem aprovador definido, a rota aceita admin/editor autorizado."
+    },
+    {
+      "id": "RG-PRO-009",
+      "rule": "Aprovação registra aprovador/data na última revisão e muda o processo para aprovado."
+    },
+    {
+      "id": "RG-PRO-010",
+      "rule": "Renomear processo ou alterar setor não move a pasta já atribuída."
+    },
+    {
+      "id": "RG-PRO-011",
+      "rule": "Excluir processo apaga suas revisões por cascata e tenta remover sua pasta física após o commit."
+    },
+    {
+      "id": "RG-DOC-001",
+      "rule": "Documentos comuns de processo/Issue são organizados pelo filesystem, sem tabela de documentos. A data apresentada vem da modificação física do arquivo."
+    },
+    {
+      "id": "RG-DOC-002",
+      "rule": "Pasta de processo usa empresa/setor/processo, omitindo setor quando ausente. Pasta de Issue usa empresa/código. O caminho atribuído é persistido."
+    },
+    {
+      "id": "RG-DOC-003",
+      "rule": "Componentes dos nomes físicos são saneados, limitados a 80 caracteres e substituídos por `_` quando vazios após saneamento."
+    },
+    {
+      "id": "RG-DOC-004",
+      "rule": "Nomes físicos repetidos recebem sufixos para evitar sobrescrita. Pastas de Issue/Ishikawa também evitam colisão com caminhos existentes."
+    },
+    {
+      "id": "RG-DOC-005",
+      "rule": "Caminhos relativos são resolvidos dentro da pasta autorizada; tentativas de sair dela são rejeitadas. Excluir a própria raiz pela rota de objetos é proibido."
+    },
+    {
+      "id": "RG-DOC-006",
+      "rule": "Autenticados autorizados podem listar árvores e abrir arquivos. Upload/criação de arquivo/criação de pasta/exclusão exige admin/editor."
+    },
+    {
+      "id": "RG-DOC-007",
+      "rule": "Upload comum recusa arquivo sem conteúdo. Criar arquivo vazio é permitido pela operação específica de criação. Subpasta apontando para arquivo é inválida."
+    },
+    {
+      "id": "RG-DOC-008",
+      "rule": "Excluir objeto remove arquivo ou pasta recursivamente. Pastas pedem confirmação na interface. Arquivo inexistente resulta em 404."
+    },
+    {
+      "id": "RG-DOC-009",
+      "rule": "Arquivos de imagem, PDF e texto podem ser abertos inline; outros tipos são entregues como download, conforme a rota de anexos."
+    },
+    {
+      "id": "RG-DOC-010",
+      "rule": "Transcrição aceita somente TXT, PDF e DOCX e exige autenticação. Arquivo vazio ou formato não suportado é recusado."
+    },
+    {
+      "id": "RG-DOC-011",
+      "rule": "TXT tenta UTF-8 e depois Latin-1. PDF extrai texto das páginas; DOCX extrai texto dos parágrafos. Não há áudio nem OCR."
+    },
+    {
+      "id": "RG-DOC-012",
+      "rule": "A transcrição retorna texto para preenchimento do formulário; não cria Issue nem salva automaticamente o registro."
+    },
+    {
+      "id": "RG-DOC-013",
+      "rule": "O limite de 20 MB descrito na seção de evidências RNC é específico dessa rota; não está implementado como limite geral dos uploads comuns de processo/Issue."
+    },
+    {
+      "id": "RG-ISS-001",
+      "rule": "Issue e RNC são entidades distintas. Issue pertence diretamente a uma empresa existente; cadastro não exige setor/processo."
+    },
+    {
+      "id": "RG-ISS-002",
+      "rule": "Nova Issue abre formulário; a gravação efetiva ocorre em Salvar registro."
+    },
+    {
+      "id": "RG-ISS-003",
+      "rule": "São obrigatórios, com conteúdo não vazio: data/hora da detecção, comportamento esperado, comportamento observado, evidências objetivas, impacto, ação emergencial, o que aconteceu, onde ocorreu, quando ocorreu, quem foi afetado/envolvido e como foi detectado. A atualização também valida o conjunto final desses campos."
+    },
+    {
+      "id": "RG-ISS-004",
+      "rule": "Código de erro, ambiente, envolvidos/afetados adicional, hipótese inicial e campos complementares de bloqueio não integram a lista de obrigatórios do backend."
+    },
+    {
+      "id": "RG-ISS-005",
+      "rule": "Código é gerado na gravação como `ISSUE-NNNN`, usando o maior número existente na empresa mais um. Código é único por empresa."
+    },
+    {
+      "id": "RG-ISS-006",
+      "rule": "Autor do registro é selecionável. Na criação, ausência usa o usuário logado; o criador efetivo é registrado separadamente e não muda com a edição do autor."
+    },
+    {
+      "id": "RG-ISS-007",
+      "rule": "Autor escolhido diferente do usuário logado deve pertencer à empresa da Issue. O usuário logado é aceito como autor pela exceção explícita do validador, inclusive superusuário global."
+    },
+    {
+      "id": "RG-ISS-008",
+      "rule": "Operador e inspetor, quando informados, devem ser usuários da empresa da Issue."
+    },
+    {
+      "id": "RG-ISS-009",
+      "rule": "Cadastro cria pasta de anexos, grava datas de criação/atualização e inicia com status cadastrada."
+    },
+    {
+      "id": "RG-ISS-010",
+      "rule": "A SPA usa comportamento observado como resumo e oferece seletores de impacto, ambiente e envolvidos/afetados. Não há classificação automática dos relatos na captura."
+    },
+    {
+      "id": "RG-ISS-011",
+      "rule": "Os campos antigos setor, processo, descrição genérica, origem, produto, norma, reincidência, tipo, severidade e etapa de captura foram removidos da tabela/formulário de Issue pela migração autorizada. Dados dos demais módulos não recebem essa remoção."
+    },
+    {
+      "id": "RG-ISS-012",
+      "rule": "A tela atual de captura não apresenta as antigas abas completas de investigação/ação/análise da Issue. Documentos e Kanban continuam disponíveis; APIs legadas permanecem operacionais conforme seção 8."
+    },
+    {
+      "id": "RG-EST-001",
+      "rule": "Estados atuais de Issue: cadastrada, em tratamento e fechada. A API não aceita os antigos estados como novos valores de edição."
+    },
+    {
+      "id": "RG-EST-002",
+      "rule": "Primeiro input/change de registro salvo na captura solicita início de tratamento; salvar atualização não vazia de Issue cadastrada também inicia tratamento no servidor."
+    },
+    {
+      "id": "RG-EST-003",
+      "rule": "Início de tratamento é gravado uma única vez com preservação do valor anterior. Repetir a solicitação não reinicia o prazo."
+    },
+    {
+      "id": "RG-EST-004",
+      "rule": "Edição comum de status só admite transição para em tratamento; encerramento usa rota própria. Não há reabertura da Issue fechada por edição de status."
+    },
+    {
+      "id": "RG-EST-005",
+      "rule": "Fechar Issue manualmente não exige ações nem resultado/nota. Grava status fechado, data e usuário; repetir preserva o primeiro fechamento."
+    },
+    {
+      "id": "RG-EST-006",
+      "rule": "Emitir RNC fecha a Issue na mesma transação. Mover/criar ações não reabre uma Issue já fechada."
+    },
+    {
+      "id": "RG-EST-007",
+      "rule": "Endpoint legado finalizar exige resultado não vazio, nota entre 1 e 5, ao menos uma ação e todas as ações finalizadas. Grava resultado/nota e fecha a Issue. Essa exigência não se aplica à rota fechar."
+    },
+    {
+      "id": "RG-EST-008",
+      "rule": "Seletor da captura mostra somente Issues abertas; a API de listagem conserva também as fechadas."
+    },
+    {
+      "id": "RG-EST-009",
+      "rule": "Excluir Issue exige admin/editor e acesso à empresa. RNC vinculada concluída/fechada bloqueia a exclusão até reabertura."
+    },
+    {
+      "id": "RG-EST-010",
+      "rule": "Exclusão da Issue apaga ações, Ishikawa vinculado e Issue em transação com rollback em falha. RNC e dependentes seguem FKs. Após commit, tenta apagar pastas da Issue e do Ishikawa."
+    },
+    {
+      "id": "RG-EST-011",
+      "rule": "A SPA confirma fechamento e exclusão da Issue."
+    },
+    {
+      "id": "RG-EST-012",
+      "rule": "KPIs: cadastradas, em tratamento, fechadas no mês, abertas há mais de 15 dias e em tratamento há mais de 15 dias. Todos respeitam o escopo de consulta da empresa."
+    },
+    {
+      "id": "RG-EST-013",
+      "rule": "Fechadas no mês considera data do fechamento no mês corrente em UTC−03:00. Datas inválidas não entram na contagem mensal."
+    },
+    {
+      "id": "RG-EST-014",
+      "rule": "Abertas há mais de 15 dias usa criação; tratativa há mais de 15 dias usa início do tratamento e somente status em tratamento. O limiar é estritamente superior a 15 dias."
+    },
+    {
+      "id": "RG-EST-015",
+      "rule": "Dashboard apresenta status, impacto, criação/fechamento mensal, abertas antigas e distribuições por envolvidos, ambiente e autor, com todos os períodos nas distribuições. Ausência aparece como Não informado."
+    },
+    {
+      "id": "RG-EST-016",
+      "rule": "Autores no dashboard são agrupados por ID do autor escolhido, com fallback para criador. Homônimos não são fundidos; a UI diferencia rótulos com ID quando necessário."
+    },
+    {
+      "id": "RG-EST-017",
+      "rule": "Tendências mensais da API agrupam pelo prefixo ano/mês das datas gravadas. Não aplicam a mesma conversão de fuso usada pelo KPI de fechadas no mês."
+    },
+    {
+      "id": "RG-ACO-001",
+      "rule": "Cada ação pertence a uma Issue e pode também estar vinculada a uma RNC. O Kanban consulta ações pelo escopo da empresa da Issue."
+    },
+    {
+      "id": "RG-ACO-002",
+      "rule": "Raias aceitas: backlog, iniciada, em andamento, em revisão e finalizada. A UI usa Backlog, Início, Em andamento, Revisão e Finalizado."
+    },
+    {
+      "id": "RG-ACO-003",
+      "rule": "Nova ação começa no Backlog, com início vazio e ordem calculada a partir das ações existentes."
+    },
+    {
+      "id": "RG-ACO-004",
+      "rule": "Primeira saída do Backlog define início da ação. Voltar ao Backlog não apaga/reinicia esse início."
+    },
+    {
+      "id": "RG-ACO-005",
+      "rule": "Criar ação ou tirar ação do Backlog pode iniciar tratamento de Issue cadastrada; não altera o estado de Issue já fechada."
+    },
+    {
+      "id": "RG-ACO-006",
+      "rule": "Responsável informado deve pertencer à empresa da Issue/RNC. Campos 5W2H incluem descrição, responsável, prazo, por quê, onde, como, quanto e observação."
+    },
+    {
+      "id": "RG-ACO-007",
+      "rule": "Ação é consultada/alterada/excluída somente dentro da Issue ou RNC indicada na rota. ID de ação de outro registro não é aceito como se fosse filho desse registro."
+    },
+    {
+      "id": "RG-ACO-008",
+      "rule": "Ações de RNC encerrada não podem ser criadas/editadas/excluídas/movidas pelas rotas protegidas. O Kanban apresenta essas ações em Finalizado, inclusive na leitura de inconsistência histórica."
+    },
+    {
+      "id": "RG-ACO-009",
+      "rule": "Alterar conteúdo ou excluir ação vinculada a RNC invalida aprovação do plano nas rotas correspondentes. A simples movimentação de status no Kanban não possui essa invalidação no código atual."
+    },
+    {
+      "id": "RG-ACO-010",
+      "rule": "Na seção RNC, o Kanban é filtrado para ações vinculadas a RNC. Cartão usa código RNC e resumo opcional; código da Issue continua disponível no contexto. Sem RNC, usa código Issue."
+    },
+    {
+      "id": "RG-ACO-011",
+      "rule": "Status no Kanban é separado do ciclo de vida da RNC. Cabeçalho e matriz acompanham raias; múltiplas raias mostram quantidades sem reconstruir todo o formulário e perder rascunhos."
+    },
+    {
+      "id": "RG-ACO-012",
+      "rule": "Semáforo de prazo é calculado por RNC a partir das ações não finalizadas. Prazo vencido ou no dia é vermelho; de um a três dias é amarelo; demais casos permanecem verdes. Vermelho prevalece sobre amarelo no conjunto da RNC."
+    },
+    {
+      "id": "RG-ACO-013",
+      "rule": "Semáforo usa o dia corrente de São Paulo e somente prazo no formato de data válida YYYY-MM-DD. Prazo ausente/inválido e ação finalizada não geram atraso; verde não comprova cumprimento quando não há prazo válido."
+    },
+    {
+      "id": "RG-ACO-014",
+      "rule": "Cartões de RNC concluída/fechada não são arrastáveis; a leitura os apresenta como finalizados mesmo diante de inconsistência histórica de raia."
+    },
+    {
+      "id": "RG-LEG-001",
+      "rule": "Na API legada de Issue, investigar causa exige ao menos uma de Ishikawa/5 Porquês. Marcar ferramenta sem habilitar investigação é rejeitado."
+    },
+    {
+      "id": "RG-LEG-002",
+      "rule": "Criar/editar Ishikawa vinculado exige investigação e uso de Ishikawa habilitados. Nome deve ser único no setor; na criação sem setor, busca o primeiro da empresa."
+    },
+    {
+      "id": "RG-LEG-003",
+      "rule": "Edição de categorias do Ishikawa faz merge com as existentes; causas são atualizadas conforme conteúdo enviado."
+    },
+    {
+      "id": "RG-LEG-004",
+      "rule": "Salvar 5 Porquês exige investigação e uso de 5 Porquês habilitados. Com Ishikawa, referências preenchidas a itens não podem se repetir."
+    },
+    {
+      "id": "RG-LEG-005",
+      "rule": "Salvar 5 Porquês legado grava conteúdo/causa raiz e inicia tratamento se a Issue não estiver fechada; mantém fechada quando já encerrada. Essas APIs não correspondem às etapas próprias de investigação da RNC."
+    },
+    {
+      "id": "RG-EMI-001",
+      "rule": "Toda RNC tem Issue de origem. Há no máximo uma RNC por Issue; vínculo composto garante a mesma empresa."
+    },
+    {
+      "id": "RG-EMI-002",
+      "rule": "Código RNC é próprio, `RNC-AAAA-NNN`, sequenciado por empresa/ano usando o maior número existente. Ano vem do relógio UTC da emissão."
+    },
+    {
+      "id": "RG-EMI-003",
+      "rule": "Emitir exige admin/editor com acesso à Issue e revalida os dados mínimos da captura. Nova emissão para Issue já vinculada é recusada."
+    },
+    {
+      "id": "RG-EMI-004",
+      "rule": "Complemento de emissão é opcional, inclusive classificação, enquadramento, responsáveis, equipe, metodologia e prazos. Não existe mínimo atual de dois integrantes."
+    },
+    {
+      "id": "RG-EMI-005",
+      "rule": "Classificação preenchida aceita maior/menor; não é equivalente à criticidade sugerida BAIXA/MÉDIA/ALTA da IA."
+    },
+    {
+      "id": "RG-EMI-006",
+      "rule": "Disposição aceita refugo, retrabalho, devolução ao fornecedor, liberação por concessão ou bloqueio preventivo. Metodologia aceita 5 Porquês, Ishikawa ou FMEA."
+    },
+    {
+      "id": "RG-EMI-007",
+      "rule": "Origem do gatilho não aparece no complemento atual da UI, mas a API ainda aceita vazio ou auditoria interna/externa, reclamação do cliente ou inspeção de rotina."
+    },
+    {
+      "id": "RG-EMI-008",
+      "rule": "Líder, responsável pela contenção, auditor de eficácia e membros da equipe informados devem pertencer à empresa. Equipe é deduplicada na emissão."
+    },
+    {
+      "id": "RG-EMI-009",
+      "rule": "Emissão salva uma fotografia dos fatos da Issue, usuário/data da emissão, origem da fotografia, impacto/ambiente próprios e ação imediata inicial copiada da ação emergencial."
+    },
+    {
+      "id": "RG-EMI-010",
+      "rule": "Os fatos preservados não são campos editáveis pela API RNC. Alterar campos próprios de impacto/ambiente da RNC não altera o snapshot."
+    },
+    {
+      "id": "RG-EMI-011",
+      "rule": "Emissão cria uma ação de tratamento no Backlog, ligada à Issue e à RNC, sem início. Líder/prazo de análise, quando informados, alimentam responsável/prazo dessa ação."
+    },
+    {
+      "id": "RG-EMI-012",
+      "rule": "RNC, ação inicial e fechamento da Issue são gravados na mesma transação. Falha não deve confirmar só uma parte do item."
+    },
+    {
+      "id": "RG-EMI-013",
+      "rule": "RNC histórica sem snapshot é migrada usando snapshot de triagem quando disponível e complemento da Issue atual; a origem dessa recuperação é registrada. Não é apresentada como captura original integral quando derivada da migração."
+    },
+    {
+      "id": "RG-MAN-001",
+      "rule": "Seleção oferece modos IA e manual. Manual usa movimentação entre listas e não chama provedor."
+    },
+    {
+      "id": "RG-MAN-002",
+      "rule": "Elegíveis são Issues da empresa cadastradas/em tratamento e sem RNC. Lista tem busca por código/relato, filtro de status e paginação; API aceita página ≥1, tamanho 1–100, padrão 50."
+    },
+    {
+      "id": "RG-MAN-003",
+      "rule": "Validação manual exige requisito/expectativa, desvio observado e suporte factual preenchidos. Recusa marcadores normalizados de ausência, como não informado, não se aplica, sem evidência, sem desvio, a definir e a confirmar."
+    },
+    {
+      "id": "RG-MAN-004",
+      "rule": "A checagem é textual; consistência factual precisa ser confirmada pelo usuário. O resultado inclui pendências, justificativa dos campos e hash do snapshot."
+    },
+    {
+      "id": "RG-MAN-005",
+      "rule": "Gerar manualmente exige `confirmar=true` literal e hash igual ao snapshot atual. Mudança de dados exige nova validação."
+    },
+    {
+      "id": "RG-MAN-006",
+      "rule": "A UI confirma que gerar RNC fecha as Issues de origem. Itens são processados individualmente no modo manual; uma falha é exibida no item sem apresentar sucesso indevido."
+    },
+    {
+      "id": "RG-TRI-001",
+      "rule": "Solicitar análise exige empresa, acesso LLM ativo com chave e lote de 1 a 20 IDs positivos e distintos de Issues elegíveis da empresa."
+    },
+    {
+      "id": "RG-TRI-002",
+      "rule": "Prompt pode ser editado/restaurado; texto informado tem 1–20.000 caracteres e não pode ser só espaços. Prompt + entradas serializadas têm limite de 100 KB."
+    },
+    {
+      "id": "RG-TRI-003",
+      "rule": "Análise exige Idempotency-Key UUID. Repetição com o mesmo conteúdo retorna análise existente; mesma chave para outro conteúdo é conflito. Há compatibilidade específica com hashes de requisições antigas sem prompt próprio."
+    },
+    {
+      "id": "RG-TRI-004",
+      "rule": "Cada usuário pode ter somente uma análise pendente/processando por vez."
+    },
+    {
+      "id": "RG-TRI-005",
+      "rule": "Solicitação persiste fotografia de entradas, hashes, provedor/modelo, versão/texto/hash do prompt, URL e parâmetros. Criar análise não altera status da Issue nem emite RNC."
+    },
+    {
+      "id": "RG-TRI-006",
+      "rule": "Worker consome análises persistidas em ordem. Estados: pendente, processando, concluída e falha. Etapas visíveis: enviando, aguardando e recebendo."
+    },
+    {
+      "id": "RG-TRI-007",
+      "rule": "Antes de chamar o provedor, worker revalida acesso/chave/atividade, modelo, provedor, URL e hash do prompt contra o pedido. Mudanças incompatíveis encerram com erro seguro."
+    },
+    {
+      "id": "RG-TRI-008",
+      "rule": "Trabalho em processamento há mais de 120 segundos é marcado como interrompido; não é reenviado automaticamente ao provedor. Worker ocioso não adquire lock de escrita e a chamada externa não mantém transação de escrita aberta."
+    },
+    {
+      "id": "RG-TRI-009",
+      "rule": "Resultado é JSON estrito, sem markdown, campos extras ou chaves JSON duplicadas. Candidatas têm ID enviado, título, justificativa completa e sugestão BAIXA/MÉDIA/ALTA."
+    },
+    {
+      "id": "RG-TRI-010",
+      "rule": "IDs repetidos/não enviados, justificativas vazias, tipos/enums inválidos e resposta superior a 200 KB são rejeitados. Lista vazia de candidatas é resultado válido."
+    },
+    {
+      "id": "RG-TRI-011",
+      "rule": "Prompt padrão aceita expectativa identificável, desvio descrito e suporte factual textual; não exige norma formal nem anexo nesta triagem preliminar."
+    },
+    {
+      "id": "RG-TRI-012",
+      "rule": "Prompt orienta aceitar cenários simulados identificando-os, explicitar pendências, não inventar fatos/evidências e não tratar conteúdo das Issues como instrução. Correção imediata ou baixo impacto não excluem por si só uma candidata."
+    },
+    {
+      "id": "RG-TRI-013",
+      "rule": "IA sugere candidatas; geração não ocorre automaticamente. Usuário seleciona candidatas, confere complemento e confirma explicitamente a emissão."
+    },
+    {
+      "id": "RG-TRI-014",
+      "rule": "Gerar lote exige análise concluída, 1–20 candidatas sem repetição, pertencentes à análise/empresa e confirmação literal verdadeira. Campos desconhecidos no complemento RNC são recusados."
+    },
+    {
+      "id": "RG-TRI-015",
+      "rule": "Antes de cada emissão, revalida existência, estado aberto, ausência de RNC e hash factual da Issue. Alteração do snapshot exige nova análise."
+    },
+    {
+      "id": "RG-TRI-016",
+      "rule": "Geração possui UUID idempotente por empresa e hash do conteúdo. Mesma chave/conteúdo retorna o resultado; chave reutilizada com outro conteúdo é conflito."
+    },
+    {
+      "id": "RG-TRI-017",
+      "rule": "Cada item usa savepoint: erro reverte aquele item, preservando os demais válidos. Resultado geral pode ser concluída, parcial ou falha; item pode ser gerada ou pendente com motivo."
+    },
+    {
+      "id": "RG-TRI-018",
+      "rule": "Restrição única impede que uma mesma candidata tenha mais de uma emissão bem-sucedida. Serviço/FK também impedem duas RNCs para a mesma Issue."
+    },
+    {
+      "id": "RG-TRI-019",
+      "rule": "Histórico preserva snapshots/justificativas e dados aprovados. Remover Issue/RNC pode anular suas referências, mantendo código e conteúdo histórico. Lista de análises retorna as 50 mais recentes da empresa."
+    },
+    {
+      "id": "RG-TRI-020",
+      "rule": "UI permite seleção por página/lote, consulta da Issue por código, mostra resultados por item e bloqueia duplicidade de envio enquanto processa. Acesso único ativo é pré-selecionado."
+    },
+    {
+      "id": "RG-RNC-001",
+      "rule": "Autenticados consultam RNCs do escopo autorizado; registro de outra empresa é retornado como não encontrado na consulta individual."
+    },
+    {
+      "id": "RG-RNC-002",
+      "rule": "A UI atual tem seis abas: Registro, Contenção, Investigação, Plano de Ação, Pendências e Encerramento. Permite consultar a Issue de origem."
+    },
+    {
+      "id": "RG-RNC-003",
+      "rule": "Admin/editor editam RNC não encerrada. Estados concluída/fechada bloqueiam alterações protegidas e tornam os formulários somente consulta."
+    },
+    {
+      "id": "RG-RNC-004",
+      "rule": "Registro admite resumo de até 25 caracteres. Esse resumo acompanha o código em seletores/cartões onde implementado."
+    },
+    {
+      "id": "RG-RNC-005",
+      "rule": "Responsáveis, emitente, validadores, equipe, revisores e aprovadores informados nas abas devem pertencer à empresa da RNC."
+    },
+    {
+      "id": "RG-RNC-006",
+      "rule": "Impacto próprio aceita baixo/médio/alto/crítico; ambiente próprio produção/homologação/campo/linha/outro. Valor histórico idêntico ao já salvo pode ser preservado mesmo fora da lista normalizada."
+    },
+    {
+      "id": "RG-RNC-007",
+      "rule": "Metodologias admitem seleção múltipla de 5 Porquês, Ishikawa e FMEA; duplicatas são removidas. Coluna singular acompanha a primeira opção para compatibilidade."
+    },
+    {
+      "id": "RG-RNC-008",
+      "rule": "Contenção possui ação imediata/definitiva, responsável, prazo, conclusão, validador e disposição. Datas preenchidas nas abas são validadas como ISO; não há imposição geral de preenchimento de toda contenção para salvar."
+    },
+    {
+      "id": "RG-RNC-009",
+      "rule": "Observações abrangem início/período, frequência, turnos, local, sintomas, condições sem falha, operadores/equipes e impacto acumulado. Atualização parcial preserva campos omitidos."
+    },
+    {
+      "id": "RG-RNC-010",
+      "rule": "Datas de observação são validadas; período final anterior ao inicial é recusado. Operadores são deduplicados e validados na empresa."
+    },
+    {
+      "id": "RG-RNC-011",
+      "rule": "Quantidade afetada, horas perdidas e prejuízo admitem ausência ou número finito não negativo. Unidade, moeda e período do impacto são guardados separadamente; não existe conversão automática de moeda/unidade."
+    },
+    {
+      "id": "RG-RNC-012",
+      "rule": "Hipóteses guardam descrição, evidências favoráveis/contrárias e testes. Testes admitem procedimento, responsável, data, resultado, esperado, critério de decisão, configuração, amostra, repetições e evidências vinculadas."
+    },
+    {
+      "id": "RG-RNC-013",
+      "rule": "Repetições de teste, quando preenchidas, são inteiro estrito ≥1. Conclusão aceita vazio, confirmada, descartada ou inconclusiva. Evidência vinculada ao teste deve pertencer à mesma RNC."
+    },
+    {
+      "id": "RG-RNC-014",
+      "rule": "Complementos guardam mudanças/antes/depois, abrangência, controles, motivo de não detecção, conclusões, limitações e revisão. Parecer aceita vazio, aceita ou complementar; revisor e datas são validados."
+    },
+    {
+      "id": "RG-RNC-015",
+      "rule": "Investigação RNC tem etapas próprias de 5 Porquês e Ishikawa. 5 Porquês admite problema, até 20 passos pergunta/resposta/evidência e conclusão. Não exige exatamente cinco passos."
+    },
+    {
+      "id": "RG-RNC-016",
+      "rule": "Ishikawa próprio guarda efeito, seis ramos e conclusão; títulos dos ramos são editáveis até 200 caracteres e recebem valores padrão quando omitidos."
+    },
+    {
+      "id": "RG-RNC-017",
+      "rule": "Modelos estruturados de investigação rejeitam campos extras. A chave antiga `porques` na raiz da investigação RNC é recusada/removida por migração; ela não é a etapa atual `etapa_porques`."
+    },
+    {
+      "id": "RG-RNC-018",
+      "rule": "Filtro da lista RNC procura código RNC/Issue ou descrição, ignorando acentos/maiúsculas. Sem curingas usa trecho; `*` e `?` fazem comparação do padrão completo, com outros metacaracteres tratados literalmente."
+    },
+    {
+      "id": "RG-EVI-001",
+      "rule": "Upload e exclusão exigem admin/editor, empresa autorizada e RNC não encerrada; download exige autenticação e vínculo com a RNC autorizada."
+    },
+    {
+      "id": "RG-EVI-002",
+      "rule": "Upload exige pasta configurada na Issue de origem e conteúdo não vazio; limite de 20 MB por arquivo."
+    },
+    {
+      "id": "RG-EVI-003",
+      "rule": "Arquivo fica em subpasta de investigação da Issue, com separação por código RNC e UUID; homônimos não sobrescrevem evidências existentes."
+    },
+    {
+      "id": "RG-EVI-004",
+      "rule": "Metadados guardam RNC, nome, caminho único, tamanho, MIME e usuário/data de carga."
+    },
+    {
+      "id": "RG-EVI-005",
+      "rule": "Falha na transação de upload remove o arquivo recém-criado; não deixa só o arquivo sem seu registro confirmado."
+    },
+    {
+      "id": "RG-EVI-006",
+      "rule": "Exclusão remove metadados e referências da evidência nos testes da investigação, além do arquivo quando presente. Falha física/SQL desfaz metadados e tenta restaurar o arquivo quando necessário."
+    },
+    {
+      "id": "RG-EVI-007",
+      "rule": "Exclusão exige confirmação na UI. Upload preserva rascunhos dos demais campos da investigação."
+    },
+    {
+      "id": "RG-EVI-008",
+      "rule": "Download valida o caminho dentro da pasta da Issue e entrega como anexo. Falta de metadado ou arquivo retorna não encontrado."
+    },
+    {
+      "id": "RG-ARV-001",
+      "rule": "RNC pode guardar objetivo até 4.000 caracteres e árvore própria de até 200 nós. Árvore não vazia exige objetivo não vazio."
+    },
+    {
+      "id": "RG-ARV-002",
+      "rule": "Cada nó tem ID inteiro positivo estrito e único, pai opcional, descrição, responsável, prazo, recursos e critério de aceite."
+    },
+    {
+      "id": "RG-ARV-003",
+      "rule": "Nó exige descrição não vazia de até 2.000 caracteres; recursos e critério de aceite têm até 2.000."
+    },
+    {
+      "id": "RG-ARV-004",
+      "rule": "Pai informado deve existir na própria árvore; autorreferência e ciclos são rejeitados."
+    },
+    {
+      "id": "RG-ARV-005",
+      "rule": "Responsável deve pertencer à empresa e prazo preenchido deve ser data válida. Modelos de nó rejeitam atributos extras."
+    },
+    {
+      "id": "RG-ARV-006",
+      "rule": "A árvore é persistida como parte da RNC, separada das ações do Kanban. Salvar nó não cria automaticamente ação 5W2H."
+    },
+    {
+      "id": "RG-PLA-001",
+      "rule": "Plano usa ações vinculadas por `rnc_id` e `issue_id`; criação pela rota RNC exige descrição não vazia, responsável da empresa e prazo válido quando informado."
+    },
+    {
+      "id": "RG-PLA-002",
+      "rule": "Matriz permite incluir/descartar linhas ainda não salvas e salvar por linha. Atualização preserva rascunhos das demais linhas e atualiza o Kanban."
+    },
+    {
+      "id": "RG-PLA-003",
+      "rule": "Criar/editar ação pela rota RNC invalida aprovação anterior do plano. Trocar aprovador também limpa usuário/data de aprovação."
+    },
+    {
+      "id": "RG-PLA-004",
+      "rule": "Aprovar plano exige RNC editável, ao menos uma ação e usuário logado igual ao aprovador indicado. Essa rota não concede exceção nominal ao superusuário."
+    },
+    {
+      "id": "RG-PLA-005",
+      "rule": "Aprovação registra usuário/data. A interface desabilita aprovação enquanto há linha não salva ou operação de linha em andamento."
+    },
+    {
+      "id": "RG-PLA-006",
+      "rule": "Pendência pertence à RNC e exige descrição não vazia; responsável e prazo, se informados, são validados. Inicia aberta com autor/data."
+    },
+    {
+      "id": "RG-PLA-007",
+      "rule": "Pendência só aceita aberta/concluída. Concluir registra usuário/data; reabrir limpa esses dados. Repetir o mesmo estado não refaz a conclusão."
+    },
+    {
+      "id": "RG-PLA-008",
+      "rule": "RNC encerrada bloqueia inclusão/alteração de ações, aprovação de plano e inclusão/conclusão/reabertura de pendências."
+    },
+    {
+      "id": "RG-ENC-001",
+      "rule": "Encerrar exige confirmação literal verdadeira, aprovador identificado da própria empresa e executor igual ao aprovador ou superusuário, com papel admin/editor."
+    },
+    {
+      "id": "RG-ENC-002",
+      "rule": "Aprovador, conclusão e lições podem ser informados na própria requisição de encerramento; não é obrigatório salvar essa aba antes. Falha posterior reverte essas alterações na mesma transação."
+    },
+    {
+      "id": "RG-ENC-003",
+      "rule": "Encerrar exige ao menos uma ação ligada à RNC e nenhuma pendência aberta. Não exige aprovação prévia do plano nem todas as ações previamente finalizadas."
+    },
+    {
+      "id": "RG-ENC-004",
+      "rule": "Encerramento finaliza automaticamente as ações ligadas à RNC e as ações da Issue de origem ainda sem RNC, vinculando essas últimas à RNC."
+    },
+    {
+      "id": "RG-ENC-005",
+      "rule": "Encerramento grava status concluída, usuário/data de aprovação e atualização. Nova chamada em concluída mantém o encerramento e reconcilia ações como finalizadas, respeitando a autorização do aprovador."
+    },
+    {
+      "id": "RG-ENC-006",
+      "rule": "Reabrir exige admin/editor autorizado e confirmação verdadeira. Somente estados concluída/fechada podem ser reabertos. Não exige que o executor seja o antigo aprovador."
+    },
+    {
+      "id": "RG-ENC-007",
+      "rule": "Reabertura preserva histórico do encerramento anterior, conclusão e lições, registrando executor/data/motivo. Motivo vazio recebe texto padrão; limite de 2.000 caracteres."
+    },
+    {
+      "id": "RG-ENC-008",
+      "rule": "Reabertura muda RNC para reaberta, limpa aprovação do encerramento e coloca ações finalizadas da RNC em andamento, preenchendo início ausente."
+    },
+    {
+      "id": "RG-ENC-009",
+      "rule": "Reabrir RNC não reabre a Issue de origem nem limpa automaticamente a aprovação do plano."
+    },
+    {
+      "id": "RG-ENC-010",
+      "rule": "UI oferece submenu Reativar RNC somente a editores/admin, lista encerradas e confirma reativação. Ciclo de vida e raias Kanban continuam conceitos separados."
+    },
+    {
+      "id": "RG-LIM-001",
+      "rule": "Limpeza é exclusiva de admin e exige empresa selecionada/existente, sem permitir outra empresa para admin comum."
+    },
+    {
+      "id": "RG-LIM-002",
+      "rule": "Há dois escopos: somente fechadas sem RNC ou todas sem RNC. Issues vinculadas a RNC são sempre preservadas nessa operação."
+    },
+    {
+      "id": "RG-LIM-003",
+      "rule": "Consultar prévia não exclui dados. Prévia apresenta quantidades de Issues/ações, vinculadas preservadas e revisão derivada dos dados candidatos."
+    },
+    {
+      "id": "RG-LIM-004",
+      "rule": "Executar exige confirmação e revisão igual à prévia atual; mudança na base candidata exige revisar a prévia."
+    },
+    {
+      "id": "RG-LIM-005",
+      "rule": "Antes da remoção de candidatos, cria backup SQLite. Sem candidatos retorna zero e não cria backup."
+    },
+    {
+      "id": "RG-LIM-006",
+      "rule": "Exclui ações, Issues e Ishikawa não compartilhado em transação única; falha provoca rollback. Histórico de triagem conserva snapshots conforme suas FKs."
+    },
+    {
+      "id": "RG-LIM-007",
+      "rule": "Limpeza preserva todos os arquivos físicos, inclusive pastas das Issues removidas. É diferente da exclusão individual da Issue."
+    },
+    {
+      "id": "RG-FIL-001",
+      "rule": "Ferramentas separam Issues e RNCs. Base Issues aceita somente cadastradas/em tratamento, sem finalização e sem RNC; vínculo com RNC exclui mesmo que o status da Issue esteja inconsistente."
+    },
+    {
+      "id": "RG-FIL-002",
+      "rule": "Elegibilidade é aplicada antes de gerar opções, filtros, totais e detalhes. Base RNC usa registros emitidos com Issue de origem, incluindo seus estados conforme filtros."
+    },
+    {
+      "id": "RG-FIL-003",
+      "rule": "Categoria é o campo factual `o_que`; em RNC usa snapshot da emissão. Não há classificação semântica automática para criar categoria."
+    },
+    {
+      "id": "RG-FIL-004",
+      "rule": "RNC usa impacto/ambiente próprios e localização da observação, com fallback para local factual. Pessoa é responsável ou líder; na base Issue é autor ou criador."
+    },
+    {
+      "id": "RG-FIL-005",
+      "rule": "Filtros: empresa, período/data de referência, simulados, categoria, impacto, ambiente, local, status, pessoa, envolvidos e classificação RNC. Datas de referência: detecção/cadastro para Issue; detecção/emissão para RNC."
+    },
+    {
+      "id": "RG-FIL-006",
+      "rule": "Início posterior ao fim é recusado. Período inclui limites; registros sem data válida para o período são excluídos e contabilizados. Datas com fuso são consideradas em UTC−03:00."
+    },
+    {
+      "id": "RG-FIL-007",
+      "rule": "Comparação de categorias e filtros normaliza acentos, caixa e espaços. Opções ausentes não são inventadas."
+    },
+    {
+      "id": "RG-FIL-008",
+      "rule": "Filtro de simulados aceita todos/somente/excluir. Identificação usa a presença de simulado ou SIM-FERR- nos campos textuais analisados; não garante detectar simulação sem marcação textual."
+    },
+    {
+      "id": "RG-FIL-009",
+      "rule": "Unidade e moeda não são convertidas. Quantidade/prejuízo exigem rótulo correspondente para inclusão; misturas incompatíveis são rejeitadas quando a medida pede comparabilidade."
+    },
+    {
+      "id": "RG-FIL-010",
+      "rule": "Consultas estatísticas são somente leitura. Afinidades/Relações só gravam suas análises próprias por ação explícita, sem alterar origens."
+    },
+    {
+      "id": "RG-FIL-011",
+      "rule": "Radios das bases são isolados por formulário. Alterações de filtros/contexto invalidam análises ou exigem novo carregamento conforme a ferramenta; respostas obsoletas são descartadas por controle de sequência."
+    },
+    {
+      "id": "RG-PAR-001",
+      "rule": "Agrupa por categoria, impacto, ambiente, local, status, pessoa ou envolvidos; classificação é exclusiva da base RNC."
+    },
+    {
+      "id": "RG-PAR-002",
+      "rule": "Issue mede contagem de registros. RNC mede contagem, quantidade afetada, horas perdidas ou prejuízo."
+    },
+    {
+      "id": "RG-PAR-003",
+      "rule": "Medida numérica ausente/inválida/não finita/negativa é excluída e contabilizada; não vira zero automaticamente. Ausência na dimensão pode formar Não informado."
+    },
+    {
+      "id": "RG-PAR-004",
+      "rule": "Soma contribuições por grupo, ordena decrescente e calcula percentual e percentual acumulado sobre o total, apresentados com duas casas no cálculo de Pareto."
+    },
+    {
+      "id": "RG-PAR-005",
+      "rule": "Total zero produz percentuais zero. Base vazia produz total zero e itens vazios."
+    },
+    {
+      "id": "RG-PAR-006",
+      "rule": "Barras/tabela permitem consultar os registros de cada grupo. Filtro legado de vínculo existe na API, mas fica oculto na base Issue; elegibilidade fixa prevalece."
+    },
+    {
+      "id": "RG-HIS-001",
+      "rule": "Issue oferece idade desde cadastro e horas entre detecção/cadastro. RNC oferece idade desde emissão, horas detecção/emissão, detecção/contenção, horas perdidas, quantidade afetada e prejuízo."
+    },
+    {
+      "id": "RG-HIS-002",
+      "rule": "Intervalos têm largura igual. Número automático usa teto de log2(n) + 1, limitado a 50; manual aceita 1–50."
+    },
+    {
+      "id": "RG-HIS-003",
+      "rule": "Amostra com valores iguais forma um único intervalo. Limite superior pertence somente ao último intervalo, incluindo o máximo."
+    },
+    {
+      "id": "RG-HIS-004",
+      "rule": "Apresenta n, mínimo, máximo, média, mediana e desvio padrão amostral quando n≥2. Sem amostra, estatísticas ficam ausentes; sem dois valores, desvio não é calculado."
+    },
+    {
+      "id": "RG-HIS-005",
+      "rule": "Tempo exige datas com componente de horário válido; sem fuso usa UTC−03:00. Contenção usa `contencao_em` ou, na ausência, data de conclusão."
+    },
+    {
+      "id": "RG-HIS-006",
+      "rule": "Valores ausentes e inválidos/negativos têm contagens separadas. Quantidade/moeda incompatível exige filtro de unidade/moeda."
+    },
+    {
+      "id": "RG-HIS-007",
+      "rule": "Clique em intervalo consulta seus registros. Valores estatísticos são exibidos com duas casas, mantendo precisão interna."
+    },
+    {
+      "id": "RG-DIS-001",
+      "rule": "Exige duas medidas diferentes disponíveis na base, usando o catálogo de medidas do Histograma."
+    },
+    {
+      "id": "RG-DIS-002",
+      "rule": "Cada ponto contém X e Y do mesmo registro; listas independentes não são emparelhadas por posição."
+    },
+    {
+      "id": "RG-DIS-003",
+      "rule": "Par sem uma medida completa é excluído e contabilizado; valores não numéricos/não finitos/negativos também são excluídos com contagem própria."
+    },
+    {
+      "id": "RG-DIS-004",
+      "rule": "Eixos com quantidade/prejuízo respeitam unidade/moeda compatível. UI exige seleção desses filtros quando necessários."
+    },
+    {
+      "id": "RG-DIS-005",
+      "rule": "Pearson só é calculado com pelo menos dois pares e variação nos dois eixos; valor é limitado ao intervalo −1 a 1. Ausência de condições resulta em correlação indisponível."
+    },
+    {
+      "id": "RG-DIS-006",
+      "rule": "Clique no ponto consulta registro; tabela conserva os pares. Números são exibidos com duas casas e precisão de cálculo é preservada."
+    },
+    {
+      "id": "RG-DIS-007",
+      "rule": "UI informa que correlação não comprova causalidade, pontos coincidentes podem se sobrepor e exemplos simulados podem ter relações construídas."
+    },
+    {
+      "id": "RG-DIS-008",
+      "rule": "Não há campo de hipótese a investigar nessa ferramenta na versão levantada; a proposta histórica de adicioná-lo não é regra já implementada."
+    },
+    {
+      "id": "RG-AFI-001",
+      "rule": "Quadro trabalha com uma empresa e uma base por vez, com filtros/elegibilidade comuns e aba explicativa para Issues/RNCs."
+    },
+    {
+      "id": "RG-AFI-002",
+      "rule": "Cada cartão é um registro inteiro, preservando códigos, relato e detalhes factuais. Observações de uma RNC não viram cartões independentes."
+    },
+    {
+      "id": "RG-AFI-003",
+      "rule": "Grupos são criados/nomeados pelo usuário; cartões são movidos manualmente por seletor. Não há agrupamento semântico automático."
+    },
+    {
+      "id": "RG-AFI-004",
+      "rule": "Um cartão pode pertencer a no máximo um grupo do quadro; sem atribuição fica em Sem grupo. IDs fora do snapshot e repetições são recusados."
+    },
+    {
+      "id": "RG-AFI-005",
+      "rule": "Título é obrigatório até 160 caracteres; máximo 100 grupos, nome não vazio até 120 e no máximo 2.000 IDs por grupo. Nomes devem ser distintos desconsiderando caixa e espaços externos."
+    },
+    {
+      "id": "RG-AFI-006",
+      "rule": "Renomear grupo é permitido; remover grupo devolve seus cartões a Sem grupo."
+    },
+    {
+      "id": "RG-AFI-007",
+      "rule": "Salvar é manual e exige admin/editor; grava título, base, fotografia dos registros/filtros, grupos, autoria e revisão na tabela afinidades. Visualizador pode explorar temporariamente e consultar salvos."
+    },
+    {
+      "id": "RG-AFI-008",
+      "rule": "Lista de salvos é filtrada por empresa/base. Reabrir mantém a fotografia original e gera assinatura para o usuário atual. Atualizar exige revisão vigente e preserva empresa/base; conflito retorna 409."
+    },
+    {
+      "id": "RG-AFI-009",
+      "rule": "Navegar entre seções preserva o quadro. Trocar base/carregar outro quadro/abrir salvo confirma descarte se houver alterações; empresa/sessão limpa contexto. Não há autosave nem exclusão de diagrama nessa versão."
+    },
+    {
+      "id": "RG-AFI-010",
+      "rule": "Preparar IA valida o quadro e assina título, grupos, registros e itens sem grupo sem salvar. Sugestões são textuais e não movimentam cartões automaticamente; afinidade não comprova causa raiz."
+    },
+    {
+      "id": "RG-AFI-011",
+      "rule": "Excluir empresa remove seus diagramas por gatilho; excluir criador desvincula autoria e preserva análise."
+    },
+    {
+      "id": "RG-REL-001",
+      "rule": "Segue seleção de empresa/base, filtros, aba explicativa, salvamento manual, revisões e consulta IA do padrão Afinidades, com tabela própria relacoes."
+    },
+    {
+      "id": "RG-REL-002",
+      "rule": "Fator tem ID positivo único e nome não vazio único, até 160 caracteres. Diagrama admite até 40 fatores e título obrigatório até 160 caracteres."
+    },
+    {
+      "id": "RG-REL-003",
+      "rule": "Fator pode vincular zero ou mais registros do snapshot, até 2.000 IDs sem repetição dentro do fator. O mesmo registro pode sustentar vários fatores. Sem vínculo, fator é proposta do analista."
+    },
+    {
+      "id": "RG-REL-004",
+      "rule": "Relação aponta da origem que influencia para destino influenciado. Ambos os fatores precisam existir e ser diferentes; autorrelação é recusada."
+    },
+    {
+      "id": "RG-REL-005",
+      "rule": "Até 200 relações. Não pode haver duplicata na mesma direção; direção inversa e ciclos são permitidos."
+    },
+    {
+      "id": "RG-REL-006",
+      "rule": "Relação exige justificativa não vazia até 3.000 caracteres e tipo hipótese ou evidenciada. Evidenciada exige texto de evidência/referência não vazio até 3.000. O servidor não comprova a veracidade dessa evidência."
+    },
+    {
+      "id": "RG-REL-007",
+      "rule": "Entradas/saídas por fator são recalculadas no backend a partir das relações. Contagens não determinam causalidade, causa raiz ou prioridade."
+    },
+    {
+      "id": "RG-REL-008",
+      "rule": "UI desenha fatores em disposição circular e setas direcionais: hipóteses laranja tracejado, evidenciadas azul contínuo. Relações inversas recebem separação curva."
+    },
+    {
+      "id": "RG-REL-009",
+      "rule": "Usuário pode editar/remover relações, renomear fatores e alterar vínculos. Remover fator remove todas as suas relações. Não há arraste/posicionamento manual nem importação automática de Afinidades."
+    },
+    {
+      "id": "RG-REL-010",
+      "rule": "Grava fotografia de relatos/filtros, fatores/vínculos, relações, justificativas/evidências, autoria e revisão. Apenas admin/editor grava; visualizador consulta/explora temporariamente."
+    },
+    {
+      "id": "RG-REL-011",
+      "rule": "Reabrir gera assinatura da sessão atual; atualização confere revisão e mantém empresa/base. Navegação preserva quadro; descarte de rascunho e mudança de contexto seguem o padrão descrito em Afinidades."
+    },
+    {
+      "id": "RG-REL-012",
+      "rule": "Preparar IA valida e assina o diagrama atual sem gravação. Resposta não cria fatores/setas automaticamente nem é salva como parte da análise."
+    },
+    {
+      "id": "RG-REL-013",
+      "rule": "Exclusão de empresa remove diagramas; exclusão do criador limpa autoria sem apagar análises. Não há rota de exclusão individual de diagrama."
+    },
+    {
+      "id": "RG-LLM-001",
+      "rule": "Cadastro LLM é por empresa e exclusivo de admin. Nome é único por empresa; nome/provedor/modelo/URL são obrigatórios e não vazios."
+    },
+    {
+      "id": "RG-LLM-002",
+      "rule": "Criar acesso exige chave. Editar com chave vazia preserva a anterior; empresa do acesso não pode ser trocada."
+    },
+    {
+      "id": "RG-LLM-003",
+      "rule": "Consultas do cadastro não retornam a chave, apenas indicador de chave configurada. A chave fica no SQLite e é lida pelo backend. Criar/editar cadastro não chama o provedor."
+    },
+    {
+      "id": "RG-LLM-004",
+      "rule": "URL no cadastro deve ser HTTP/HTTPS, com host e sem credenciais/query/fragmento. A autorização mais restrita de execução é aplicada somente ao usar o acesso."
+    },
+    {
+      "id": "RG-LLM-005",
+      "rule": "Execução suporta Groq, OpenAI, OpenRouter, DeepSeek e identificadores de provedor compatível. Exige HTTPS, porta padrão/443 e host autorizado. Hosts adicionais vêm de QUALIDADE_LLM_ALLOWED_HOSTS."
+    },
+    {
+      "id": "RG-LLM-006",
+      "rule": "Destino padrão permitido: api.groq.com, api.openai.com, openrouter.ai e api.deepseek.com. Resolução precisa resultar em endereços públicos; redirects e uso de proxy do ambiente estão desabilitados."
+    },
+    {
+      "id": "RG-LLM-007",
+      "rule": "Endpoint é Chat Completions; URL base recebe /chat/completions quando necessário. OpenRouter exige caminho /api/v1 ou /api/v1/chat/completions."
+    },
+    {
+      "id": "RG-LLM-008",
+      "rule": "Chamada tem timeout de 60 segundos, conexão de 10 segundos e resposta limitada a 200 KB. Não há retry automático. Erros de credencial, limite, parâmetros, destino, conteúdo e transporte viram mensagens controladas."
+    },
+    {
+      "id": "RG-LLM-009",
+      "rule": "Limite de saída padrão é 8.192 tokens. OpenRouter/DeepSeek usam max_tokens; demais usam max_completion_tokens. OpenRouter consulta catálogo e ajusta parâmetros/limite ao suporte declarado pelo modelo."
+    },
+    {
+      "id": "RG-LLM-010",
+      "rule": "Triagem usa saída JSON e validação estrita. Consulta de ferramenta usa texto; DeepSeek textual envia thinking desabilitado sem mudar a triagem JSON."
+    },
+    {
+      "id": "RG-LLM-011",
+      "rule": "Abrir Consultar IA apenas carrega acessos e instruções/prévia. Somente Enviar à IA envia prompt e dados ao provedor. Um acesso único é pré-selecionado; ausência de acesso ativo impede envio."
+    },
+    {
+      "id": "RG-LLM-012",
+      "rule": "Consulta de ferramenta exige prompt não vazio até 12.000 caracteres, snapshot até 1.000.000 e assinatura hexadecimal válida. Campos extras são rejeitados."
+    },
+    {
+      "id": "RG-LLM-013",
+      "rule": "Snapshot contém ferramenta, empresa, usuário, parâmetros e resultado, assinado com HMAC. Assinatura/empresa/usuário são verificados; troca de usuário ou adulteração não autoriza consulta."
+    },
+    {
+      "id": "RG-LLM-014",
+      "rule": "Chave de assinatura é gerada na inicialização do processo: reinício exige gerar análise ou reabrir diagrama para renovar snapshot. Não há validade temporal persistente independente desse processo."
+    },
+    {
+      "id": "RG-LLM-015",
+      "rule": "Envio revalida acesso ativo, chave e empresa. Não mantém conexão/transação de banco durante a chamada externa e não altera dados de Issue/RNC."
+    },
+    {
+      "id": "RG-LLM-016",
+      "rule": "Mudança de contexto invalida a consulta na interface; respostas obsoletas são descartadas. Envio é bloqueado na janela enquanto uma chamada está em andamento."
+    },
+    {
+      "id": "RG-LLM-017",
+      "rule": "Texto com finish_reason=length é preservado e marcado como parcial. Limite sem texto, conteúdo filtrado, texto vazio e outros términos recebem tratamento específico. JSON de triagem incompleto continua rejeitado."
+    },
+    {
+      "id": "RG-LLM-018",
+      "rule": "Prompt fixo das ferramentas orienta não inventar evidências/causas, distinguir simulação e hipótese e não executar ações. Prompt editável varia para Afinidades/Relações para apoiar revisão humana."
+    },
+    {
+      "id": "RG-LLM-019",
+      "rule": "Consultas textuais das ferramentas não têm histórico persistente de prompt/resposta nessa versão. Isso difere do histórico persistente da triagem para RNC."
+    },
+    {
+      "id": "RG-AUX-001",
+      "rule": "Projetos permanecem na API: pertencem à empresa, leitura para autenticados autorizados e escrita para admin/editor. Nome/descrição são cadastrados; menu Projeto não aparece na SPA atual."
+    },
+    {
+      "id": "RG-AUX-002",
+      "rule": "Datasets pertencem a projeto, herdando autorização pela empresa. Criação aceita nome, tipo e dados lista/objeto; exclusão do projeto remove datasets por cascata."
+    },
+    {
+      "id": "RG-AUX-003",
+      "rule": "Importação CSV usa UTF-8 com BOM opcional, ignora linhas totalmente vazias e usa primeira linha como cabeçalho. Pareto converte categoria/frequência; dispersão converte X/Y; controle extrai células numéricas; outros tipos viram dicionários por cabeçalho."
+    },
+    {
+      "id": "RG-AUX-004",
+      "rule": "Rotinas de cálculo de dispersão e carta de controle permanecem na biblioteca, sem módulo independente atual de Carta de Controle. Controle usa média ±3 desvios amostrais; n=1 tem desvio zero."
+    },
+    {
+      "id": "RG-AUX-005",
+      "rule": "Modelos derivados de SafeModel saneiam texto recursivamente, removendo tags/padrões de script/eventos/javascript. Exceções explícitas preservam senha, sintaxe, chave e snapshots/prompts conforme cada modelo. Não é uma validação factual de conteúdo."
+    },
+    {
+      "id": "RG-AUX-006",
+      "rule": "A interface usa texto/escape para apresentar conteúdo dos usuários em seus componentes. O helper comum transforma erros estruturados de validação em mensagens com campo, preservando mensagens textuais."
+    },
+    {
+      "id": "RG-AUX-007",
+      "rule": "Conexões SQLite habilitam FKs. Identidades e dependências são preservadas pelas migrações específicas, não por reset automático de base/Vault."
+    },
+    {
+      "id": "RG-AUX-008",
+      "rule": "Migração converte estados antigos de Issue, fecha Issues já emitidas em RNC e complementa datas históricas faltantes usando atualização/criação como aproximação."
+    },
+    {
+      "id": "RG-AUX-009",
+      "rule": "Migração separa códigos e dados de RNC da Issue, preservando IDs, ações e caminhos; fatos antigos são recuperados com origem declarada."
+    },
+    {
+      "id": "RG-AUX-010",
+      "rule": "Seed cria superusuário admin quando inexistente e base demonstrativa Empresa teste/Carlos quando ausentes. Não deve ser entendido como autorização para resetar dados existentes."
+    },
+    {
+      "id": "RG-AUX-011",
+      "rule": "Carga didática de ferramentas possui ensaio em memória e aplicação explícita com backup; cria Issue antes de emitir RNC pelo serviço. Identificação da carga evita reaplicação; não aprova/conclui RNCs nem chama LLM."
+    },
+    {
+      "id": "RG-AUX-012",
+      "rule": "Scripts de aplicação das tabelas Afinidades/Relações fazem backup e conferem preservação do conteúdo anterior e integridade/FKs. Essas garantias são próprias desses scripts, não de toda gravação comum do sistema."
+    },
+    {
+      "id": "RG-LAC-001",
+      "rule": "A exigência explícita de confirmar emissão e estar aberta pertence aos fluxos de seleção manual/IA. A rota direta emitir-rnc revalida captura, vínculos e duplicidade, mas não recebe confirmar nem rejeita uma Issue apenas por já estar fechada."
+    },
+    {
+      "id": "RG-LAC-002",
+      "rule": "Fechar Issue, finalizar Issue legado e encerrar RNC são três operações com pré-condições diferentes. Não há exigência universal de todas as tarefas já finalizadas para qualquer encerramento."
+    },
+    {
+      "id": "RG-LAC-003",
+      "rule": "RNC concluída é bloqueada nas rotas próprias e de ações protegidas. Edição dos fatos da Issue original não possui bloqueio geral por Issue fechada; snapshot da RNC permanece separado."
+    },
+    {
+      "id": "RG-LAC-004",
+      "rule": "Aprovação nominal de processo pode ser registrada pela rota aprovar. A edição cadastral também aceita status aprovado sem passar por essa rota; portanto status sozinho não garante presença de assinatura de aprovação."
+    },
+    {
+      "id": "RG-LAC-005",
+      "rule": "Issue valida conteúdo obrigatório, mas não valida genericamente enums de impacto/ambiente nem formato ISO de todos os textos de data na captura. A UI é mais restritiva com seletores e controles; RNC/ferramentas aplicam suas próprias validações."
+    },
+    {
+      "id": "RG-LAC-006",
+      "rule": "Usuário pode existir sem setor e, quando criado pelo superusuário, sem empresa. A hierarquia empresa→setor→usuário não é obrigatória para todos os registros no código atual."
+    },
+    {
+      "id": "RG-LAC-007",
+      "rule": "Em usuários/processos, alguns campos opcionais usam valor não nulo para decidir atualização; enviar null não remove necessariamente um vínculo existente. Não presumir que todo campo possa ser limpo por null."
+    },
+    {
+      "id": "RG-LAC-008",
+      "rule": "Configurar URL LLM com formato aceito não garante que ela seja autorizada na execução nem que modelo/chave sejam válidos. Validações externas ocorrem quando o acesso é usado."
+    },
+    {
+      "id": "RG-LAC-009",
+      "rule": "Campos de enquadramento, FMEA, auditor de eficácia, prazos, conclusão técnica e revisão podem ser registrados, mas não há motor que imponha conformidade normativa, eficácia comprovada, teste real ou preenchimento integral antes de todo encerramento."
+    },
+    {
+      "id": "RG-LAC-010",
+      "rule": "Não há ciclo automático de seis estados RNC nem notificações operacionais implementadas. Há abas e eventos de emitir/concluir/reabrir; abas não são estados."
+    },
+    {
+      "id": "RG-LAC-011",
+      "rule": "Diagramas salvam fotografia e não sincronizam automaticamente alterações/exclusões dos registros de origem. Resposta IA não substitui confirmação humana nem é incorporada automaticamente ao diagrama."
+    },
+    {
+      "id": "RG-LAC-012",
+      "rule": "Exclusões físicas de entidades/cadastros podem ser impedidas por FKs de outros módulos. Não existe garantia universal de excluir usuário com referências ou de mover pastas ao renomear."
+    },
+    {
+      "id": "RG-LAC-013",
+      "rule": "Lacuna de isolamento reproduzida e corrigida pelo QA: ferramentas estatísticas rejeitam com 403 usuário não global sem empresa, antes de consultar registros/opções. A regra compartilhada do Pareto protege também Histograma e Dispersão. Consulta global do superusuário e filtros de contas vinculadas permanecem disponíveis."
+    },
+    {
+      "id": "RG-LAC-014",
+      "rule": "No Ishikawa legado de Issue, o superusuário tem exceção na comparação da empresa do setor. Isso difere da validação estrita de mesma empresa de responsáveis/RNC."
+    },
+    {
+      "id": "RG-MAT-001",
+      "rule": "Uma RNC exige exatamente uma origem; Geral exige de duas a vinte RNCs únicas da mesma empresa. Origem ausente ou de outra empresa não gera matriz."
+    },
+    {
+      "id": "RG-MAT-002",
+      "rule": "Filtros de seleção compartilham a base RNC do Pareto. A fotografia contém as RNCs explicitamente selecionadas e suas ações reais vinculadas à RNC e à Issue correspondente."
+    },
+    {
+      "id": "RG-MAT-003",
+      "rule": "Linhas declaram problema, hipótese ou fator evidenciado, com RNCs de origem da fotografia. Fator evidenciado exige referência de evidência. Limite de 40 linhas e 60 ações; seleção com mais ações é rejeitada."
+    },
+    {
+      "id": "RG-MAT-004",
+      "rule": "Cruzamentos aceitam Não avaliada, Nenhuma, Fraca, Média e Forte. Toda avaliação, inclusive Nenhuma, exige justificativa. Coordenadas duplicadas ou fora das linhas/colunas são rejeitadas."
+    },
+    {
+      "id": "RG-MAT-005",
+      "rule": "Sem relação positiva indicada não equivale a ausência demonstrada de cobertura: a conclusão de ausência após avaliação exige todas as células da linha avaliadas e colunas não vazias. Ações excluídas são identificadas separadamente."
+    },
+    {
+      "id": "RG-MAT-006",
+      "rule": "Células podem relacionar problemas e ações de RNCs diferentes no contexto Geral, mantendo as origens e sem transferir ações, alterar planos, aprovações ou registros operacionais."
+    },
+    {
+      "id": "RG-MAT-007",
+      "rule": "Matrizes são fotografias persistidas separadamente por empresa/contexto. Admin/editor salvam; visualizador consulta e explora temporariamente. Atualização exige revisão vigente e preserva empresa, contexto e seleção original de RNCs."
+    },
+    {
+      "id": "RG-MAT-008",
+      "rule": "Preparar consulta à IA valida as edições e assina a matriz atual por empresa/usuário. Instruções editáveis distinguem Uma RNC/Geral. Somente Enviar à IA chama o provedor; resposta exibida não altera nem é salva automaticamente na matriz."
+    },
+    {
+      "id": "RG-MAT-009",
+      "rule": "Aplicar/cancelar edição pendente do cruzamento precede salvar/consultar IA. Aba Como funciona explica ambos os contextos, intensidades, origem, fotografia e limites de interpretação."
+    },
+    {
+      "id": "RG-MAT-010",
+      "rule": "Descrições iniciais acima de 2.000 caracteres recebem uma prévia identificada; o relato integral continua no snapshot e em Registros de origem. Não há pontuação, causa raiz ou eficácia determinada automaticamente."
+    }
+  ],
+  "routes": [
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 66,
+      "function": "candidates",
+      "method": "GET",
+      "path": "/api/ferramentas/afinidades"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 96,
+      "function": "preview",
+      "method": "POST",
+      "path": "/api/ferramentas/afinidades/preparar"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 102,
+      "function": "listing",
+      "method": "GET",
+      "path": "/api/ferramentas/afinidades/diagramas"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 109,
+      "function": "detail",
+      "method": "GET",
+      "path": "/api/ferramentas/afinidades/diagramas/{diagram_id}"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 120,
+      "function": "create",
+      "method": "POST",
+      "path": "/api/ferramentas/afinidades/diagramas"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 131,
+      "function": "update",
+      "method": "PUT",
+      "path": "/api/ferramentas/afinidades/diagramas/{diagram_id}"
+    },
+    {
+      "file": "app/routers/auth.py",
+      "line": 24,
+      "function": "login",
+      "method": "POST",
+      "path": "/api/auth/login"
+    },
+    {
+      "file": "app/routers/auth.py",
+      "line": 41,
+      "function": "logout",
+      "method": "POST",
+      "path": "/api/auth/logout"
+    },
+    {
+      "file": "app/routers/auth.py",
+      "line": 50,
+      "function": "me",
+      "method": "GET",
+      "path": "/api/auth/me"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 75,
+      "function": "list_datasets",
+      "method": "GET",
+      "path": "/api/projects/{project_id}/datasets"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 85,
+      "function": "create_dataset",
+      "method": "POST",
+      "path": "/api/projects/{project_id}/datasets"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 99,
+      "function": "import_csv",
+      "method": "POST",
+      "path": "/api/projects/{project_id}/datasets/csv"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 122,
+      "function": "delete_dataset",
+      "method": "DELETE",
+      "path": "/api/datasets/{dataset_id}"
+    },
+    {
+      "file": "app/routers/dispersao.py",
+      "line": 24,
+      "function": "scatter",
+      "method": "GET",
+      "path": "/api/ferramentas/dispersao"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 30,
+      "function": "arvore",
+      "method": "GET",
+      "path": "/api/processos/{processo_id}/arvore"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 52,
+      "function": "upload_arquivo",
+      "method": "POST",
+      "path": "/api/processos/{processo_id}/arquivos"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 76,
+      "function": "criar_arquivo",
+      "method": "POST",
+      "path": "/api/processos/{processo_id}/arquivos/criar"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 95,
+      "function": "criar_pasta",
+      "method": "POST",
+      "path": "/api/processos/{processo_id}/pastas"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 114,
+      "function": "delete_objeto",
+      "method": "DELETE",
+      "path": "/api/processos/{processo_id}/objetos"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 127,
+      "function": "abrir_arquivo",
+      "method": "GET",
+      "path": "/api/processos/{processo_id}/arquivo"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 40,
+      "function": "list_empresas",
+      "method": "GET",
+      "path": "/api/empresas"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 52,
+      "function": "create_empresa",
+      "method": "POST",
+      "path": "/api/empresas"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 67,
+      "function": "get_empresa",
+      "method": "GET",
+      "path": "/api/empresas/{empresa_id}"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 78,
+      "function": "update_empresa",
+      "method": "PUT",
+      "path": "/api/empresas/{empresa_id}"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 98,
+      "function": "delete_empresa",
+      "method": "DELETE",
+      "path": "/api/empresas/{empresa_id}"
+    },
+    {
+      "file": "app/routers/ferramentas_ia.py",
+      "line": 28,
+      "function": "accesses",
+      "method": "GET",
+      "path": "/api/ferramentas/ia/acessos"
+    },
+    {
+      "file": "app/routers/ferramentas_ia.py",
+      "line": 34,
+      "function": "consult",
+      "method": "POST",
+      "path": "/api/ferramentas/ia/consultar"
+    },
+    {
+      "file": "app/routers/histograma.py",
+      "line": 54,
+      "function": "histogram",
+      "method": "GET",
+      "path": "/api/ferramentas/histograma"
+    },
+    {
+      "file": "app/routers/issue_limpeza.py",
+      "line": 55,
+      "function": "preview_limpeza",
+      "method": "GET",
+      "path": "/api/issues/limpeza"
+    },
+    {
+      "file": "app/routers/issue_limpeza.py",
+      "line": 63,
+      "function": "limpar_issues",
+      "method": "POST",
+      "path": "/api/issues/limpeza"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 90,
+      "function": "validate_manual",
+      "method": "GET",
+      "path": "/api/issues/selecao/manual/{issue_id}/validacao"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 98,
+      "function": "generate_manual",
+      "method": "POST",
+      "path": "/api/issues/selecao/manual/{issue_id}/gerar"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 157,
+      "function": "default_prompt",
+      "method": "GET",
+      "path": "/api/issues/selecao/prompt"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 162,
+      "function": "eligible",
+      "method": "GET",
+      "path": "/api/issues/selecao/elegiveis"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 181,
+      "function": "accesses",
+      "method": "GET",
+      "path": "/api/issues/selecao/acessos-llm"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 188,
+      "function": "company_users",
+      "method": "GET",
+      "path": "/api/issues/selecao/usuarios"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 195,
+      "function": "history",
+      "method": "GET",
+      "path": "/api/issues/selecao/analises"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 205,
+      "function": "create_analysis",
+      "method": "POST",
+      "path": "/api/issues/selecao/analises"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 246,
+      "function": "get_analysis",
+      "method": "GET",
+      "path": "/api/issues/selecao/analises/{analysis_id}"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 251,
+      "function": "get_generation",
+      "method": "GET",
+      "path": "/api/issues/selecao/geracoes/{generation_id}"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 256,
+      "function": "generate",
+      "method": "POST",
+      "path": "/api/issues/selecao/analises/{analysis_id}/geracoes"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 393,
+      "function": "list_issues",
+      "method": "GET",
+      "path": "/api/issues"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 402,
+      "function": "create_issue",
+      "method": "POST",
+      "path": "/api/issues"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 440,
+      "function": "issue_kpis",
+      "method": "GET",
+      "path": "/api/issues/kpis"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 486,
+      "function": "list_kanban",
+      "method": "GET",
+      "path": "/api/issues/kanban"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 513,
+      "function": "issue_stats",
+      "method": "GET",
+      "path": "/api/issues/stats"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 531,
+      "function": "issue_trends",
+      "method": "GET",
+      "path": "/api/issues/trends"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 562,
+      "function": "get_issue",
+      "method": "GET",
+      "path": "/api/issues/{issue_id}"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 570,
+      "function": "emitir_rnc",
+      "method": "POST",
+      "path": "/api/issues/{issue_id}/emitir-rnc"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 584,
+      "function": "update_issue",
+      "method": "PUT",
+      "path": "/api/issues/{issue_id}"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 637,
+      "function": "iniciar_tratamento",
+      "method": "POST",
+      "path": "/api/issues/{issue_id}/iniciar-tratamento"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 648,
+      "function": "fechar_issue",
+      "method": "POST",
+      "path": "/api/issues/{issue_id}/fechar"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 659,
+      "function": "delete_issue",
+      "method": "DELETE",
+      "path": "/api/issues/{issue_id}"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 695,
+      "function": "link_ishikawa",
+      "method": "POST",
+      "path": "/api/issues/{issue_id}/ishikawa"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 756,
+      "function": "update_ishikawa",
+      "method": "PUT",
+      "path": "/api/issues/{issue_id}/ishikawa"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 812,
+      "function": "save_porques",
+      "method": "PUT",
+      "path": "/api/issues/{issue_id}/porques"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 838,
+      "function": "list_acoes",
+      "method": "GET",
+      "path": "/api/issues/{issue_id}/acoes"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 849,
+      "function": "create_acao",
+      "method": "POST",
+      "path": "/api/issues/{issue_id}/acoes"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 887,
+      "function": "update_acao",
+      "method": "PUT",
+      "path": "/api/issues/{issue_id}/acoes/{acao_id}"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 926,
+      "function": "delete_acao",
+      "method": "DELETE",
+      "path": "/api/issues/{issue_id}/acoes/{acao_id}"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 947,
+      "function": "update_acao_status",
+      "method": "PUT",
+      "path": "/api/issues/{issue_id}/acoes/{acao_id}/status"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 981,
+      "function": "finalizar_issue",
+      "method": "POST",
+      "path": "/api/issues/{issue_id}/finalizar"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1025,
+      "function": "issue_arvore",
+      "method": "GET",
+      "path": "/api/issues/{issue_id}/arvore"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1037,
+      "function": "issue_upload",
+      "method": "POST",
+      "path": "/api/issues/{issue_id}/arquivos"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1061,
+      "function": "issue_criar_arquivo",
+      "method": "POST",
+      "path": "/api/issues/{issue_id}/arquivos/criar"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1080,
+      "function": "issue_criar_pasta",
+      "method": "POST",
+      "path": "/api/issues/{issue_id}/pastas"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1099,
+      "function": "issue_delete_objeto",
+      "method": "DELETE",
+      "path": "/api/issues/{issue_id}/objetos"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1112,
+      "function": "issue_abrir_arquivo",
+      "method": "GET",
+      "path": "/api/issues/{issue_id}/arquivo"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 69,
+      "function": "list_access",
+      "method": "GET",
+      "path": "/api/configuracao/llm"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 76,
+      "function": "get_access",
+      "method": "GET",
+      "path": "/api/configuracao/llm/{access_id}"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 82,
+      "function": "create_access",
+      "method": "POST",
+      "path": "/api/configuracao/llm"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 99,
+      "function": "update_access",
+      "method": "PUT",
+      "path": "/api/configuracao/llm/{access_id}"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 113,
+      "function": "delete_access",
+      "method": "DELETE",
+      "path": "/api/configuracao/llm/{access_id}"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 67,
+      "function": "sources",
+      "method": "GET",
+      "path": "/api/ferramentas/matriz/fontes"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 78,
+      "function": "generate",
+      "method": "GET",
+      "path": "/api/ferramentas/matriz"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 142,
+      "function": "preview",
+      "method": "POST",
+      "path": "/api/ferramentas/matriz/preparar"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 147,
+      "function": "listing",
+      "method": "GET",
+      "path": "/api/ferramentas/matriz/diagramas"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 153,
+      "function": "detail",
+      "method": "GET",
+      "path": "/api/ferramentas/matriz/diagramas/{diagram_id}"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 160,
+      "function": "create",
+      "method": "POST",
+      "path": "/api/ferramentas/matriz/diagramas"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 169,
+      "function": "update",
+      "method": "PUT",
+      "path": "/api/ferramentas/matriz/diagramas/{diagram_id}"
+    },
+    {
+      "file": "app/routers/pareto.py",
+      "line": 69,
+      "function": "analysis",
+      "method": "GET",
+      "path": "/api/ferramentas/pareto"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 115,
+      "function": "list_processos",
+      "method": "GET",
+      "path": "/api/processos"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 148,
+      "function": "create_processo",
+      "method": "POST",
+      "path": "/api/processos"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 215,
+      "function": "get_processo",
+      "method": "GET",
+      "path": "/api/processos/{processo_id}"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 223,
+      "function": "update_processo",
+      "method": "PUT",
+      "path": "/api/processos/{processo_id}"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 252,
+      "function": "list_revisoes",
+      "method": "GET",
+      "path": "/api/processos/{processo_id}/revisoes"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 263,
+      "function": "create_revisao",
+      "method": "POST",
+      "path": "/api/processos/{processo_id}/revisoes"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 287,
+      "function": "aprovar_processo",
+      "method": "POST",
+      "path": "/api/processos/{processo_id}/aprovar"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 313,
+      "function": "delete_processo",
+      "method": "DELETE",
+      "path": "/api/processos/{processo_id}"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 40,
+      "function": "list_projects",
+      "method": "GET",
+      "path": "/api/projects"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 53,
+      "function": "create_project",
+      "method": "POST",
+      "path": "/api/projects"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 75,
+      "function": "get_project",
+      "method": "GET",
+      "path": "/api/projects/{project_id}"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 86,
+      "function": "update_project",
+      "method": "PUT",
+      "path": "/api/projects/{project_id}"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 105,
+      "function": "delete_project",
+      "method": "DELETE",
+      "path": "/api/projects/{project_id}"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 91,
+      "function": "candidates",
+      "method": "GET",
+      "path": "/api/ferramentas/relacoes"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 121,
+      "function": "preview",
+      "method": "POST",
+      "path": "/api/ferramentas/relacoes/preparar"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 127,
+      "function": "listing",
+      "method": "GET",
+      "path": "/api/ferramentas/relacoes/diagramas"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 134,
+      "function": "detail",
+      "method": "GET",
+      "path": "/api/ferramentas/relacoes/diagramas/{diagram_id}"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 145,
+      "function": "create",
+      "method": "POST",
+      "path": "/api/ferramentas/relacoes/diagramas"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 156,
+      "function": "update",
+      "method": "PUT",
+      "path": "/api/ferramentas/relacoes/diagramas/{diagram_id}"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 205,
+      "function": "list_rncs",
+      "method": "GET",
+      "path": "/api/rncs"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 213,
+      "function": "get_rnc",
+      "method": "GET",
+      "path": "/api/rncs/{rnc_id}"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 217,
+      "function": "update_rnc",
+      "method": "PUT",
+      "path": "/api/rncs/{rnc_id}"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 317,
+      "function": "close_rnc",
+      "method": "POST",
+      "path": "/api/rncs/{rnc_id}/encerrar"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 347,
+      "function": "reopen_rnc",
+      "method": "POST",
+      "path": "/api/rncs/{rnc_id}/reabrir"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 364,
+      "function": "create_task",
+      "method": "POST",
+      "path": "/api/rncs/{rnc_id}/acoes"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 378,
+      "function": "update_task",
+      "method": "PUT",
+      "path": "/api/rncs/{rnc_id}/acoes/{acao_id}"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 391,
+      "function": "approve",
+      "method": "POST",
+      "path": "/api/rncs/{rnc_id}/aprovar-plano"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 401,
+      "function": "create_pending",
+      "method": "POST",
+      "path": "/api/rncs/{rnc_id}/pendencias"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 412,
+      "function": "close_pending",
+      "method": "PUT",
+      "path": "/api/rncs/{rnc_id}/pendencias/{pendencia_id}"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 425,
+      "function": "upload_evidence",
+      "method": "POST",
+      "path": "/api/rncs/{rnc_id}/evidencias"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 449,
+      "function": "download_evidence",
+      "method": "GET",
+      "path": "/api/rncs/{rnc_id}/evidencias/{evidencia_id}"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 461,
+      "function": "delete_evidence",
+      "method": "DELETE",
+      "path": "/api/rncs/{rnc_id}/evidencias/{evidencia_id}"
+    },
+    {
+      "file": "app/routers/setores.py",
+      "line": 38,
+      "function": "list_setores",
+      "method": "GET",
+      "path": "/api/setores"
+    },
+    {
+      "file": "app/routers/setores.py",
+      "line": 56,
+      "function": "create_setor",
+      "method": "POST",
+      "path": "/api/setores"
+    },
+    {
+      "file": "app/routers/setores.py",
+      "line": 80,
+      "function": "update_setor",
+      "method": "PUT",
+      "path": "/api/setores/{setor_id}"
+    },
+    {
+      "file": "app/routers/setores.py",
+      "line": 95,
+      "function": "delete_setor",
+      "method": "DELETE",
+      "path": "/api/setores/{setor_id}"
+    },
+    {
+      "file": "app/routers/transcricao.py",
+      "line": 45,
+      "function": "transcrever",
+      "method": "POST",
+      "path": "/api/transcricao"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 68,
+      "function": "list_usuarios",
+      "method": "GET",
+      "path": "/api/usuarios"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 80,
+      "function": "create_usuario",
+      "method": "POST",
+      "path": "/api/usuarios"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 111,
+      "function": "update_usuario",
+      "method": "PUT",
+      "path": "/api/usuarios/{usuario_id}"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 144,
+      "function": "delete_usuario",
+      "method": "DELETE",
+      "path": "/api/usuarios/{usuario_id}"
+    }
+  ],
+  "functions": [
+    {
+      "file": "app/auth.py",
+      "line": 12,
+      "function": "hash_password"
+    },
+    {
+      "file": "app/auth.py",
+      "line": 16,
+      "function": "verify_password"
+    },
+    {
+      "file": "app/auth.py",
+      "line": 23,
+      "function": "create_session"
+    },
+    {
+      "file": "app/auth.py",
+      "line": 36,
+      "function": "delete_session"
+    },
+    {
+      "file": "app/auth.py",
+      "line": 42,
+      "function": "get_current_user"
+    },
+    {
+      "file": "app/auth.py",
+      "line": 61,
+      "function": "empresa_desativada"
+    },
+    {
+      "file": "app/auth.py",
+      "line": 68,
+      "function": "is_superuser"
+    },
+    {
+      "file": "app/auth.py",
+      "line": 72,
+      "function": "require_papel"
+    },
+    {
+      "file": "app/auth.py",
+      "line": 81,
+      "function": "public_user"
+    },
+    {
+      "file": "app/calculations.py",
+      "line": 5,
+      "function": "pareto"
+    },
+    {
+      "file": "app/calculations.py",
+      "line": 25,
+      "function": "dispersao"
+    },
+    {
+      "file": "app/calculations.py",
+      "line": 44,
+      "function": "controle"
+    },
+    {
+      "file": "app/db.py",
+      "line": 232,
+      "function": "get_connection"
+    },
+    {
+      "file": "app/db.py",
+      "line": 240,
+      "function": "init_db"
+    },
+    {
+      "file": "app/db.py",
+      "line": 387,
+      "function": "_migrar_nao_conformidades"
+    },
+    {
+      "file": "app/db.py",
+      "line": 418,
+      "function": "_separar_rncs_e_corrigir_codigos"
+    },
+    {
+      "file": "app/db.py",
+      "line": 458,
+      "function": "_migrar_status_issues"
+    },
+    {
+      "file": "app/db.py",
+      "line": 471,
+      "function": "_remover_campos_duplicados_issue"
+    },
+    {
+      "file": "app/db.py",
+      "line": 479,
+      "function": "_sanitize"
+    },
+    {
+      "file": "app/db.py",
+      "line": 485,
+      "function": "backfill_pastas"
+    },
+    {
+      "file": "app/db.py",
+      "line": 504,
+      "function": "seed_admin"
+    },
+    {
+      "file": "app/db.py",
+      "line": 519,
+      "function": "seed_demo"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 13,
+      "function": "sanitize"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 21,
+      "function": "build_pasta"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 29,
+      "function": "folder_for"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 33,
+      "function": "ensure_pasta"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 39,
+      "function": "safe_rel"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 48,
+      "function": "save_file"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 64,
+      "function": "delete_path"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 76,
+      "function": "guess_mime"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 80,
+      "function": "file_node"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 91,
+      "function": "node"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 101,
+      "function": "build_ishikawa_pasta"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 111,
+      "function": "build_issue_pasta"
+    },
+    {
+      "file": "app/docs.py",
+      "line": 121,
+      "function": "arvore_tree"
+    },
+    {
+      "file": "app/main.py",
+      "line": 38,
+      "function": "lifespan"
+    },
+    {
+      "file": "app/main.py",
+      "line": 61,
+      "function": "no_cache_static"
+    },
+    {
+      "file": "app/main.py",
+      "line": 93,
+      "function": "index"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 42,
+      "function": "prepare"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 66,
+      "function": "candidates"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 96,
+      "function": "preview"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 102,
+      "function": "listing"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 109,
+      "function": "detail"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 120,
+      "function": "create"
+    },
+    {
+      "file": "app/routers/afinidades.py",
+      "line": 131,
+      "function": "update"
+    },
+    {
+      "file": "app/routers/auth.py",
+      "line": 24,
+      "function": "login"
+    },
+    {
+      "file": "app/routers/auth.py",
+      "line": 41,
+      "function": "logout"
+    },
+    {
+      "file": "app/routers/auth.py",
+      "line": 50,
+      "function": "me"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 23,
+      "function": "row_to_dict"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 34,
+      "function": "owns"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 38,
+      "function": "check_project"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 47,
+      "function": "parse_csv"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 75,
+      "function": "list_datasets"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 85,
+      "function": "create_dataset"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 99,
+      "function": "import_csv"
+    },
+    {
+      "file": "app/routers/datasets.py",
+      "line": 122,
+      "function": "delete_dataset"
+    },
+    {
+      "file": "app/routers/dispersao.py",
+      "line": 17,
+      "function": "correlation"
+    },
+    {
+      "file": "app/routers/dispersao.py",
+      "line": 24,
+      "function": "scatter"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 25,
+      "function": "processo_folder"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 30,
+      "function": "arvore"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 52,
+      "function": "upload_arquivo"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 76,
+      "function": "criar_arquivo"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 95,
+      "function": "criar_pasta"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 114,
+      "function": "delete_objeto"
+    },
+    {
+      "file": "app/routers/documentos.py",
+      "line": 127,
+      "function": "abrir_arquivo"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 25,
+      "function": "row_to_dict"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 35,
+      "function": "_can_access"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 40,
+      "function": "list_empresas"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 52,
+      "function": "create_empresa"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 67,
+      "function": "get_empresa"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 78,
+      "function": "update_empresa"
+    },
+    {
+      "file": "app/routers/empresas.py",
+      "line": 98,
+      "function": "delete_empresa"
+    },
+    {
+      "file": "app/routers/ferramentas_ia.py",
+      "line": 28,
+      "function": "accesses"
+    },
+    {
+      "file": "app/routers/ferramentas_ia.py",
+      "line": 34,
+      "function": "consult"
+    },
+    {
+      "file": "app/routers/histograma.py",
+      "line": 23,
+      "function": "instant"
+    },
+    {
+      "file": "app/routers/histograma.py",
+      "line": 30,
+      "function": "elapsed"
+    },
+    {
+      "file": "app/routers/histograma.py",
+      "line": 34,
+      "function": "distribution"
+    },
+    {
+      "file": "app/routers/histograma.py",
+      "line": 54,
+      "function": "histogram"
+    },
+    {
+      "file": "app/routers/issue_limpeza.py",
+      "line": 25,
+      "function": "empresa_limpeza"
+    },
+    {
+      "file": "app/routers/issue_limpeza.py",
+      "line": 37,
+      "function": "resumo_limpeza"
+    },
+    {
+      "file": "app/routers/issue_limpeza.py",
+      "line": 55,
+      "function": "preview_limpeza"
+    },
+    {
+      "file": "app/routers/issue_limpeza.py",
+      "line": 63,
+      "function": "limpar_issues"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 69,
+      "function": "manual_validation"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 90,
+      "function": "validate_manual"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 98,
+      "function": "generate_manual"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 109,
+      "function": "idem_key"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 114,
+      "function": "owned"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 122,
+      "function": "analysis_view"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 147,
+      "function": "generation_view"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 157,
+      "function": "default_prompt"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 162,
+      "function": "eligible"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 181,
+      "function": "accesses"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 188,
+      "function": "company_users"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 195,
+      "function": "history"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 205,
+      "function": "create_analysis"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 246,
+      "function": "get_analysis"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 251,
+      "function": "get_generation"
+    },
+    {
+      "file": "app/routers/issue_selecao.py",
+      "line": 256,
+      "function": "generate"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 38,
+      "function": "now"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 201,
+      "function": "_valida_investigacao"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 226,
+      "function": "_next_codigo"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 238,
+      "function": "_next_rnc_codigo"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 252,
+      "function": "_validar_cadastro_inicial"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 277,
+      "function": "_validar_usuario_empresa"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 285,
+      "function": "_validar_autor"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 293,
+      "function": "fetch_issue"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 302,
+      "function": "user_nome"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 309,
+      "function": "user_cargo"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 316,
+      "function": "acao_to_dict"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 321,
+      "function": "_validar_rnc_aberta_para_acao"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 327,
+      "function": "issue_to_dict"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 375,
+      "function": "_empresa_scope"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 383,
+      "function": "_scope_issues_query"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 393,
+      "function": "list_issues"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 402,
+      "function": "create_issue"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 440,
+      "function": "issue_kpis"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 486,
+      "function": "list_kanban"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 513,
+      "function": "issue_stats"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 531,
+      "function": "issue_trends"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 562,
+      "function": "get_issue"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 570,
+      "function": "emitir_rnc"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 584,
+      "function": "update_issue"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 637,
+      "function": "iniciar_tratamento"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 648,
+      "function": "fechar_issue"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 659,
+      "function": "delete_issue"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 695,
+      "function": "link_ishikawa"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 756,
+      "function": "update_ishikawa"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 812,
+      "function": "save_porques"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 838,
+      "function": "list_acoes"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 849,
+      "function": "create_acao"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 887,
+      "function": "update_acao"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 926,
+      "function": "delete_acao"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 947,
+      "function": "update_acao_status"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 981,
+      "function": "finalizar_issue"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1025,
+      "function": "issue_arvore"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1037,
+      "function": "issue_upload"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1061,
+      "function": "issue_criar_arquivo"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1080,
+      "function": "issue_criar_pasta"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1099,
+      "function": "issue_delete_objeto"
+    },
+    {
+      "file": "app/routers/issues.py",
+      "line": 1112,
+      "function": "issue_abrir_arquivo"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 44,
+      "function": "scope"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 54,
+      "function": "public"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 61,
+      "function": "fetch"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 69,
+      "function": "list_access"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 76,
+      "function": "get_access"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 82,
+      "function": "create_access"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 99,
+      "function": "update_access"
+    },
+    {
+      "file": "app/routers/llm_acessos.py",
+      "line": 113,
+      "function": "delete_access"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 53,
+      "function": "diagnostics"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 67,
+      "function": "sources"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 78,
+      "function": "generate"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 110,
+      "function": "prepare"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 142,
+      "function": "preview"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 147,
+      "function": "listing"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 153,
+      "function": "detail"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 160,
+      "function": "create"
+    },
+    {
+      "file": "app/routers/matriz.py",
+      "line": 169,
+      "function": "update"
+    },
+    {
+      "file": "app/routers/pareto.py",
+      "line": 23,
+      "function": "norm"
+    },
+    {
+      "file": "app/routers/pareto.py",
+      "line": 27,
+      "function": "local_date"
+    },
+    {
+      "file": "app/routers/pareto.py",
+      "line": 34,
+      "function": "records"
+    },
+    {
+      "file": "app/routers/pareto.py",
+      "line": 65,
+      "function": "label"
+    },
+    {
+      "file": "app/routers/pareto.py",
+      "line": 69,
+      "function": "analysis"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 44,
+      "function": "now"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 48,
+      "function": "user_nome"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 55,
+      "function": "row_to_dict"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 81,
+      "function": "rev_to_dict"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 88,
+      "function": "check_setor_empresa"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 97,
+      "function": "check_user_empresa"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 105,
+      "function": "fetch_processo"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 115,
+      "function": "list_processos"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 148,
+      "function": "create_processo"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 215,
+      "function": "get_processo"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 223,
+      "function": "update_processo"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 252,
+      "function": "list_revisoes"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 263,
+      "function": "create_revisao"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 287,
+      "function": "aprovar_processo"
+    },
+    {
+      "file": "app/routers/processos.py",
+      "line": 313,
+      "function": "delete_processo"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 25,
+      "function": "row_to_dict"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 35,
+      "function": "owns"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 40,
+      "function": "list_projects"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 53,
+      "function": "create_project"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 75,
+      "function": "get_project"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 86,
+      "function": "update_project"
+    },
+    {
+      "file": "app/routers/projects.py",
+      "line": 105,
+      "function": "delete_project"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 52,
+      "function": "prepare"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 91,
+      "function": "candidates"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 121,
+      "function": "preview"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 127,
+      "function": "listing"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 134,
+      "function": "detail"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 145,
+      "function": "create"
+    },
+    {
+      "file": "app/routers/relacoes.py",
+      "line": 156,
+      "function": "update"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 168,
+      "function": "fetch"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 175,
+      "function": "editable"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 179,
+      "function": "validate_date"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 184,
+      "function": "view"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 205,
+      "function": "list_rncs"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 213,
+      "function": "get_rnc"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 217,
+      "function": "update_rnc"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 313,
+      "function": "invalidate_plan"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 317,
+      "function": "close_rnc"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 347,
+      "function": "reopen_rnc"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 364,
+      "function": "create_task"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 378,
+      "function": "update_task"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 391,
+      "function": "approve"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 401,
+      "function": "create_pending"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 412,
+      "function": "close_pending"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 425,
+      "function": "upload_evidence"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 449,
+      "function": "download_evidence"
+    },
+    {
+      "file": "app/routers/rncs.py",
+      "line": 461,
+      "function": "delete_evidence"
+    },
+    {
+      "file": "app/routers/setores.py",
+      "line": 24,
+      "function": "row_to_dict"
+    },
+    {
+      "file": "app/routers/setores.py",
+      "line": 33,
+      "function": "owns"
+    },
+    {
+      "file": "app/routers/setores.py",
+      "line": 38,
+      "function": "list_setores"
+    },
+    {
+      "file": "app/routers/setores.py",
+      "line": 56,
+      "function": "create_setor"
+    },
+    {
+      "file": "app/routers/setores.py",
+      "line": 80,
+      "function": "update_setor"
+    },
+    {
+      "file": "app/routers/setores.py",
+      "line": 95,
+      "function": "delete_setor"
+    },
+    {
+      "file": "app/routers/transcricao.py",
+      "line": 11,
+      "function": "_transcreve_txt"
+    },
+    {
+      "file": "app/routers/transcricao.py",
+      "line": 20,
+      "function": "_transcreve_pdf"
+    },
+    {
+      "file": "app/routers/transcricao.py",
+      "line": 32,
+      "function": "_transcreve_docx"
+    },
+    {
+      "file": "app/routers/transcricao.py",
+      "line": 45,
+      "function": "transcrever"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 37,
+      "function": "row_to_dict"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 47,
+      "function": "_can_access"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 53,
+      "function": "_resolve_setor"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 62,
+      "function": "_valida_posicao"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 68,
+      "function": "list_usuarios"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 80,
+      "function": "create_usuario"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 111,
+      "function": "update_usuario"
+    },
+    {
+      "file": "app/routers/usuarios.py",
+      "line": 144,
+      "function": "delete_usuario"
+    },
+    {
+      "file": "app/security.py",
+      "line": 12,
+      "function": "sanitize_text"
+    },
+    {
+      "file": "app/security.py",
+      "line": 32,
+      "function": "sanitize_fields"
+    },
+    {
+      "file": "app/services/ferramentas_ia.py",
+      "line": 9,
+      "function": "context"
+    },
+    {
+      "file": "app/services/ferramentas_ia.py",
+      "line": 14,
+      "function": "verify"
+    },
+    {
+      "file": "app/services/issue_triagem.py",
+      "line": 45,
+      "function": "now"
+    },
+    {
+      "file": "app/services/issue_triagem.py",
+      "line": 49,
+      "function": "canonical"
+    },
+    {
+      "file": "app/services/issue_triagem.py",
+      "line": 53,
+      "function": "digest"
+    },
+    {
+      "file": "app/services/issue_triagem.py",
+      "line": 57,
+      "function": "snapshot"
+    },
+    {
+      "file": "app/services/issue_triagem.py",
+      "line": 87,
+      "function": "validate_result"
+    },
+    {
+      "file": "app/services/issue_triagem.py",
+      "line": 108,
+      "function": "process_next"
+    },
+    {
+      "file": "app/services/issue_triagem.py",
+      "line": 162,
+      "function": "start_worker"
+    },
+    {
+      "file": "app/services/llm_client.py",
+      "line": 22,
+      "function": "endpoint"
+    },
+    {
+      "file": "app/services/llm_client.py",
+      "line": 48,
+      "function": "analisar_issues"
+    },
+    {
+      "file": "app/services/llm_client.py",
+      "line": 126,
+      "function": "consultar_ferramenta"
+    },
+    {
+      "file": "app/services/rnc_emissao.py",
+      "line": 5,
+      "function": "emitir_rnc_transacao"
+    },
+    {
+      "file": "app/services/rnc_schema.py",
+      "line": 37,
+      "function": "facts"
+    },
+    {
+      "file": "app/services/rnc_schema.py",
+      "line": 40,
+      "function": "migrate"
+    }
+  ],
+  "scenarios": [
+    {
+      "file": "tests/qa/test_integration_rules.py",
+      "line": 16,
+      "name": "test_rg_lac_013_usuario_sem_empresa_nao_le_base_global",
+      "rules": [
+        "RG-LAC-013"
+      ]
+    },
+    {
+      "file": "tests/qa/test_integration_rules.py",
+      "line": 30,
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos",
+      "rules": [
+        "RG-ISS-003"
+      ]
+    },
+    {
+      "file": "tests/qa/test_integration_rules.py",
+      "line": 36,
+      "name": "test_rg_emi_010_fatos_preservados_apos_editar_origem",
+      "rules": [
+        "RG-EMI-010"
+      ]
+    },
+    {
+      "file": "tests/qa/test_integration_rules.py",
+      "line": 44,
+      "name": "test_rg_aut_006_logout_revoga_outra_sessao",
+      "rules": [
+        "RG-AUT-006"
+      ]
+    },
+    {
+      "file": "tests/qa/test_unit_rules.py",
+      "line": 13,
+      "name": "test_rg_fil_007_normalizacao",
+      "rules": [
+        "RG-FIL-007"
+      ]
+    },
+    {
+      "file": "tests/qa/test_unit_rules.py",
+      "line": 16,
+      "name": "test_rg_fil_006_limite_dia_local",
+      "rules": [
+        "RG-FIL-006"
+      ]
+    },
+    {
+      "file": "tests/qa/test_unit_rules.py",
+      "line": 20,
+      "name": "test_rg_his_003_limites_internos_e_maximo",
+      "rules": [
+        "RG-HIS-003"
+      ]
+    },
+    {
+      "file": "tests/qa/test_unit_rules.py",
+      "line": 27,
+      "name": "test_rg_his_004_amostra_unica_e_vazia",
+      "rules": [
+        "RG-HIS-004"
+      ]
+    },
+    {
+      "file": "tests/qa/test_unit_rules.py",
+      "line": 33,
+      "name": "test_rg_his_005_tempo_nao_imputa_data",
+      "rules": [
+        "RG-HIS-005"
+      ]
+    },
+    {
+      "file": "tests/qa/test_unit_rules.py",
+      "line": 37,
+      "name": "test_rg_dis_005_pearson_negativo_e_constante",
+      "rules": [
+        "RG-DIS-005"
+      ]
+    },
+    {
+      "file": "tests/qa/test_unit_rules.py",
+      "line": 41,
+      "name": "test_rg_llm_013_assinatura_rejeita_adulteracao",
+      "rules": [
+        "RG-LLM-013"
+      ]
+    },
+    {
+      "file": "tests/qa/test_unit_rules.py",
+      "line": 47,
+      "name": "test_rg_tri_009_json_estrito",
+      "rules": [
+        "RG-TRI-009"
+      ]
+    },
+    {
+      "file": "tests/qa/test_unit_rules.py",
+      "line": 51,
+      "name": "test_rg_doc_005_traversal_e_caminho_valido",
+      "rules": [
+        "RG-DOC-005"
+      ]
+    },
+    {
+      "file": "tests/test_afinidades.py",
+      "line": 10,
+      "name": "test_board_lifecycle_snapshot_validation_and_tenancy",
+      "rules": []
+    },
+    {
+      "file": "tests/test_afinidades.py",
+      "line": 54,
+      "name": "test_viewer_cannot_save_or_update",
+      "rules": []
+    },
+    {
+      "file": "tests/test_api.py",
+      "line": 10,
+      "name": "test_fluxo_projeto_dataset",
+      "rules": []
+    },
+    {
+      "file": "tests/test_api.py",
+      "line": 30,
+      "name": "test_issue_analise_endpoints",
+      "rules": []
+    },
+    {
+      "file": "tests/test_api.py",
+      "line": 37,
+      "name": "test_projeto_nao_encontrado",
+      "rules": []
+    },
+    {
+      "file": "tests/test_auth.py",
+      "line": 14,
+      "name": "test_login_superuser",
+      "rules": []
+    },
+    {
+      "file": "tests/test_auth.py",
+      "line": 22,
+      "name": "test_login_senha_errada",
+      "rules": []
+    },
+    {
+      "file": "tests/test_auth.py",
+      "line": 27,
+      "name": "test_rotas_sem_autenticacao",
+      "rules": []
+    },
+    {
+      "file": "tests/test_auth.py",
+      "line": 35,
+      "name": "test_visualizador_nao_escreve",
+      "rules": []
+    },
+    {
+      "file": "tests/test_auth.py",
+      "line": 50,
+      "name": "test_isolamento_entre_empresas",
+      "rules": []
+    },
+    {
+      "file": "tests/test_calculations.py",
+      "line": 4,
+      "name": "test_pareto_ordena_e_calcula_acumulado",
+      "rules": []
+    },
+    {
+      "file": "tests/test_calculations.py",
+      "line": 12,
+      "name": "test_pareto_vazio",
+      "rules": []
+    },
+    {
+      "file": "tests/test_calculations.py",
+      "line": 16,
+      "name": "test_dispersao_correlacao_perfeita",
+      "rules": []
+    },
+    {
+      "file": "tests/test_calculations.py",
+      "line": 22,
+      "name": "test_dispersao_sem_pares",
+      "rules": []
+    },
+    {
+      "file": "tests/test_calculations.py",
+      "line": 26,
+      "name": "test_controle_limites",
+      "rules": []
+    },
+    {
+      "file": "tests/test_criterios_aceite.py",
+      "line": 68,
+      "name": "test_senha_gravada_como_hash",
+      "rules": []
+    },
+    {
+      "file": "tests/test_criterios_aceite.py",
+      "line": 115,
+      "name": "test_visualizador_403_em_toda_escrita",
+      "rules": []
+    },
+    {
+      "file": "tests/test_criterios_aceite.py",
+      "line": 148,
+      "name": "test_isolamento_entre_empresas",
+      "rules": []
+    },
+    {
+      "file": "tests/test_criterios_aceite.py",
+      "line": 176,
+      "name": "test_ciclo_completo_da_issue",
+      "rules": []
+    },
+    {
+      "file": "tests/test_criterios_aceite.py",
+      "line": 214,
+      "name": "test_put_nao_finaliza_issue",
+      "rules": []
+    },
+    {
+      "file": "tests/test_criterios_aceite.py",
+      "line": 224,
+      "name": "test_criar_acao_nao_regride_status",
+      "rules": []
+    },
+    {
+      "file": "tests/test_criterios_aceite.py",
+      "line": 238,
+      "name": "test_finalizar_exige_resultado",
+      "rules": []
+    },
+    {
+      "file": "tests/test_criterios_aceite.py",
+      "line": 250,
+      "name": "test_finalizar_exige_ao_menos_uma_acao",
+      "rules": []
+    },
+    {
+      "file": "tests/test_criterios_aceite.py",
+      "line": 260,
+      "name": "test_excluir_issue_remove_acoes",
+      "rules": []
+    },
+    {
+      "file": "tests/test_criterios_aceite.py",
+      "line": 274,
+      "name": "test_empresa_desativada_bloqueia_acesso",
+      "rules": []
+    },
+    {
+      "file": "tests/test_dispersao.py",
+      "line": 9,
+      "name": "test_correlation_and_constant_axes",
+      "rules": []
+    },
+    {
+      "file": "tests/test_dispersao.py",
+      "line": 16,
+      "name": "test_rnc_same_record_pairs_units_missing_and_ai",
+      "rules": []
+    },
+    {
+      "file": "tests/test_dispersao.py",
+      "line": 44,
+      "name": "test_issue_eligibility_filters_and_tenancy",
+      "rules": []
+    },
+    {
+      "file": "tests/test_ferramentas_ia.py",
+      "line": 9,
+      "name": "test_adapter_text_mode_preserves_triage_json_mode",
+      "rules": []
+    },
+    {
+      "file": "tests/test_ferramentas_ia.py",
+      "line": 36,
+      "name": "test_truncated_text_is_marked_partial_and_json_remains_strict",
+      "rules": []
+    },
+    {
+      "file": "tests/test_ferramentas_ia.py",
+      "line": 59,
+      "name": "test_partial_answer_metadata_reaches_interface",
+      "rules": []
+    },
+    {
+      "file": "tests/test_ferramentas_ia.py",
+      "line": 67,
+      "name": "test_prompt_snapshot_and_no_automatic_provider_call",
+      "rules": []
+    },
+    {
+      "file": "tests/test_ferramentas_ia.py",
+      "line": 92,
+      "name": "test_tenancy_inactive_access_and_provider_failure",
+      "rules": []
+    },
+    {
+      "file": "tests/test_gestao.py",
+      "line": 14,
+      "name": "test_processo_metadados_revisao_aprovacao",
+      "rules": []
+    },
+    {
+      "file": "tests/test_gestao.py",
+      "line": 51,
+      "name": "test_processo_status_invalido",
+      "rules": []
+    },
+    {
+      "file": "tests/test_gestao.py",
+      "line": 65,
+      "name": "test_documentos_arvore_fluxo",
+      "rules": []
+    },
+    {
+      "file": "tests/test_gestao.py",
+      "line": 96,
+      "name": "test_documentos_pastas_e_upload_subpasta",
+      "rules": []
+    },
+    {
+      "file": "tests/test_gestao.py",
+      "line": 128,
+      "name": "test_documentos_path_traversal_bloqueado",
+      "rules": []
+    },
+    {
+      "file": "tests/test_gestao.py",
+      "line": 145,
+      "name": "test_processo_cria_pasta_fisica",
+      "rules": []
+    },
+    {
+      "file": "tests/test_gestao.py",
+      "line": 158,
+      "name": "test_excluir_processo_remove_pasta",
+      "rules": []
+    },
+    {
+      "file": "tests/test_hierarquia.py",
+      "line": 21,
+      "name": "test_setor_exige_empresa",
+      "rules": []
+    },
+    {
+      "file": "tests/test_hierarquia.py",
+      "line": 29,
+      "name": "test_processo_exige_empresa",
+      "rules": []
+    },
+    {
+      "file": "tests/test_hierarquia.py",
+      "line": 37,
+      "name": "test_primary_key_empresa_processo",
+      "rules": []
+    },
+    {
+      "file": "tests/test_hierarquia.py",
+      "line": 58,
+      "name": "test_primary_key_ishikawa",
+      "rules": []
+    },
+    {
+      "file": "tests/test_hierarquia.py",
+      "line": 65,
+      "name": "test_cascata_empresa_setor_processo",
+      "rules": []
+    },
+    {
+      "file": "tests/test_histograma.py",
+      "line": 8,
+      "name": "test_intervals_boundaries_constant_and_empty",
+      "rules": []
+    },
+    {
+      "file": "tests/test_histograma.py",
+      "line": 18,
+      "name": "test_issues_eligibility_time_filters_and_invalid_data",
+      "rules": []
+    },
+    {
+      "file": "tests/test_histograma.py",
+      "line": 39,
+      "name": "test_rnc_metrics_units_missing_containment_and_tenancy",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_limpeza.py",
+      "line": 11,
+      "name": "test_limpeza_preview_backup_preserva_rnc_e_arquivos",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_limpeza.py",
+      "line": 51,
+      "name": "test_limpeza_permissoes_e_empresa_obrigatoria",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_limpeza.py",
+      "line": 67,
+      "name": "test_limpeza_rejeita_preview_desatualizado",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_limpeza.py",
+      "line": 80,
+      "name": "test_limpeza_rollback_em_falha",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_limpeza.py",
+      "line": 103,
+      "name": "test_dashboard_filtro_empresa_e_tenancy",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_limpeza.py",
+      "line": 119,
+      "name": "test_dashboard_usuario_sem_empresa_nao_acessa_base_global",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 57,
+      "name": "test_manual_valida_e_revalida_sem_llm",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 94,
+      "name": "test_investigacao_complementos_e_rastreabilidade",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 126,
+      "name": "test_investigacao_etapas_porques_ishikawa",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 141,
+      "name": "test_encerramento_rnc_aprovador_pendencias_e_historico",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 185,
+      "name": "test_encerramento_direto_sem_salvar_e_rollback",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 203,
+      "name": "test_kanban_rnc_encerrada_nunca_fica_backlog",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 214,
+      "name": "test_superusuario_encerra_com_aprovador_identificado",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 227,
+      "name": "test_resumo_rnc_persistencia_limite_e_kanban",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 241,
+      "name": "test_investigacao_etapas_rejeita_dados_invalidos",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 252,
+      "name": "test_prompt_editado_enviado_e_preservado",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 272,
+      "name": "test_openrouter_endpoint",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 279,
+      "name": "test_etapas_reais_da_analise",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 314,
+      "name": "test_selecao_emite_com_complemento_opcional",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 327,
+      "name": "test_rnc_observacao_hipoteses_e_arquivos_persistem",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 384,
+      "name": "test_rnc_exclusao_arquivo_falha_preserva_metadados",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 400,
+      "name": "test_rnc_upload_rollback_nao_deixa_arquivo",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 415,
+      "name": "test_rnc_migracao_remove_porques_causa_sem_alterar_issue",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 433,
+      "name": "test_rnc_abas_snapshot_plano_pendencias_e_permissoes",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 504,
+      "name": "test_selecao_fluxo_completo_aprovacao_parcial_idempotencia",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 547,
+      "name": "test_selecao_vazia_e_status_nao_alterado",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 556,
+      "name": "test_selecao_rejeita_resposta_invalida",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 575,
+      "name": "test_selecao_snapshot_pendencias_e_retomada",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 593,
+      "name": "test_selecao_rollback_gravacao_e_retentativa",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 612,
+      "name": "test_selecao_limites_e_elegibilidade",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 629,
+      "name": "test_selecao_empresa_permissoes_e_modelos",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 644,
+      "name": "test_selecao_limpeza_preserva_snapshot",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 657,
+      "name": "test_selecao_timeout_configuracao_e_recuperacao",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 673,
+      "name": "test_adapter_bloqueia_destinos_e_provedores",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 680,
+      "name": "test_deepseek_endpoint",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 686,
+      "name": "test_selecao_concorrencia_nao_duplica_rnc",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 697,
+      "name": "test_selecao_worker_processa_lote_persistido",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 711,
+      "name": "test_worker_ocioso_nao_adquire_lock_de_escrita",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 723,
+      "name": "test_adapter_http_payload_e_erros",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issue_selecao.py",
+      "line": 748,
+      "name": "test_openrouter_sem_json_mode_preserva_validacao",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 65,
+      "name": "test_issue_codigo_sequencial",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 77,
+      "name": "test_issue_rejeita_cadastro_vago_e_persiste_dados_iniciais",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 95,
+      "name": "test_issue_captura_permanece_apos_inicializar_banco_novamente",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 114,
+      "name": "test_issue_emissao_rnc_com_governanca_preserva_vinculo",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 166,
+      "name": "test_migracao_separa_rnc_preserva_issue_acoes_e_anexos",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 211,
+      "name": "test_issue_fluxo_tres_status_e_fechamento_manual",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 243,
+      "name": "test_issue_kpis_mes_local_e_isolamento",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 274,
+      "name": "test_issue_kpis_prazos_15_dias_sem_reiniciar_tratamento",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 306,
+      "name": "test_issue_migracao_status_antigos",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 323,
+      "name": "test_issue_emissao_rnc_aceita_equipe_de_uma_pessoa",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 346,
+      "name": "test_issue_superuser_cria_com_empresa",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 366,
+      "name": "test_issue_tenancy",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 384,
+      "name": "test_issue_resultado_esperado_do_plano",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 396,
+      "name": "test_issue_autor_editavel_preserva_criador_e_tenancy",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 421,
+      "name": "test_issue_campos_duplicados_removidos",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 467,
+      "name": "test_issue_status_em_execucao",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 484,
+      "name": "test_issue_investigar_causa_regra",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 494,
+      "name": "test_issue_ishikawa_link_e_update",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 550,
+      "name": "test_issue_porques_sem_repeticao",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 578,
+      "name": "test_issue_acao_status_e_data_inicio",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 594,
+      "name": "test_issue_finalizar",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 615,
+      "name": "test_issue_exclusao_transacional",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 639,
+      "name": "test_issue_visualizador_403",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 654,
+      "name": "test_issue_kanban_global",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 668,
+      "name": "test_issue_documentos_arvore",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 708,
+      "name": "test_issue_stats",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 735,
+      "name": "test_issue_trends",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 753,
+      "name": "test_transcricao_txt",
+      "rules": []
+    },
+    {
+      "file": "tests/test_issues.py",
+      "line": 761,
+      "name": "test_transcricao_formato_invalido",
+      "rules": []
+    },
+    {
+      "file": "tests/test_llm_acessos.py",
+      "line": 13,
+      "name": "test_llm_crud_chave_e_validacoes",
+      "rules": []
+    },
+    {
+      "file": "tests/test_llm_acessos.py",
+      "line": 38,
+      "name": "test_llm_permissoes_e_tenancy",
+      "rules": []
+    },
+    {
+      "file": "tests/test_matriz.py",
+      "line": 30,
+      "name": "test_matriz_context_selection_sources_and_auth",
+      "rules": []
+    },
+    {
+      "file": "tests/test_matriz.py",
+      "line": 43,
+      "name": "test_matriz_pending_is_not_none_and_original_plans_unchanged",
+      "rules": []
+    },
+    {
+      "file": "tests/test_matriz.py",
+      "line": 64,
+      "name": "test_matriz_rejects_invalid_cells_lines_and_evidence",
+      "rules": []
+    },
+    {
+      "file": "tests/test_matriz.py",
+      "line": 79,
+      "name": "test_matriz_persistence_revision_and_snapshot",
+      "rules": []
+    },
+    {
+      "file": "tests/test_matriz.py",
+      "line": 95,
+      "name": "test_matriz_tenancy_viewer_and_snapshot_identity",
+      "rules": []
+    },
+    {
+      "file": "tests/test_matriz.py",
+      "line": 116,
+      "name": "test_matriz_ai_explicit_signed_snapshot_and_mock_provider",
+      "rules": []
+    },
+    {
+      "file": "tests/test_matriz.py",
+      "line": 132,
+      "name": "test_matriz_limits_long_report_and_same_company_other_user",
+      "rules": []
+    },
+    {
+      "file": "tests/test_pareto.py",
+      "line": 31,
+      "name": "test_pareto_filters_normalization_and_single_count",
+      "rules": []
+    },
+    {
+      "file": "tests/test_pareto.py",
+      "line": 56,
+      "name": "test_rnc_measures_missing_units_snapshot_and_date",
+      "rules": []
+    },
+    {
+      "file": "tests/test_pareto.py",
+      "line": 76,
+      "name": "test_pareto_tenancy_and_auth",
+      "rules": []
+    },
+    {
+      "file": "tests/test_processos.py",
+      "line": 14,
+      "name": "test_fluxo_setor_processo_sintaxe",
+      "rules": []
+    },
+    {
+      "file": "tests/test_processos.py",
+      "line": 41,
+      "name": "test_isolamento_fluxo_entre_empresas",
+      "rules": []
+    },
+    {
+      "file": "tests/test_processos.py",
+      "line": 62,
+      "name": "test_processo_primary_key_unico",
+      "rules": []
+    },
+    {
+      "file": "tests/test_processos.py",
+      "line": 82,
+      "name": "test_delete_empresa_cascateia_setores",
+      "rules": []
+    },
+    {
+      "file": "tests/test_relacoes.py",
+      "line": 17,
+      "name": "test_lifecycle_filters_snapshot_counts_and_tenancy",
+      "rules": []
+    },
+    {
+      "file": "tests/test_relacoes.py",
+      "line": 57,
+      "name": "test_invalid_edges_links_signature_and_cycles",
+      "rules": []
+    },
+    {
+      "file": "tests/test_relacoes.py",
+      "line": 78,
+      "name": "test_viewer_reads_but_cannot_write",
+      "rules": []
+    },
+    {
+      "file": "tests/test_rnc_arvore.py",
+      "line": 7,
+      "name": "test_arvore_persistencia_hierarquia_e_isolamento",
+      "rules": []
+    },
+    {
+      "file": "tests/test_rnc_ishikawa_titulos.py",
+      "line": 7,
+      "name": "test_ishikawa_objetivo_titulos_conteudo_persistem",
+      "rules": []
+    },
+    {
+      "file": "tests/test_security.py",
+      "line": 16,
+      "name": "test_sanitize_text_neutraliza_xss",
+      "rules": []
+    },
+    {
+      "file": "tests/test_security.py",
+      "line": 28,
+      "name": "test_campos_sanitizados_na_criacao",
+      "rules": []
+    },
+    {
+      "file": "tests/test_security.py",
+      "line": 39,
+      "name": "test_sintaxe_fluxograma_nao_sanitizada",
+      "rules": []
+    },
+    {
+      "file": "tests/test_security.py",
+      "line": 51,
+      "name": "test_ishikawa_campos_sanitizados",
+      "rules": []
+    },
+    {
+      "file": "tests/test_security.py",
+      "line": 83,
+      "name": "test_senha_nao_sanitizada",
+      "rules": []
+    },
+    {
+      "file": "tests/test_vault_arquivos.py",
+      "line": 26,
+      "name": "test_fluxo_arquivos_completo",
+      "rules": []
+    },
+    {
+      "file": "qa/e2e/critical.spec.cjs",
+      "line": 1,
+      "name": "RG-AUT-001 login inválido e login válido",
+      "rules": [
+        "RG-AUT-001"
+      ]
+    },
+    {
+      "file": "qa/e2e/critical.spec.cjs",
+      "line": 1,
+      "name": "RG-ISS-003 captura real pela SPA e RG-EST-005 fechamento",
+      "rules": [
+        "RG-ISS-003",
+        "RG-EST-005"
+      ]
+    },
+    {
+      "file": "qa/e2e/critical.spec.cjs",
+      "line": 1,
+      "name": "RG-AFI-007 e RG-REL-010 persistem após recarregar a página",
+      "rules": [
+        "RG-AFI-007",
+        "RG-REL-010"
+      ]
+    },
+    {
+      "file": "qa/e2e/matriz.spec.cjs",
+      "line": 1,
+      "name": "Matriz: Uma RNC/Geral, avaliar, salvar e reabrir sem alterar planos",
+      "rules": []
+    }
+  ],
+  "latest_outcomes": [
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_fil_007_normalizacao[  SEL\\xc1GEM  DUPLA -selagem dupla]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_fil_007_normalizacao[None-]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_fil_007_normalizacao[A\\t B-a b]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_fil_006_limite_dia_local",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_his_003_limites_internos_e_maximo",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_his_004_amostra_unica_e_vazia",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_his_005_tempo_nao_imputa_data",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_dis_005_pearson_negativo_e_constante",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_llm_013_assinatura_rejeita_adulteracao",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_tri_009_json_estrito[{\"candidatas_rnc\":[],\"candidatas_rnc\":[]}]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_tri_009_json_estrito[```json\\n{\"candidatas_rnc\":[]}\\n```]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_tri_009_json_estrito[{\"candidatas_rnc\":[],\"extra\":true}]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "unit",
+      "scope": "complete",
+      "name": "test_rg_doc_005_traversal_e_caminho_valido",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T15-46-27-720Z-18428-unit/unit.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_lac_013_usuario_sem_empresa_nao_le_base_global[pareto]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_lac_013_usuario_sem_empresa_nao_le_base_global[histograma]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_lac_013_usuario_sem_empresa_nao_le_base_global[dispersao]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos[detectado_em]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos[comportamento_esperado]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos[comportamento_observado]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos[evidencias_objetivas]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos[impacto]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos[acao_emergencial]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos[o_que]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos[onde]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos[quando]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos[quem]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_iss_003_cada_campo_obrigatorio_recusa_espacos[como_detectado]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_emi_010_fatos_preservados_apos_editar_origem",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rg_aut_006_logout_revoga_outra_sessao",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_board_lifecycle_snapshot_validation_and_tenancy",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_viewer_cannot_save_or_update",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_fluxo_projeto_dataset",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_analise_endpoints",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_projeto_nao_encontrado",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_login_superuser",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_login_senha_errada",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rotas_sem_autenticacao",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_visualizador_nao_escreve",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_isolamento_entre_empresas",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_pareto_ordena_e_calcula_acumulado",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_pareto_vazio",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_dispersao_correlacao_perfeita",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_dispersao_sem_pares",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_controle_limites",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_senha_gravada_como_hash",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_visualizador_403_em_toda_escrita",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_isolamento_entre_empresas",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_ciclo_completo_da_issue",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_put_nao_finaliza_issue",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_criar_acao_nao_regride_status",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_finalizar_exige_resultado[]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_finalizar_exige_resultado[   ]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_finalizar_exige_ao_menos_uma_acao",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_excluir_issue_remove_acoes",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_empresa_desativada_bloqueia_acesso",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_correlation_and_constant_axes",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rnc_same_record_pairs_units_missing_and_ai",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_eligibility_filters_and_tenancy",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_text_mode_preserves_triage_json_mode",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_truncated_text_is_marked_partial_and_json_remains_strict",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_partial_answer_metadata_reaches_interface",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_prompt_snapshot_and_no_automatic_provider_call",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_tenancy_inactive_access_and_provider_failure",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_processo_metadados_revisao_aprovacao",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_processo_status_invalido",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_documentos_arvore_fluxo",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_documentos_pastas_e_upload_subpasta",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_documentos_path_traversal_bloqueado",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_processo_cria_pasta_fisica",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_excluir_processo_remove_pasta",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_setor_exige_empresa",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_processo_exige_empresa",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_primary_key_empresa_processo",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_primary_key_ishikawa",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_cascata_empresa_setor_processo",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_intervals_boundaries_constant_and_empty",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issues_eligibility_time_filters_and_invalid_data",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rnc_metrics_units_missing_containment_and_tenancy",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_limpeza_preview_backup_preserva_rnc_e_arquivos",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_limpeza_permissoes_e_empresa_obrigatoria",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_limpeza_rejeita_preview_desatualizado",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_limpeza_rollback_em_falha",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_dashboard_filtro_empresa_e_tenancy",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_dashboard_usuario_sem_empresa_nao_acessa_base_global",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_manual_valida_e_revalida_sem_llm",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_investigacao_complementos_e_rastreabilidade",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_investigacao_etapas_porques_ishikawa",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_encerramento_rnc_aprovador_pendencias_e_historico",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_encerramento_direto_sem_salvar_e_rollback",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_kanban_rnc_encerrada_nunca_fica_backlog",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_superusuario_encerra_com_aprovador_identificado",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_resumo_rnc_persistencia_limite_e_kanban",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_investigacao_etapas_rejeita_dados_invalidos",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_prompt_editado_enviado_e_preservado",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_openrouter_endpoint",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_etapas_reais_da_analise",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_emite_com_complemento_opcional[False]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_emite_com_complemento_opcional[True]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rnc_observacao_hipoteses_e_arquivos_persistem",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rnc_exclusao_arquivo_falha_preserva_metadados",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rnc_upload_rollback_nao_deixa_arquivo",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rnc_migracao_remove_porques_causa_sem_alterar_issue",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rnc_abas_snapshot_plano_pendencias_e_permissoes",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_fluxo_completo_aprovacao_parcial_idempotencia",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_vazia_e_status_nao_alterado",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_rejeita_resposta_invalida[markdown]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_rejeita_resposta_invalida[unknown]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_rejeita_resposta_invalida[duplicate]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_rejeita_resposta_invalida[blank]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_rejeita_resposta_invalida[enum]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_rejeita_resposta_invalida[extra]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_rejeita_resposta_invalida[float]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_rejeita_resposta_invalida[duplicate_key]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_snapshot_pendencias_e_retomada",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_rollback_gravacao_e_retentativa",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_limites_e_elegibilidade",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_empresa_permissoes_e_modelos",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_limpeza_preserva_snapshot",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_timeout_configuracao_e_recuperacao",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_bloqueia_destinos_e_provedores",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_deepseek_endpoint[https://api.deepseek.com]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_deepseek_endpoint[https://api.deepseek.com/v1]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_concorrencia_nao_duplica_rnc",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_selecao_worker_processa_lote_persistido",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_worker_ocioso_nao_adquire_lock_de_escrita",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[Groq-401-acesso_llm_invalido]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[Groq-429-limite_provedor]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[Groq-500-provedor_indisponivel]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[Groq-302-provedor_indisponivel]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[Groq-200-None]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[OpenRouter-401-acesso_llm_invalido]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[OpenRouter-429-limite_provedor]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[OpenRouter-500-provedor_indisponivel]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[OpenRouter-302-provedor_indisponivel]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[OpenRouter-200-None]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[DeepSeek-401-acesso_llm_invalido]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[DeepSeek-429-limite_provedor]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[DeepSeek-500-provedor_indisponivel]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[DeepSeek-302-provedor_indisponivel]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_adapter_http_payload_e_erros[DeepSeek-200-None]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_openrouter_sem_json_mode_preserva_validacao",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_codigo_sequencial",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_rejeita_cadastro_vago_e_persiste_dados_iniciais",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_captura_permanece_apos_inicializar_banco_novamente",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_emissao_rnc_com_governanca_preserva_vinculo",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_migracao_separa_rnc_preserva_issue_acoes_e_anexos",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_fluxo_tres_status_e_fechamento_manual",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_kpis_mes_local_e_isolamento",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_kpis_prazos_15_dias_sem_reiniciar_tratamento",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_migracao_status_antigos",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_emissao_rnc_aceita_equipe_de_uma_pessoa",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_superuser_cria_com_empresa",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_tenancy",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_resultado_esperado_do_plano",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_autor_editavel_preserva_criador_e_tenancy",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_campos_duplicados_removidos",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_status_em_execucao",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_investigar_causa_regra",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_ishikawa_link_e_update",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_porques_sem_repeticao",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_acao_status_e_data_inicio",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_finalizar",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_exclusao_transacional",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_visualizador_403",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_kanban_global",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_documentos_arvore",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_stats",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_issue_trends",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_transcricao_txt",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_transcricao_formato_invalido",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_llm_crud_chave_e_validacoes",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_llm_permissoes_e_tenancy",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_context_selection_sources_and_auth",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_pending_is_not_none_and_original_plans_unchanged",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_rejects_invalid_cells_lines_and_evidence[reason]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_rejects_invalid_cells_lines_and_evidence[duplicate_cell]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_rejects_invalid_cells_lines_and_evidence[foreign_action]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_rejects_invalid_cells_lines_and_evidence[foreign_line]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_rejects_invalid_cells_lines_and_evidence[duplicate_line]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_rejects_invalid_cells_lines_and_evidence[foreign_origin]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_rejects_invalid_cells_lines_and_evidence[duplicate_origin]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_rejects_invalid_cells_lines_and_evidence[evidence]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_rejects_invalid_cells_lines_and_evidence[extra]",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_persistence_revision_and_snapshot",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_tenancy_viewer_and_snapshot_identity",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_ai_explicit_signed_snapshot_and_mock_provider",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_pareto_filters_normalization_and_single_count",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_rnc_measures_missing_units_snapshot_and_date",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_pareto_tenancy_and_auth",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_fluxo_setor_processo_sintaxe",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_isolamento_fluxo_entre_empresas",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_processo_primary_key_unico",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_delete_empresa_cascateia_setores",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_lifecycle_filters_snapshot_counts_and_tenancy",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_invalid_edges_links_signature_and_cycles",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_viewer_reads_but_cannot_write",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_arvore_persistencia_hierarquia_e_isolamento",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_ishikawa_objetivo_titulos_conteudo_persistem",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_sanitize_text_neutraliza_xss",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_campos_sanitizados_na_criacao",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_sintaxe_fluxograma_nao_sanitizada",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_ishikawa_campos_sanitizados",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_senha_nao_sanitizada",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "complete",
+      "name": "test_fluxo_arquivos_completo",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-20-30-975Z-18040-backend/backend.xml"
+    },
+    {
+      "suite": "backend",
+      "scope": "matriz",
+      "name": "test_matriz_limits_long_report_and_same_company_other_user",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-41-268Z-8440-backend/backend.xml"
+    },
+    {
+      "suite": "e2e",
+      "scope": "complete",
+      "name": "RG-AUT-001 login inválido e login válido",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-52-142Z-11428-e2e/e2e.xml"
+    },
+    {
+      "suite": "e2e",
+      "scope": "complete",
+      "name": "RG-ISS-003 captura real pela SPA e RG-EST-005 fechamento",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-52-142Z-11428-e2e/e2e.xml"
+    },
+    {
+      "suite": "e2e",
+      "scope": "complete",
+      "name": "RG-AFI-007 e RG-REL-010 persistem após recarregar a página",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-52-142Z-11428-e2e/e2e.xml"
+    },
+    {
+      "suite": "e2e",
+      "scope": "complete",
+      "name": "Matriz: Uma RNC/Geral, avaliar, salvar e reabrir sem alterar planos",
+      "status": "passou",
+      "evidence": "qa/evidencias/2026-10-16T16-23-52-142Z-11428-e2e/e2e.xml"
+    }
+  ]
+}

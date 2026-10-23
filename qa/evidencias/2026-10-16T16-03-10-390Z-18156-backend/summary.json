@@ -1,0 +1,16 @@
+{
+  "suite": "backend",
+  "scope": "live-readonly",
+  "finished": "2026-10-16T16:03:12.107Z",
+  "exit_code": 0,
+  "results": [
+    {
+      "name": "live-readonly",
+      "started": "2026-10-16T16:03:10.393Z",
+      "finished": "2026-10-16T16:03:12.105Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-03-10-390Z-18156-backend\\live-readonly.txt"
+    }
+  ]
+}

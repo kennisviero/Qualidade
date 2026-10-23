@@ -1,0 +1,119 @@
+{
+  "name": "backend",
+  "started": "2026-10-16T15:46:33.388Z",
+  "command": "python.exe",
+  "args": [
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "qa.pytest_guard",
+    "tests",
+    "--ignore=tests/qa/test_unit_rules.py",
+    "--junitxml=C:\\produttare\\qualidade\\qa\\evidencias\\2026-10-16T15-46-33-385Z-684-backend\\backend.xml"
+  ]
+}
+FFF..................................................................... [ 40%]
+.F...................................................................... [ 81%]
+.................................                                        [100%]
+================================== FAILURES ===================================
+_______ test_rg_lac_013_usuario_sem_empresa_nao_le_base_global[pareto] ________
+
+qa_client = (<starlette.testclient.TestClient object at 0x000001A1695C71D0>, 2)
+tool = 'pareto'
+
+    @pytest.mark.parametrize('tool',['pareto','histograma','dispersao'])
+    def test_rg_lac_013_usuario_sem_empresa_nao_le_base_global(qa_client,tool):
+        c,eid=qa_client
+        criar_issue(c,empresa_id=eid,o_que='Dado privado QA').raise_for_status()
+        email='qa_orfao_'+uuid4().hex
+        c.post('/api/usuarios',json={'nome':'Sem empresa','email':email,'senha':'qa','papel':'editor'}).raise_for_status()
+        login(c,email,'qa').raise_for_status()
+        response=c.get('/api/ferramentas/'+tool)
+>       assert response.status_code in (403,422), 'Conta sem empresa não pode receber dados globais: '+response.text[:250]
+E       AssertionError: Conta sem empresa não pode receber dados globais: {"base":"issues","opcoes":{"categoria":[{"valor":"dado privado qa","rotulo":"Dado privado QA"}],"impacto":[{"valor":"impacto medio no processo, sem risco imediato ao cliente.","rotulo":"Impacto médio no processo, sem risco imediato ao cliente."}],"am
+E       assert 200 in (403, 422)
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests\qa\test_integration_rules.py:23: AssertionError
+_____ test_rg_lac_013_usuario_sem_empresa_nao_le_base_global[histograma] ______
+
+qa_client = (<starlette.testclient.TestClient object at 0x000001A1696891F0>, 3)
+tool = 'histograma'
+
+    @pytest.mark.parametrize('tool',['pareto','histograma','dispersao'])
+    def test_rg_lac_013_usuario_sem_empresa_nao_le_base_global(qa_client,tool):
+        c,eid=qa_client
+        criar_issue(c,empresa_id=eid,o_que='Dado privado QA').raise_for_status()
+        email='qa_orfao_'+uuid4().hex
+        c.post('/api/usuarios',json={'nome':'Sem empresa','email':email,'senha':'qa','papel':'editor'}).raise_for_status()
+        login(c,email,'qa').raise_for_status()
+        response=c.get('/api/ferramentas/'+tool)
+>       assert response.status_code in (403,422), 'Conta sem empresa não pode receber dados globais: '+response.text[:250]
+E       AssertionError: Conta sem empresa não pode receber dados globais: {"base":"issues","medida":"idade_dias","rotulo":"Tempo desde o cadastro / emissão","unidade":"dias","opcoes":{"categoria":[{"valor":"dado privado qa","rotulo":"Dado privado QA"}],"impacto":[{"valor":"impacto medio no processo, sem risco imediato ao c
+E       assert 200 in (403, 422)
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests\qa\test_integration_rules.py:23: AssertionError
+______ test_rg_lac_013_usuario_sem_empresa_nao_le_base_global[dispersao] ______
+
+qa_client = (<starlette.testclient.TestClient object at 0x000001A16968B8C0>, 4)
+tool = 'dispersao'
+
+    @pytest.mark.parametrize('tool',['pareto','histograma','dispersao'])
+    def test_rg_lac_013_usuario_sem_empresa_nao_le_base_global(qa_client,tool):
+        c,eid=qa_client
+        criar_issue(c,empresa_id=eid,o_que='Dado privado QA').raise_for_status()
+        email='qa_orfao_'+uuid4().hex
+        c.post('/api/usuarios',json={'nome':'Sem empresa','email':email,'senha':'qa','papel':'editor'}).raise_for_status()
+        login(c,email,'qa').raise_for_status()
+        response=c.get('/api/ferramentas/'+tool)
+>       assert response.status_code in (403,422), 'Conta sem empresa não pode receber dados globais: '+response.text[:250]
+E       AssertionError: Conta sem empresa não pode receber dados globais: {"base":"issues","eixo_x":{"medida":"idade_dias","rotulo":"Tempo desde o cadastro / emissão","unidade":"dias"},"eixo_y":{"medida":"registro_horas","rotulo":"Tempo da detecção ao cadastro","unidade":"horas"},"pontos":[{"id":1,"issue_id":1,"empresa_id"
+E       assert 200 in (403, 422)
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests\qa\test_integration_rules.py:23: AssertionError
+__________________ test_investigacao_etapas_porques_ishikawa __________________
+
+setup = namespace(c=<starlette.testclient.TestClient object at 0x000001A1699FEF60>, eid=63, users=[44, 45], emails=['7616770ec...e': None, 'rnc_emitida_por_nome': None, 'rnc_equipe_investigacao_nomes': [], 'ishikawa': None, 'acoes': []}], calls=[])
+
+    def test_investigacao_etapas_porques_ishikawa(setup):
+        s=setup;rid=s.c.post(f"/api/issues/{s.issues[0]['id']}/emitir-rnc",json={}).json()['rnc_id'];url=f'/api/rncs/{rid}'
+        data={'analise':'Etapa 1 preservada','hipoteses':[],
+            'etapa_porques':{'problema':'Falha na entrega','passos':[{'pergunta':'Por quê?','resposta':'Configuração','evidencia':'Log 123'}],'conclusao':'Revisar parâmetro'},
+            'etapa_ishikawa':{'efeito':'Atraso','metodo':'Instrução antiga','maquina':'Parâmetro','material':'Lote A',
+                'mao_obra':'Treinamento','medicao':'Amostragem','meio_ambiente':'Turno','conclusao':'Testar parâmetro'}}
+        saved=s.c.put(url,json={'investigacao_json':data})
+        assert saved.status_code==200,saved.text
+>       assert s.c.get(url).json()['rnc_investigacao_json']==data
+E       AssertionError: assert {'analise': '...essoas', ...}} == {'analise': '...Lote A', ...}}
+E         
+E         Omitting 3 identical items, use -vv to show
+E         Differing items:
+E         {'etapa_ishikawa': {'metodo_titulo': 'Método', 'maquina_titulo': 'Máquina / equipamento / sistema', 'material_titulo': 'Material / insumos', 'mao_obra_titulo': 'Mão de obra / pessoas', ...}} != {'etapa_ishikawa': {'efeito': 'Atraso', 'metodo': 'Instrução antiga', 'maquina': 'Parâmetro', 'material': 'Lote A', ...}}
+E         Use -v to get more diff
+
+tests\test_issue_selecao.py:134: AssertionError
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\produttare\qualidade\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+.venv\Lib\site-packages\_pytest\cacheprovider.py:469
+  C:\produttare\qualidade\.venv\Lib\site-packages\_pytest\cacheprovider.py:469: PytestCacheWarning: cache could not write path C:\produttare\qualidade\.pytest_cache\v\cache\nodeids: [Errno 13] Permission denied: 'C:\\produttare\\qualidade\\.pytest_cache\\v\\cache\\nodeids'
+    config.cache.set("cache/nodeids", sorted(self.cached_nodeids))
+
+.venv\Lib\site-packages\_pytest\cacheprovider.py:423
+  C:\produttare\qualidade\.venv\Lib\site-packages\_pytest\cacheprovider.py:423: PytestCacheWarning: cache could not write path C:\produttare\qualidade\.pytest_cache\v\cache\lastfailed: [Errno 13] Permission denied: 'C:\\produttare\\qualidade\\.pytest_cache\\v\\cache\\lastfailed'
+    config.cache.set("cache/lastfailed", self.lastfailed)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/qa/test_integration_rules.py::test_rg_lac_013_usuario_sem_empresa_nao_le_base_global[pareto]
+FAILED tests/qa/test_integration_rules.py::test_rg_lac_013_usuario_sem_empresa_nao_le_base_global[histograma]
+FAILED tests/qa/test_integration_rules.py::test_rg_lac_013_usuario_sem_empresa_nao_le_base_global[dispersao]
+FAILED tests/test_issue_selecao.py::test_investigacao_etapas_porques_ishikawa
+4 failed, 173 passed, 3 warnings in 202.32s (0:03:22)
+
+[QA] exit_code=1

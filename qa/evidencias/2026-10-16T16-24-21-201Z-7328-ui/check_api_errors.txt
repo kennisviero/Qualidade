@@ -1,0 +1,11 @@
+{
+  "name": "check_api_errors",
+  "started": "2026-10-16T16:24:21.277Z",
+  "command": "node.exe",
+  "args": [
+    "tests/check_api_errors.cjs"
+  ]
+}
+OK: erros textuais preservados e validações estruturadas exibidas com campo e mensagem.
+
+[QA] exit_code=0

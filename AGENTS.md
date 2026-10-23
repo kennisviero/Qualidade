@@ -1,5 +1,32 @@
 # Qualidade — Gestão da Qualidade em Ciclo Fechado (Issues + PDCA)
 
+## Atualização autorizada (2026-10-16) — Diagrama de Matriz
+
+- Adicionada 6-Diagrama de Matriz nos padrões de Afinidades/Relações, com contextos Uma RNC (uma origem) e Geral (2–20 RNCs da mesma empresa), filtros de seleção compartilhados com Pareto e aba Como funciona para ambos.
+- Linhas de problemas/hipóteses/fatores com origem explícita, colunas de ações reais dos planos e cruzamentos editáveis Não avaliada/Nenhuma/Fraca/Média/Forte. Avaliações exigem justificativa; fator evidenciado exige referência. Sem pontuação automática, inferência de causa ou conclusão de eficácia. Distinção entre avaliação pendente e ausência de cobertura após avaliação completa; ações excluídas identificadas.
+- Tabela própria `matrizes`, fotografia preservada e revisão contra sobrescrita concorrente. Admin/editor salvam; visualizadores consultam/exploram. Consulta IA com instruções contextuais editáveis, fotografia assinada e envio explícito, sem gravar resposta ou alterar matriz/planos automaticamente. Operação em `Documentos/specs/MATRIZ.md`; regras RG-MAT-001 a 010.
+- Schema aplicado com `_apply_matriz_schema.py`; backup `data/backups/qualidade_antes_matriz_20261016T162132934850Z.db`. Conteúdo integral das 27 tabelas anteriores preservado, incluindo 77 Issues, 31 RNCs e 31 ações. Integridade/FKs verificadas. Esta migração faz parte da implementação autorizada; testes mutantes permanecem isolados.
+- QA: 191 testes backend passaram na suíte completa; 15 testes Matriz passaram na execução focada com complementos (subconjunto, não somar). Também aprovados 11 scripts de interface, 4 E2E (prompts contextuais e resposta IA simulada) e 33 checagens ativas somente leitura. Livro-razão e evidências em `qa/RESULTADOS.md`; sem chamada real LLM.
+
+## QA local — execução autorizada (2026-10-16)
+
+- Autorização adicional do usuário em 16/10/2026: pode usar a base ativa para testes neste momento. Escopo adotado: smoke somente leitura pelo filtro fixo `qa:backend -- --focus=live-readonly`, com SQLite mode=ro/query_only e GETs no servidor existente, sessão válida sem registrar token. Sem limpeza/exclusões, emissão/encerramento, gravação de diagramas, migrações ou LLM real. Suítes mutantes continuam isoladas. Resultados ativos devem ser registrados separadamente das suítes temporárias.
+
+- Agente de projeto QA em `.codex/agents/QA.toml`, com cópia revisável em `qa/QA.toml`. Instruções e livro-razão em `qa/README.md` e `qa/RESULTADOS.md`; regras em `regrasnegocio/RG.md` e stack em `stack/stack.md`.
+- Comandos autorizados de testes no `package.json`: `qa:unit`, `qa:backend`, `qa:ui`, `qa:e2e`, `qa:inventory` e `test`. No PowerShell local usar `npm.cmd` sem alterar ExecutionPolicy. Playwright é dependência de desenvolvimento, sem mudança no build FastAPI.
+- Testes devem usar banco/Vault temporários, servidor E2E exclusivo 127.0.0.1:18765 e bloquear chamadas LLM reais. Não usar localhost:8000/base ativa. Preservar logs/exit code/JUnit por execução em `qa/evidencias`; scripts DOM simulados não contam como E2E real. Mudanças futuras em configuração principal exigem consulta conforme restrição do usuário.
+- Execução QA concluída: 13 unitários, 177 backend, 10 scripts de interface e 3 E2E Edge passaram. Regressão focada de 16 integrações (subconjunto) passou. Primeira rodada com quatro falhas preservada no livro-razão. Corrigido acesso estatístico global indevido de usuário não global sem empresa no Pareto compartilhado; consulta global legítima do superusuário mantida. Teste legado Ishikawa atualizado com títulos padrão literais, mantendo comparação exata dos fatos. Harness E2E usa encerramento cooperativo disponível somente no servidor QA. Matriz tem 299 itens inventariados e 17 com vínculos explícitos; não equivale a cobertura integral de regras/linhas.
+
+## Atualização autorizada (2026-10-16) — Relações
+
+- Implementada 5-Diagrama de Relações no padrão de Afinidades: Issues/RNCs, filtros/elegibilidade compartilhados, aba explicativa, salvamento/reabertura por empresa e consulta IA explícita com snapshot assinado. Fatores com vínculos aos registros e setas direcionais com justificativa; hipóteses ou relações sustentadas por evidência declarada. Contagens de entradas/saídas não determinam causa raiz/prioridade. Ciclos permitidos, duplicatas/autorrelações rejeitadas.
+- Tabela aditiva `relacoes`, fotografia dos relatos e revisão contra sobrescrita. Admin/editor gravam; visualizadores consultam. Não altera dados originais nem aplica sugestões IA automaticamente. Operação em `Documentos/specs/RELACOES.md`; testes backend/interface com provedor não acionado.
+
+## Atualização autorizada (2026-10-16) — Afinidades
+
+- Adicionada ferramenta 4-Diagrama de Afinidades, com bases Issues/RNCs, filtros compartilhados e aba Como funciona com exemplos para ambas as bases. Cartões por registro, agrupamento manual, renomear/remover grupos e itens sem grupo; não infere causa raiz.
+- Análises salvas separadamente em `afinidades`, por empresa/base, com fotografia dos relatos e revisão contra sobrescrita concorrente. Admin/editor gravam; visualizadores consultam. Issues/RNCs originais permanecem preservadas. Consulta IA segue componente compartilhado e envio explícito com snapshot assinado do quadro atual. Sem chamada real ao provedor. Operação em `documentos/specs/AFINIDADES.md`.
+
 ## Base didática autorizada (2026-10-14)
 
 - Adicionado 3-Diagrama de Dispersão em Ferramentas. Filtros e elegibilidade de Pareto/Histograma, seleção de dois eixos, pares numéricos do mesmo registro, Pearson quando aplicável, contagens de exclusões, tabela por clique e Consultar IA com snapshot assinado. Unidades/moedas compatíveis e números exibidos com duas casas; sem inferência de causalidade. Operação em `documentos/specs/DISPERSAO.md`.

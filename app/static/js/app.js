@@ -17,6 +17,22 @@ function escapeHtml(s) {
   ));
 }
 
+function apiErrorMessage(detail, fallback) {
+  if (typeof detail === 'string' && detail) return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail.map(item => {
+      if (typeof item === 'string') return item;
+      if (!item || typeof item.msg !== 'string') return '';
+      const field = Array.isArray(item.loc) ? item.loc.filter(part => !['body','query','path'].includes(part)).join('.') : '';
+      const label = {inicio:'Data inicial',fim:'Data final',titulo:'Título',grupos:'Grupos',empresa_id:'Empresa'}[field] || field;
+      return label ? `${label}: ${item.msg}` : item.msg;
+    }).filter(Boolean);
+    if (messages.length) return messages.join('\n');
+  }
+  if (detail && typeof detail === 'object' && typeof detail.msg === 'string') return detail.msg;
+  return fallback || 'Não foi possível concluir a solicitação.';
+}
+
 function api(path, options = {}) {
   const opts = { credentials: "same-origin", cache: "no-store", headers: { "Content-Type": "application/json" }, ...options };
   if (opts.body && typeof opts.body !== "string") opts.body = JSON.stringify(opts.body);
@@ -25,7 +41,7 @@ function api(path, options = {}) {
     const data = await r.json().catch(() => null);
     if (!r.ok) {
       if (r.status === 401) showLogin();
-      const err = new Error(data && data.detail ? data.detail : r.statusText);
+      const err = new Error(apiErrorMessage(data?.detail, r.statusText));
       err.status = r.status;
       throw err;
     }
@@ -71,6 +87,9 @@ async function onAuth() {
   resetPareto();
   resetHistograma();
   resetDispersao();
+  resetAfinidades();
+  resetRelacoes();
+  resetMatriz();
   resetIssueSelecao();
   document.querySelectorAll(".editor-only").forEach((el) => el.classList.toggle("hidden", !isEditor()));
   resetLlmForm();
@@ -1660,6 +1679,9 @@ document.querySelectorAll(".sidebar a").forEach((a) => {
     if (a.dataset.section === "pareto") loadPareto();
     if (a.dataset.section === "histograma") loadHistograma();
     if (a.dataset.section === "dispersao") loadDispersao();
+    if (a.dataset.section === "afinidades") loadAfinidades();
+    if (a.dataset.section === "relacoes") loadRelacoes();
+    if (a.dataset.section === "matriz") loadMatriz();
     if (a.dataset.section === "rncs") showRncView(a.dataset.rncView||'registros').catch((e) => { document.getElementById("rncMensagem").textContent=e.message; });
   });
 });
@@ -1676,6 +1698,12 @@ document.getElementById("empresaSelect").addEventListener("change", async (e) =>
   state.empresaId = Number(e.target.value) || null;
   resetDispersao();
   if (document.getElementById("section-dispersao").classList.contains("active")) await loadDispersao();
+  resetAfinidades();
+  if (document.getElementById("section-afinidades").classList.contains("active")) await loadAfinidades();
+  resetRelacoes();
+  if (document.getElementById("section-relacoes").classList.contains("active")) await loadRelacoes();
+  resetMatriz();
+  if (document.getElementById("section-matriz").classList.contains("active")) await loadMatriz();
   resetPareto();
   resetHistograma();
   if (document.getElementById("section-histograma").classList.contains("active")) await loadHistograma();

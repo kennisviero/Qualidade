@@ -1,0 +1,11 @@
+{
+  "name": "check_relacoes",
+  "started": "2026-10-16T16:24:49.105Z",
+  "command": "node.exe",
+  "args": [
+    "tests/check_relacoes.cjs"
+  ]
+}
+OK: abas, fontes, filtros sem datas vazias, fatores, setas, SVG seguro, ciclos, validação, edição, salvamento, IA e respostas obsoletas.
+
+[QA] exit_code=0

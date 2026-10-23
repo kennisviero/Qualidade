@@ -1,0 +1,11 @@
+{
+  "name": "check_afinidades",
+  "started": "2026-10-16T16:24:48.402Z",
+  "command": "node.exe",
+  "args": [
+    "tests/check_afinidades.cjs"
+  ]
+}
+OK: abas, filtros, texto seguro, grupos, movimentação, salvar, consulta IA e preservação ao navegar.
+
+[QA] exit_code=0

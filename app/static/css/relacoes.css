@@ -1,0 +1,8 @@
+.rel-editors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.rel-card{border:1px solid #cbd5e1;border-radius:8px;padding:12px;margin-top:12px;overflow-wrap:anywhere;background:#f8fafc}
+.rel-card p{white-space:pre-wrap}
+.rel-card select,.rel-editors select,.rel-editors textarea{width:100%}
+.rel-graph{overflow:auto;border:1px solid #dbeafe;border-radius:8px;max-height:75vh;padding:8px}
+.rel-graph svg{display:block;width:100%;height:auto}
+#rel-registros details{padding:10px;border-bottom:1px solid #e2e8f0;overflow-wrap:anywhere}
+@media(max-width:900px){.rel-editors{grid-template-columns:1fr}}

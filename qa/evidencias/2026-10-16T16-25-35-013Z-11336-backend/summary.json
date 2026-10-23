@@ -1,0 +1,16 @@
+{
+  "suite": "backend",
+  "scope": "matriz",
+  "finished": "2026-10-16T16:25:49.878Z",
+  "exit_code": 0,
+  "results": [
+    {
+      "name": "backend",
+      "started": "2026-10-16T16:25:35.016Z",
+      "finished": "2026-10-16T16:25:49.876Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-25-35-013Z-11336-backend\\backend.txt"
+    }
+  ]
+}

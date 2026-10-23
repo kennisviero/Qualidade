@@ -1,0 +1,16 @@
+{
+  "suite": "backend",
+  "scope": "complete",
+  "finished": "2026-10-16T16:24:00.408Z",
+  "exit_code": 0,
+  "results": [
+    {
+      "name": "backend",
+      "started": "2026-10-16T16:20:30.979Z",
+      "finished": "2026-10-16T16:24:00.400Z",
+      "exit_code": 0,
+      "signal": null,
+      "log": "qa\\evidencias\\2026-10-16T16-20-30-975Z-18040-backend\\backend.txt"
+    }
+  ]
+}

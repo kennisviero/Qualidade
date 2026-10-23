@@ -1,0 +1,11 @@
+{
+  "name": "check_matriz",
+  "started": "2026-10-16T16:24:48.941Z",
+  "command": "node.exe",
+  "args": [
+    "tests/check_matriz.cjs"
+  ]
+}
+OK: contextos, abas, filtros sem datas vazias, células, justificativas, pendente versus nenhuma, texto seguro, salvar/revisão, IA explícita, visualizador e respostas obsoletas.
+
+[QA] exit_code=0

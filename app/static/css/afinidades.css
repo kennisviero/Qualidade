@@ -1,0 +1,7 @@
+.afin-board{display:flex;gap:14px;overflow-x:auto;align-items:flex-start;padding:8px 0 20px}
+.afin-column{flex:0 0 310px;max-height:75vh;overflow-y:auto;background:#f1f5f9}
+.afin-column h3{overflow-wrap:anywhere}
+.afin-card{background:white;border:1px solid #cbd5e1;border-radius:8px;padding:12px;margin-top:12px;overflow-wrap:anywhere}
+.afin-card p{white-space:pre-wrap;font-size:13px}
+.afin-card select{width:100%}
+.afin-details{white-space:pre-wrap;font-size:12px;max-height:240px;overflow:auto}

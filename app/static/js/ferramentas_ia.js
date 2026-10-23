@@ -36,8 +36,13 @@ async function openToolAI(tool,result){
   if(!result?.consulta_ia){toolAIElement('status').textContent='Gere a análise antes de consultar a IA.';return;}
   if(!state.empresaId){toolAIElement('status').textContent='Selecione uma empresa e gere a análise novamente.';return;}
   const sequence=++toolAISequence;toolAIContext={...result.consulta_ia,empresa_id:state.empresaId};
-  toolAIElement('title').textContent=`Consultar IA — ${{pareto:'Pareto',histograma:'Histograma',dispersao:'Diagrama de Dispersão'}[tool]||tool}`;
-  toolAIElement('prompt').value='Analise os resultados apresentados, destaque os principais achados e limitações e sugira próximos passos de investigação. Diferencie hipóteses de conclusões sustentadas pelos dados.';
+  toolAIElement('title').textContent=`Consultar IA — ${{pareto:'Pareto',histograma:'Histograma',dispersao:'Diagrama de Dispersão',afinidades:'Diagrama de Afinidades',relacoes:'Diagrama de Relações'}[tool]||tool}`;
+  toolAIElement('prompt').value=tool==='afinidades'?'Revise os relatos e os grupos do Diagrama de Afinidades. Sugira temas por semelhança de significado, cite os códigos dos registros e sinalize cartões ambíguos ou sem grupo. Não invente fatos nem trate afinidade como causa raiz. Os agrupamentos propostos dependem de revisão humana.':'Analise os resultados apresentados, destaque os principais achados e limitações e sugira próximos passos de investigação. Diferencie hipóteses de conclusões sustentadas pelos dados.';
+  if(tool==='relacoes')toolAIElement('prompt').value='Revise os fatores, as setas e as justificativas do Diagrama de Relações. Diferencie hipóteses de relações com evidência declarada, confronte-as com os relatos e cite os códigos dos registros. Avalie direções, ciclos, lacunas e possíveis testes. Não invente fatos, não confirme causalidade nem determine causa raiz ou prioridade pelas contagens de entradas e saídas. As sugestões dependem de revisão humana.';
+  if(tool==='matriz'){
+    toolAIElement('title').textContent='Consultar IA — Diagrama de Matriz';
+    toolAIElement('prompt').value=(result.contexto==='rnc'?'Analise esta RNC: confronte os problemas/fatores e evidências da investigação com as ações do plano.':'Analise o contexto geral das RNCs selecionadas: compare cobertura, sobreposições e possíveis ações comuns, mantendo explícitas as RNCs de origem e verificando comparabilidade.')+' Revise as intensidades e justificativas de cada cruzamento. Diferencie células não avaliadas de ausência de relação, hipóteses de fatores evidenciados e ações fora da matriz de ações sem relação indicada. Cite códigos RNC e IDs de ações. Sugira perguntas, ajustes de cobertura e formas de verificar eficácia, sem inventar evidências, afirmar causalidade ou concluir eficácia por esta matriz. Associações entre RNCs são propostas e não transferem ações. As sugestões dependem de revisão humana.';
+  }
   toolAIElement('data').textContent=JSON.stringify(JSON.parse(toolAIContext.snapshot),null,2);
   toolAIElement('status').textContent='Carregando os acessos LLM…';
   try{
