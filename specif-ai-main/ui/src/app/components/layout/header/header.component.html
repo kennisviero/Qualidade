@@ -1,0 +1,39 @@
+<ng-container *ngIf="(startupService.isLoggedIn$ | async) === true">
+  <header
+    class="bg-white border-b [app-region:drag] select-none h-[39px] w-full"
+  >
+    <div class="flex items-center justify-between pl-4">
+      <div [ngClass]="{ 'pl-16': isMacOS && !isFullscreen }">
+        <app-breadcrumbs />
+      </div>
+      <div class="flex items-center gap-x-3">
+        <div>
+          <ng-container
+            *ngIf="themeConfiguration.appLogoDark.length > 0; else showAppName"
+          >
+            <span class="sr-only">{{ themeConfiguration.appName }}</span>
+            <img
+              [src]="themeConfiguration.appLogoDark"
+              class="mx-auto h-5"
+              [alt]="themeConfiguration.appName"
+            />
+          </ng-container>
+          <ng-template #showAppName>
+            <h1 class="text-2xl text-secondary-50">
+              {{ themeConfiguration.appName }}
+            </h1>
+          </ng-template>
+        </div>
+        <button
+          (click)="navigateToSettings()"
+          (keydown.enter)="navigateToSettings()"
+          (keydown.space)="navigateToSettings(); $event.preventDefault()"
+          class="flex items-center justify-center h-[39px] px-3.5 border-l border-secondary-200 [app-region:no-drag]"
+        >
+          <ng-icon name="heroCog8Tooth" strokeWidth="2" size="16" />
+          <span class="sr-only">Settings</span>
+        </button>
+      </div>
+    </div>
+  </header>
+</ng-container>

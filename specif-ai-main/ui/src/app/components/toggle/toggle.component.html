@@ -1,0 +1,14 @@
+<div
+  class="relative flex items-center cursor-pointer w-8 h-4 rounded-full transition-colors duration-200 ease-in-out"
+  [ngClass]="{ 'bg-primary-500': isActive, 'bg-secondary-300': !isActive }"
+  (click)="toggle()"
+  (keydown.enter)="toggle()"
+  (keydown.space)="toggle(); $event.preventDefault()"
+  role="button"
+  tabindex="0"
+>
+  <span
+    class="absolute left-[3px] top-[3px] w-2.5 h-2.5 rounded-full bg-white transition-transform duration-200 ease-in-out"
+    [ngClass]="{ 'transform translate-x-[15px]': isActive }"
+  ></span>
+</div>

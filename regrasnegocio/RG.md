@@ -535,3 +535,98 @@ Operação: [MATRIZ.md](../Documentos/specs/MATRIZ.md). Rotas `/api/ferramentas/
 ### Estado da verificação do levantamento original
 
 Leitura estática das fontes e consulta aos testes existentes; sem executar limpeza, emissão, chamadas LLM, migrações ou gravações na base ativa. O único artefato produzido por esta tarefa é este catálogo. A suíte completa não foi reexecutada para a documentação. O log da sessão registra a divergência anterior no teste de JSON exato da investigação Ishikawa; isso não foi tratado como ausência da etapa implementada.
+
+## 26. PDM — Documentos Controlados e Captura
+
+Fontes: `app/routers/documentos_controlados.py`; `app/services/captura.py`; `app/services/llm_client.py` (ler_documento_visao); `app/docs.py` (build_documento_pasta). Evidências: `tests/test_pdm.py`; `tests/check_pdm.cjs`.
+
+| ID | Regra implementada | Camada |
+|---|---|---|
+| RG-PDM-001 | Código serial por empresa `DOC-NNNN`, único por empresa; bytes no Vault `Vault/{empresa}/_pdm/{codigo}/R{numero}/`, metadados em SQLite. | DB/API |
+| RG-PDM-002 | Criar documento gera revisão R01 em rascunho e evento de auditoria; estado inicial rascunho. | API/DB |
+| RG-PDM-003 | Check-out é exclusivo (lock-out): segundo usuário recebe 409; documento obsoleto não aceita check-out. | API |
+| RG-PDM-004 | Criar revisão e enviar arquivo exigem check-out pelo próprio usuário; upload só em revisão rascunho. | API |
+| RG-PDM-005 | Aprovar exige check-in (sem check-out ativo) e só o aprovador definido (ou superusuário); marca a maior revisão como aprovada, as anteriores obsoletas, documento aprovado e revisão vigente. | API |
+| RG-PDM-006 | Obsoletar define documento e revisões como obsoletos e libera o check-out. | API |
+| RG-PDM-007 | Tenancy por empresa: leitura exige sessão (401 sem login); documento de outra empresa retorna 403/404; escrita exige admin/editor (visualizador 403). | API |
+| RG-PDM-008 | Toda operação (criar, revisão, arquivo, check-out/in, aprovar, obsoletar, leitura) registra evento com hash SHA-256 encadeado; `GET /auditoria` recalcula o encadeamento e informa `integra`. | API/DB |
+| RG-CAP-001 | Leitura extrai texto digital local (TXT/PDF/DOCX via pypdf/python-docx) sem chamada externa quando há camada de texto (`origem=digital`). | API |
+| RG-CAP-002 | Sem texto nativo e com acesso LLM OpenRouter ativo da empresa, renderiza a página (PyMuPDF) e lê por modelo de visão (`origem=ia`); sem PyMuPDF ou sem acesso, degrada para `origem=vazio`. | API |
+| RG-CAP-003 | O acesso LLM reusa o cadastro existente `/api/configuracao/llm`; a leitura só ocorre com `acesso_id` explícito e ativo da própria empresa. Guardas de host/HTTPS/anti-SSRF do adapter são preservadas. | API |
+
+Operação: [PDM.md](../Documentos/specs/PDM.md). Rotas `/api/pdm/documentos`.
+
+## 27. Normas e Regulamentos
+
+Fontes: `app/routers/normas.py`; reutiliza `create_documento_interno` do PDM. Evidências: `tests/test_normas.py`; `tests/check_normas.cjs`.
+
+| ID | Regra implementada | Camada |
+|---|---|---|
+| RG-NOR-001 | Código serial por empresa `NORMA-NNNN`, único por empresa; tenancy por `empresa_id`/`scope`. | DB/API |
+| RG-NOR-002 | `tipo_fonte` e `status` restritos a enums (422 fora do conjunto); fontes diversas cobrem norma técnica, regulamento legal, requisito contratual/cliente, política interna e outro. | API |
+| RG-NOR-003 | Criar com `criar_documento` (padrão verdadeiro) gera, na mesma transação, um documento controlado tipo `norma` e vincula `documento_id`; com falso, a norma fica sem documento. | API/DB |
+| RG-NOR-004 | Filtros por tipo de fonte, status e emissor e busca por código/título/identificador, todos restritos à empresa. | API |
+| RG-NOR-005 | Escrita exige admin/editor (visualizador 403); leitura exige sessão (401 sem login); norma de outra empresa retorna 404. | API |
+| RG-NOR-006 | Excluir a norma não remove o documento controlado vinculado (objeto independente do PDM); o FK usa `ON DELETE SET NULL`. | DB |
+
+Operação: [NORMAS.md](../Documentos/specs/NORMAS.md). Rotas `/api/normas`.
+
+## 28. Requisitos / cláusulas
+
+Fontes: `app/routers/requisitos.py`; migração `documento_revisoes.variante` em `app/db.py`. Evidências: `tests/test_requisitos.py`; `tests/check_requisitos.cjs`.
+
+| ID | Regra implementada | Camada |
+|---|---|---|
+| RG-REQ-001 | Requisito pertence a uma norma da mesma empresa (`norma_id`+`empresa_id`); norma de outra empresa retorna 404. Tenancy por `scope`. | API/DB |
+| RG-REQ-002 | `categoria` (normativo/interno/cliente/legal), `obrigatoriedade` (obrigatorio/recomendado/informativo) e `estado` (ativo/revogado) restritos a enums (422). | API |
+| RG-REQ-003 | Escrita exige admin/editor (visualizador 403); leitura exige sessão (401 sem login). | API |
+| RG-REQ-004 | Importação CSV/DOCX/XLSX cria em lote numa transação, sanitizando campos; XLSX/DOCX degradam se a lib estiver ausente (400). Exportação CSV sempre; XLSX quando openpyxl presente. | API |
+| RG-REQ-005 | Revisão de documento do PDM aceita rótulo de variante (`documento_revisoes.variante`), sem alterar o versionamento numérico. | API/DB |
+| RG-REQ-006 | Prioridade MoSCoW (`''|must|should|could|wont`) validada (422) e filtrável; migração aditiva com default vazio. | API/DB |
+| RG-REQ-007 | Esquema de atributos por empresa (`requisito_atributo_defs`) é configurado só por admin; tipo restrito a `texto|numero|data|lista|booleano`; `lista` exige opções; chave única por empresa (409). | API/DB |
+| RG-REQ-008 | Valores de atributo (`PUT /{id}/atributos`) validados conforme tipo/opções da definição e obrigatoriedade (422); upsert por (requisito, def). | API |
+| RG-REQ-009 | Relação requisito↔requisito restrita a `deriva_de|refina|depende|conflita|duplica`; rejeita auto-relação (422), duplicada (409) e destino de outra empresa (404). | API/DB |
+| RG-REQ-010 | Vínculo de rastreabilidade carrega `tipo_relacao` (`satisfaz|verifica|implementa|mitiga|outro`), default `satisfaz` (preserva vínculos existentes). | API/DB |
+| RG-REQ-011 | Change request: editor propõe mudança (`proposta`); admin/editor decide `aprovada`/`rejeitada` (grava aprovador/observação/data). Decisão em solicitação já decidida ou situação fora do enum → 422; tenancy por `scope`/`fetch_req`. | API/DB |
+| RG-REQ-012 | Versionamento: snapshot numerado do requisito em `requisito_versoes` — manual (`POST /{id}/versoes`) e **automático ao aprovar uma mudança** (origem `mudanca:{id}`). Histórico somente leitura. | API/DB |
+| RG-REQ-013 | Variante: campo `requisitos.variante` (rótulo de contexto, ex.: 127V/BR) e tipo de relação `variante_de` para ligar uma variante ao requisito base. | API/DB |
+
+Operação: [REQUISITOS.md](../Documentos/specs/REQUISITOS.md). Rotas `/api/requisitos` (+ `/atributos/defs`, `/{id}/atributos`, `/{id}/relacoes`, `/{id}/mudancas`, `/impacto`).
+
+## 31. Análise de impacto econômico
+
+Fontes: `app/routers/requisitos.py` (campos `custo_atual`/`custo_projetado`/`volume`; endpoint `/impacto`). Evidências: `tests/test_requisitos_rm.py`; `tests/check_impacto.cjs`.
+
+| ID | Regra implementada | Camada |
+|---|---|---|
+| RG-IMP-001 | Requisito guarda `custo_atual`, `custo_projetado` e `volume` (≥ 0 quando informados; podem ser nulos). Migração aditiva com default NULL. | API/DB |
+| RG-IMP-002 | `economia = (custo_atual − custo_projetado) × volume` apenas quando os três existem; caso contrário economia ausente (não entra no total). | API |
+| RG-IMP-003 | `/impacto` lista por norma/empresa com economia por requisito, ordenado desc, e resumo (economia_total, requisitos_com_dados); tenancy por `scope`; só a norma da empresa (404). | API |
+
+## 29. Rastreabilidade e conformidade
+
+Fontes: `app/routers/conformidade.py`; vínculos em `app/routers/requisitos.py`. Evidências: `tests/test_conformidade.py`; `tests/check_cobertura.cjs`.
+
+| ID | Regra implementada | Camada |
+|---|---|---|
+| RG-RAS-001 | Vínculo requisito↔alvo aceita apenas `processo|issue|rnc|acao`; o alvo precisa existir (404) e ser da **mesma empresa** do requisito (403 se de outra). | API |
+| RG-RAS-002 | Vínculo é único por (requisito, tipo, alvo) — duplicado retorna 409. Remoção restrita ao próprio requisito/empresa. | API/DB |
+| RG-RAS-003 | Os campos legados `enquadramento_normativo`/`requisito_violado` não são alterados; os vínculos apenas os referenciam (leitura aditiva). | DB |
+| RG-CNF-001 | Avaliação de conformidade por requisito (opcionalmente por processo) com `situacao` restrita a `conforme|nao_conforme|nao_avaliado` (422 fora do enum); upsert idempotente por (requisito, processo). | API |
+| RG-CNF-002 | Processo e responsável informados na avaliação precisam ser da empresa (422 caso contrário). | API |
+| RG-CNF-003 | A matriz de cobertura por norma retorna situação por requisito, contagem de vínculos por alvo e **lacunas** (`sem_vinculo`, `nao_avaliados`, `nao_conformes`) + resumo; só a norma da empresa é acessível (404). | API |
+
+Operação: [CONFORMIDADE.md](../Documentos/specs/CONFORMIDADE.md). Rotas `/api/conformidade` e `/api/requisitos/{id}/vinculos`.
+
+## 30. IA de Requisitos (parsing e análise de lacunas)
+
+Fontes: `app/services/requisitos_ia.py`; `app/routers/requisitos.py` (`/sugerir`); `app/routers/conformidade.py` (`/matriz/preparar`); `app/static/js/ferramentas_ia.js`. Evidências: `tests/test_requisitos_ia.py`.
+
+| ID | Regra implementada | Camada |
+|---|---|---|
+| RG-IAN-001 | Sugestão de requisitos usa o texto já lido da revisão do documento da norma; sem texto, retorna 400 (orienta rodar a leitura antes). Reusa o acesso LLM ativo da empresa (404 se ausente). | API |
+| RG-IAN-002 | A IA apenas sugere; nada é persistido automaticamente. A criação dos requisitos ocorre por ação humana via `POST /api/requisitos`. Instruções proíbem inventar cláusulas. | API/PROMPT |
+| RG-IAN-003 | O retorno da IA é validado estritamente (JSON com lista `requisitos`); categoria/obrigatoriedade fora do enum são normalizadas; JSON inválido retorna 502. | API |
+| RG-IAN-004 | A análise de lacunas monta a matriz de cobertura e assina o snapshot (`context('conformidade', …)`); o envio ao provedor só ocorre pelo componente compartilhado após ação explícita, validando a assinatura. | API/UI |
+
+Operação: [REQUISITOS_IA.md](../Documentos/specs/REQUISITOS_IA.md). Rotas `/api/requisitos/sugerir` e `/api/conformidade/matriz/preparar`.

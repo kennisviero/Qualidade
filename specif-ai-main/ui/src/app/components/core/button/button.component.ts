@@ -1,0 +1,147 @@
+import { Component, Input } from '@angular/core';
+import { NgClass, NgIf } from '@angular/common';
+import { NgIconComponent } from '@ng-icons/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
+@Component({
+  selector: 'app-button',
+  templateUrl: './button.component.html',
+  styleUrls: ['./button.component.scss'],
+  standalone: true,
+  imports: [NgClass, NgIconComponent, NgIf, MatTooltipModule],
+})
+export class ButtonComponent {
+  @Input() buttonContent: string = '';
+  @Input() theme:
+    | 'primary'
+    | 'primary_outline'
+    | 'secondary'
+    | 'secondary_outline'
+    | 'danger'
+    | 'danger_outline'
+    | 'green' = 'primary';
+  @Input() size: 'xs' | 'sm' | 'md' | 'lg' = 'md';
+  @Input() rounded: 'none' | 'sm' | 'md' | 'lg' = 'md';
+  @Input() roundedLeft: 'none' | 'sm' | 'md' | 'lg' = 'none';
+  @Input() roundedRight: 'none' | 'sm' | 'md' | 'lg' = 'none';
+  @Input() disabled: boolean = false;
+  @Input() icon?: string;
+  @Input() iconPosition: 'left' | 'right' = 'left';
+  @Input() type: string = 'button';
+  @Input() isIconButton: boolean = false;
+  @Input() isFullWidth: boolean = false;
+  @Input() tooltip?: string;
+  @Input() tooltipDisabled?: string;
+  @Input() showTooltip: boolean = false;
+  @Input() pill: boolean = false;
+
+  get themeClasses() {
+    if (this.pill) {
+      return {
+        bg: 'bg-secondary-100',
+        text: 'text-xs',
+        hoverBg: 'hover:bg-secondary-200',
+        disabledBg: 'bg-secondary-50',
+        disabledText: 'text-secondary-300',
+        border: '',
+      };
+    }
+
+    const styles = {
+      primary: {
+        bg: 'bg-primary-600',
+        text: 'text-white',
+        hoverBg: 'hover:bg-primary-700',
+        disabledBg: 'bg-primary-500',
+        disabledText: 'text-primary-200',
+        border: '',
+      },
+      primary_outline: {
+        bg: 'bg-transparent',
+        text: 'text-primary-600',
+        hoverBg: 'hover:bg-primary-200',
+        disabledBg: 'bg-transparent',
+        disabledText: 'text-primary-300',
+        border: 'border border-primary-300',
+      },
+      secondary: {
+        bg: 'bg-primary-50',
+        text: 'text-primary-600',
+        hoverBg: 'hover:bg-secondary-200',
+        disabledBg: 'bg-secondary-50',
+        disabledText: 'text-secondary-300',
+        border: 'border border-primary-300',
+      },
+      secondary_outline: {
+        bg: 'bg-transparent',
+        text: 'text-secondary-900',
+        hoverBg: 'hover:bg-secondary-200',
+        disabledBg: 'bg-transparent',
+        disabledText: 'text-secondary-300',
+        border: 'border border-secondary-200',
+      },
+      danger: {
+        bg: 'bg-danger-600',
+        text: 'text-secondary-50',
+        hoverBg: 'hover:bg-danger-700',
+        disabledBg: 'bg-danger-600',
+        disabledText: 'text-secondary-50',
+        border: '',
+      },
+      danger_outline: {
+        bg: 'bg-transparent',
+        text: 'text-danger-600',
+        hoverBg: 'hover:bg-danger-200',
+        disabledBg: 'bg-transparent',
+        disabledText: 'text-danger-300',
+        border: 'border border-danger-300',
+      },
+      green: {
+        bg: 'bg-success-500',
+        text: 'text-white',
+        hoverBg: 'hover:bg-success-600',
+        disabledBg: 'bg-success-400',
+        disabledText: 'text-success-300',
+        border: '',
+      },
+    };
+    return styles[this.theme] || styles.primary;
+  }
+
+  get baseClasses(): string {
+    return this.pill
+      ? 'inline-flex items-center cursor-pointer transition-colors ml-1.5'
+      : 'flex items-center justify-center font-semibold opacity-100 transition-colors duration-300 select-none';
+  }
+
+  get sizeClass(): string {
+    if (this.pill) {
+      return 'px-1.5 text-xs';
+    }
+
+    switch (this.size) {
+      case 'xs':
+        return 'px-2 py-1 text-xs';
+      case 'sm':
+        return 'px-3 py-2 text-xs';
+      case 'md':
+        return 'text-sm px-5 py-2.5';
+      case 'lg':
+        return 'text-base px-5 py-3';
+      default:
+        return 'text-sm px-5 py-2.5';
+    }
+  }
+
+  get roundedClass(): string {
+    if (this.pill) {
+      return 'rounded-xl';
+    }
+    const leftClass =
+      this.roundedLeft !== 'none' ? `rounded-l-${this.roundedLeft}` : '';
+    const rightClass =
+      this.roundedRight !== 'none' ? `rounded-r-${this.roundedRight}` : '';
+    const baseClass = this.rounded !== 'none' ? `rounded-${this.rounded}` : '';
+    return `${baseClass} ${leftClass} ${rightClass}`.trim();
+  }
+}

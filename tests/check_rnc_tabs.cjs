@@ -27,6 +27,8 @@ vm.runInContext(fs.readFileSync('app/static/js/rncs.js','utf8'),ctx);
   await ctx.renderRncTabs(target,item);
   let all=flatten(target);
   assert.deepEqual(all.filter(e=>e.className==='rnc-tab').map(e=>e.textContent),['1. Registro','2. Contenção','3. Investigação','4. Plano de Ação','5. Pendências','6. Encerramento']);
+  assert.ok(all.find(e=>e.textContent==='Normas/Requisitos aplicáveis'),'bloco de Normas/Requisitos no pane Registro');
+  assert.ok(all.find(e=>e.id==='rncVinculos'),'host de vínculos presente');
   assert.ok(all.find(e=>e.dataset.field==='licoes_aprendidas'));
   assert.ok(all.find(e=>e.textContent==='Aprovar e encerrar').disabled);
   const factual=all.find(e=>e.dataset.field==='comportamento_observado');assert.ok(factual.readOnly);assert.equal(factual.value,'Fato preservado');

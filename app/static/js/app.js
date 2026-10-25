@@ -90,6 +90,16 @@ async function onAuth() {
   resetAfinidades();
   resetRelacoes();
   resetMatriz();
+  resetProdutos();
+  resetNormas();
+  resetRequisitosGeral();
+  resetReqAtributos();
+  resetCobertura();
+  resetRastreabilidade();
+  resetImpacto();
+  resetVariantes();
+  resetVersionamento();
+  resetDocumentos();
   resetIssueSelecao();
   document.querySelectorAll(".editor-only").forEach((el) => el.classList.toggle("hidden", !isEditor()));
   resetLlmForm();
@@ -1144,6 +1154,8 @@ function novaIssue() {
   syncIssueStatus();
   document.getElementById("issueDetectadoEm").value = issueNowLocal();
   document.getElementById("issueDocsTree").innerHTML = "";
+  const iv = document.getElementById("issueVinculos");
+  if (iv) iv.innerHTML = `<p class="muted">Salve a Issue para vincular normas/requisitos.</p>`;
 }
 
 
@@ -1160,6 +1172,7 @@ async function selectIssue(id) {
     envolvidos.value = "multiplos";
   }
   await loadIssueDocsTree();
+  await loadIssueVinculos();
 }
 
 function readCaptura() {
@@ -1210,6 +1223,76 @@ async function salvarIssueCaptura() {
   fillIssueRnc(state.issue);
   await loadIssueList();
   await loadIssueKanban();
+  await loadIssueVinculos();
+}
+
+// --- Vínculos da Issue a Normas/Requisitos (reusa /api/requisitos/{id}/vinculos) ---
+const VINC_TIPOS = [["viola", "Viola"], ["relacionado", "Relacionado"], ["satisfaz", "Satisfaz"], ["outro", "Outro"]];
+let _reqVincCache = null;
+
+function resetReqVincCache() { _reqVincCache = null; }
+
+async function reqVincOptions() {
+  if (_reqVincCache) return _reqVincCache;
+  const rows = await api(`/api/requisitos?empresa_id=${state.empresaId || ""}`);
+  _reqVincCache = rows.map((r) => ({
+    id: r.id,
+    label: `${r.norma_codigo || "?"} · ${r.codigo_clausula || "—"} · ${r.titulo}`,
+  }));
+  return _reqVincCache;
+}
+
+async function loadIssueVinculos() {
+  const host = document.getElementById("issueVinculos");
+  if (!host) return;
+  if (!state.issueId) { host.innerHTML = `<p class="muted">Salve a Issue para vincular normas/requisitos.</p>`; return; }
+  return renderVinculosBloco(host, "issue", state.issueId, () => loadIssueVinculos());
+}
+
+// Componente compartilhado de vínculos (usado por Issue e RNC).
+// `editable` permite ao chamador restringir além de isEditor() (ex.: RNC concluída/fechada).
+async function renderVinculosBloco(host, alvoTipo, alvoId, reload, editable) {
+  const ed = editable === undefined ? isEditor() : (editable && isEditor());
+  let rows;
+  try { rows = await api(`/api/requisitos/vinculos-por-alvo?alvo_tipo=${alvoTipo}&alvo_id=${alvoId}&empresa_id=${state.empresaId || ""}`); }
+  catch (e) { host.innerHTML = `<p class="error">${escapeHtml(e.message)}</p>`; return; }
+  const lista = rows.length
+    ? rows.map((v) => `<div class="vinc-item" data-req="${v.requisito_id}" data-id="${v.vinculo_id}">
+        <strong>${escapeHtml(v.norma_codigo || "")}</strong> · ${escapeHtml(v.codigo_clausula || "—")} · ${escapeHtml(v.titulo)}
+        <span class="vinc-tag">${escapeHtml(v.tipo_relacao || "")}</span>${v.observacao ? ` · <span class="muted">${escapeHtml(v.observacao)}</span>` : ""}
+        ${ed ? `<button class="btn vinc-del" data-req="${v.requisito_id}" data-id="${v.vinculo_id}" type="button">remover</button>` : ""}
+      </div>`).join("")
+    : `<p class="muted">Nenhum requisito vinculado.</p>`;
+  let opts;
+  try { opts = await reqVincOptions(); }
+  catch (e) { opts = []; }
+  const form = ed ? `<div class="vinc-form">
+      <select class="vinc-sel"><option value="">Selecione um requisito…</option>${opts.map((o) => `<option value="${o.id}">${escapeHtml(o.label)}</option>`).join("")}</select>
+      <select class="vinc-tipo">${VINC_TIPOS.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select>
+      <input class="vinc-obs" placeholder="Observação (opcional)" maxlength="2000" />
+      <button class="btn vinc-add" type="button">Vincular</button>
+    </div>` : "";
+  host.innerHTML = lista + form;
+  if (!ed) return;
+  host.querySelectorAll(".vinc-del").forEach((b) => {
+    b.onclick = async () => {
+      try { await api(`/api/requisitos/${b.dataset.req}/vinculos/${b.dataset.id}?empresa_id=${state.empresaId || ""}`, { method: "DELETE" }); reload(); }
+      catch (e) { alert(e.message); }
+    };
+  });
+  const addBtn = host.querySelector(".vinc-add");
+  if (addBtn) addBtn.onclick = async () => {
+    const reqId = Number(host.querySelector(".vinc-sel").value) || null;
+    if (!reqId) { alert("Selecione um requisito."); return; }
+    const body = {
+      alvo_tipo: alvoTipo, alvo_id: alvoId,
+      tipo_relacao: host.querySelector(".vinc-tipo").value,
+      observacao: host.querySelector(".vinc-obs").value.trim(),
+      empresa_id: state.empresaId,
+    };
+    try { await api(`/api/requisitos/${reqId}/vinculos`, { method: "POST", body }); reload(); }
+    catch (e) { alert(e.message); }
+  };
 }
 
 
@@ -1670,6 +1753,33 @@ menuButton.addEventListener("click", () => {
   try { localStorage.setItem("qualidade.menuCollapsed", String(collapsed)); } catch (_) {}
 });
 
+// Grupos recolhíveis da sidebar (accordion vertical). Cada grupo esconde os itens
+// até o próximo grupo; estado por grupo persistido em localStorage.
+function initSidebarGroups() {
+  const nav = document.getElementById("mainSidebar");
+  if (!nav) return;
+  const groups = Array.from(nav.querySelectorAll(".sidebar-group"));
+  const activeSection = (document.querySelector(".sidebar a.active") || {}).dataset?.section;
+  groups.forEach((g) => {
+    const members = [];
+    for (let el = g.nextElementSibling; el && !el.classList.contains("sidebar-group"); el = el.nextElementSibling) members.push(el);
+    const key = "qualidade.grp." + g.textContent.trim();
+    // Começa recolhido, exceto o grupo que contém a seção ativa; respeita preferência salva.
+    const temAtivo = activeSection && members.some((m) => m.getAttribute && m.getAttribute("data-section") === activeSection);
+    let collapsed;
+    try { const s = localStorage.getItem(key); collapsed = s === null ? !temAtivo : s === "true"; }
+    catch (_) { collapsed = !temAtivo; }
+    const apply = () => { g.classList.toggle("collapsed", collapsed); members.forEach((m) => m.classList.toggle("grp-hidden", collapsed)); };
+    g.setAttribute("role", "button");
+    g.setAttribute("tabindex", "0");
+    const toggle = () => { collapsed = !collapsed; try { localStorage.setItem(key, String(collapsed)); } catch (_) {} apply(); };
+    g.addEventListener("click", toggle);
+    g.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+    apply();
+  });
+}
+initSidebarGroups();
+
 document.querySelectorAll(".sidebar a").forEach((a) => {
   a.addEventListener("click", (ev) => {
     ev.preventDefault();
@@ -1682,6 +1792,16 @@ document.querySelectorAll(".sidebar a").forEach((a) => {
     if (a.dataset.section === "afinidades") loadAfinidades();
     if (a.dataset.section === "relacoes") loadRelacoes();
     if (a.dataset.section === "matriz") loadMatriz();
+    if (a.dataset.section === "produtos") loadProdutos();
+    if (a.dataset.section === "normas") loadNormas();
+    if (a.dataset.section === "requisitos") loadRequisitosGeral();
+    if (a.dataset.section === "req-atributos") loadReqAtributos();
+    if (a.dataset.section === "cobertura") loadCobertura();
+    if (a.dataset.section === "rastreabilidade") loadRastreabilidade();
+    if (a.dataset.section === "impacto") loadImpacto();
+    if (a.dataset.section === "variantes") loadVariantes();
+    if (a.dataset.section === "versionamento") loadVersionamento();
+    if (a.dataset.section === "documentos") loadDocumentos();
     if (a.dataset.section === "rncs") showRncView(a.dataset.rncView||'registros').catch((e) => { document.getElementById("rncMensagem").textContent=e.message; });
   });
 });
@@ -1704,6 +1824,26 @@ document.getElementById("empresaSelect").addEventListener("change", async (e) =>
   if (document.getElementById("section-relacoes").classList.contains("active")) await loadRelacoes();
   resetMatriz();
   if (document.getElementById("section-matriz").classList.contains("active")) await loadMatriz();
+  resetProdutos();
+  if (document.getElementById("section-produtos").classList.contains("active")) await loadProdutos();
+  resetNormas();
+  if (document.getElementById("section-normas").classList.contains("active")) await loadNormas();
+  resetRequisitosGeral();
+  if (document.getElementById("section-requisitos").classList.contains("active")) await loadRequisitosGeral();
+  resetReqAtributos();
+  if (document.getElementById("section-req-atributos").classList.contains("active")) await loadReqAtributos();
+  resetCobertura();
+  if (document.getElementById("section-cobertura").classList.contains("active")) await loadCobertura();
+  resetRastreabilidade();
+  if (document.getElementById("section-rastreabilidade").classList.contains("active")) await loadRastreabilidade();
+  resetImpacto();
+  if (document.getElementById("section-impacto").classList.contains("active")) await loadImpacto();
+  resetVariantes();
+  if (document.getElementById("section-variantes").classList.contains("active")) await loadVariantes();
+  resetVersionamento();
+  if (document.getElementById("section-versionamento").classList.contains("active")) await loadVersionamento();
+  resetDocumentos();
+  if (document.getElementById("section-documentos").classList.contains("active")) await loadDocumentos();
   resetPareto();
   resetHistograma();
   if (document.getElementById("section-histograma").classList.contains("active")) await loadHistograma();
@@ -1719,6 +1859,7 @@ document.getElementById("empresaSelect").addEventListener("change", async (e) =>
   document.getElementById("processoDetail").classList.add("hidden");
   await Promise.all([loadCrudSetores(), loadCrudProcessos(), loadUsuarioSetores()]);
   await loadIssueAutores();
+  resetReqVincCache();
   state.issueId = null;
   state.issue = null;
   document.getElementById("issueDetail").classList.add("hidden");

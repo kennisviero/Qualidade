@@ -1,0 +1,85 @@
+# General ignores
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# IDEs and editors
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+*.py[cod]
+__pycache__/
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+
+# Build and distribution
+/dist/
+/tmp/
+/out-tsc/
+/bazel-out/
+/build/
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage/
+/libpeerconnection.log
+/typings/
+
+# Testing and coverage
+TEST*.xml
+
+# Logs
+logs/
+*.log
+
+# Environment and configuration files
+.env
+.env.local
+.env.*
+.sentryclirc
+
+# Application-specific
+/electron/ui/
+.electron-vue/
+release/
+
+# Large media files
+*.tiff
+*.avi
+*.flv
+*.mov
+*.wmv
+
+/docs/.docusaurus/
+
+# Miscellaneous
+.hai/
+.hai.config

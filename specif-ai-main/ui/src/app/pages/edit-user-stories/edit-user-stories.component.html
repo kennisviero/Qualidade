@@ -1,0 +1,143 @@
+<div class="mx-auto max-w-6xl h-full">
+  <div
+    [ngClass]="
+      mode === 'add'
+        ? 'grid grid-cols-1 gap-4 h-full'
+        : 'grid grid-cols-1 lg:grid-cols-3 gap-4 h-full'
+    "
+  >
+    <div
+      [ngClass]="
+        mode === 'add'
+          ? 'bg-white border border-secondary-200 rounded-lg flex flex-col h-[calc(100vh-80px)]'
+          : 'bg-white border border-secondary-200 rounded-lg flex flex-col lg:col-span-2 h-[calc(100vh-80px)]'
+      "
+    >
+      <header
+        class="flex justify-between items-center p-4 border-b border-secondary-200"
+      >
+        <h1 class="text-normal font-semibold">
+          {{ mode === "add" ? "Add User Story" : existingUserForm.id }}
+        </h1>
+
+        <div *ngIf="mode === 'edit'">
+          <app-button
+            [isIconButton]="true"
+            icon="heroTrash"
+            theme="danger"
+            size="sm"
+            rounded="md"
+            (click)="deleteUserStory()"
+            matTooltip="Delete"
+          ></app-button>
+        </div>
+      </header>
+      <form
+        [formGroup]="userStoryForm"
+        (ngSubmit)="mode === 'edit' ? updateUserStory() : addUserStory()"
+        class="flex flex-col h-full overflow-hidden"
+      >
+        <div class="p-4 flex-1 overflow-y-auto">
+          <div class="flex flex-col w-full gap-1.5">
+            <div>
+              <app-input-field
+                [required]="true"
+                elementPlaceHolder="Name"
+                elementId="name"
+                elementName="Name"
+                formControlName="name"
+              />
+              <div
+                *ngIf="
+                  userStoryForm.get('name')?.invalid &&
+                  (userStoryForm.get('name')?.dirty ||
+                    userStoryForm.get('name')?.touched)
+                "
+                class="text-danger-500 text-sm mt-1"
+              >
+                <div *ngIf="userStoryForm.get('name')?.errors?.['required']">
+                  Name is required.
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col gap-1.5">
+              <label class="block text-sm font-medium text-secondary-500">
+                Description
+                <span class="text-red-500 text-xs">*</span>
+              </label>
+              <div class="flex flex-col gap-1.5">
+                <app-rich-text-editor
+                  #editor
+                  formControlName="description"
+                  editorClass="h-[calc(100vh-460px)] min-h-24 overflow-y-auto"
+                  mode="edit"
+                  appInlineEdit
+                  [editorInstance]="editor?.editor"
+                  [contextProvider]="getContentContext.bind(this)"
+                  [onContentUpdated]="handleInlineEditUpdate.bind(this)"
+                  (change)="onEditorReady(editor)"
+                ></app-rich-text-editor>
+                <ng-container *ngIf="userStoryForm.get('description')?.touched">
+                  <span
+                    *ngIf="
+                      userStoryForm.get('description')?.errors?.['required']
+                    "
+                    class="text-red-500 text-sm"
+                  >
+                    Description is required
+                  </span>
+                </ng-container>
+              </div>
+            </div>
+          </div>
+          <app-multi-upload
+            *ngIf="mode === 'add'"
+            (fileContent)="handleFileContent($event)"
+          ></app-multi-upload>
+        </div>
+        <div class="flex justify-end gap-2 p-4 border-t border-secondary-200">
+          <app-button
+            buttonContent="Enhance with AI"
+            icon="heroSparklesSolid"
+            theme="secondary_outline"
+            size="sm"
+            rounded="lg"
+            (click)="enhanceUserStoryWithAI()"
+            [disabled]="userStoryForm.invalid"
+          ></app-button>
+          <app-button
+            buttonContent="Update"
+            theme="primary"
+            size="sm"
+            rounded="md"
+            *ngIf="mode === 'edit'"
+            type="submit"
+            [disabled]="userStoryForm.invalid"
+          />
+          <app-button
+            buttonContent="Add"
+            theme="primary"
+            size="sm"
+            rounded="md"
+            *ngIf="mode === 'add'"
+            type="submit"
+            [disabled]="userStoryForm.invalid"
+          />
+        </div>
+      </form>
+    </div>
+    <div *ngIf="mode !== 'add'" class="flex flex-col h-[calc(100vh-80px)] lg:col-span-1">
+      <app-chat
+        chatType="userstory"
+        class="h-full block"
+        [name]="projectMetadata?.name"
+        [description]="projectMetadata?.description"
+        [baseContent]="userStoryForm.getRawValue().description"
+        [chatHistory]="chatHistory"
+        [prd]="selectedPRD.requirement"
+        (getContent)="updateContent($event)"
+        (updateChatHistory)="updateChatHistory($event)"
+      ></app-chat>
+    </div>
+  </div>
+</div>

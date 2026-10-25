@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="/static/css/afinidades.css" />
   <link rel="stylesheet" href="/static/css/relacoes.css" />
   <link rel="stylesheet" href="/static/css/matriz.css" />
+  <link rel="stylesheet" href="/static/css/pdm.css" />
+  <link rel="stylesheet" href="/static/css/normas.css" />
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 </head>
 <body>
@@ -36,11 +38,13 @@
 
   <div class="layout">
     <nav class="sidebar" id="mainSidebar" aria-label="Menu principal">
+      <div class="sidebar-group">Cadastro</div>
       <a href="#" data-section="empresas" class="admin-only hidden">Empresas</a>
       <a href="#" data-section="setores">Setores</a>
       <a href="#" data-section="processos">Processos</a>
       <a href="#" data-section="usuarios" class="admin-only hidden">Usuários</a>
       <a href="#" data-section="configuracao" class="admin-only hidden">Configuração</a>
+      <div class="sidebar-group">MASP</div>
       <a href="#" data-section="issues">Issues</a>
       <div class="sidebar-submenu" aria-label="Submenu de Issues">
         <a href="#" data-section="issues" data-issue-view="capturar" class="active">Capturar</a>
@@ -62,6 +66,22 @@
         <a href="#" data-section="relacoes">5-Diagrama de Relações</a>
         <a href="#" data-section="matriz">6-Diagrama de Matriz</a>
       </div>
+      <div class="sidebar-group">Produtos</div>
+      <a href="#" data-section="produtos">Produtos (Família/Grupo)</a>
+      <div class="sidebar-group">Normas, Requisitos e Documentos</div>
+      <a href="#" data-section="req-visao">Visão geral</a>
+      <a href="#" data-section="normas">Normas e Regulamentos</a>
+      <a href="#" data-section="requisitos">Requisitos</a>
+      <div class="sidebar-submenu" aria-label="Submenu de Requisitos">
+        <a href="#" data-section="requisitos">Lista de requisitos</a>
+        <a href="#" data-section="versionamento">Árvore de versionamento</a>
+        <a href="#" data-section="cobertura">Matriz de Conformidade</a>
+        <a href="#" data-section="variantes">Variantes</a>
+      </div>
+      <a href="#" data-section="rastreabilidade">Rastreabilidade</a>
+      <a href="#" data-section="impacto">Análise de impacto</a>
+      <a href="#" data-section="documentos">Documentos (Kanban)</a>
+      <a href="#" data-section="req-atributos" class="admin-only hidden">Configuração de atributos</a>
     </nav>
 
     <main class="content">
@@ -342,6 +362,12 @@
             <p class="hint">Arraste arquivos para uma pasta. Clique para selecionar; Delete exclui; duplo clique abre.</p>
             <div id="issueDocsTree" class="docs-tree"></div>
           </div>
+
+          <div class="card" id="issueVinculosCard">
+            <h4>Normas/Requisitos aplicáveis</h4>
+            <p class="hint">Aponte os requisitos (a norma vem junto) relacionados a esta Issue. Salve a Issue antes de vincular.</p>
+            <div id="issueVinculos"></div>
+          </div>
         </div>
 
           </div>
@@ -457,6 +483,73 @@
         </div>
         <div class="card"><h3>Acessos cadastrados</h3><div id="llmLista" class="list"></div></div>
       </section>
+      <section id="section-produtos" class="section">
+        <h2>Produtos — Família / Grupo / Produto</h2>
+        <p class="hint">Cadastro em árvore por empresa. Requisitos ligam-se a qualquer nível na tela de Requisitos. Empresa: a selecionada no cabeçalho.</p>
+        <div id="produtosWorkspace"></div>
+      </section>
+      <section id="section-req-visao" class="section">
+        <h2>Requisitos e Normas — Visão geral</h2>
+        <p class="hint">Fluxo do módulo. Cada etapa é um item do menu; tudo multi-empresa e aditivo ao MASP.</p>
+        <div class="card">
+          <div class="req-flow">
+            <div class="req-flow-step"><strong>1. Norma</strong><span>Catálogo de normas/regulamentos de fontes diversas (ISO, legal, contratual, cliente, interna).</span></div>
+            <div class="req-flow-arrow">→</div>
+            <div class="req-flow-step"><strong>2. Requisito</strong><span>Cláusulas derivadas da norma, com categoria, prioridade (MoSCoW) e atributos.</span></div>
+            <div class="req-flow-arrow">→</div>
+            <div class="req-flow-step"><strong>3. Rastreabilidade</strong><span>Vínculos requisito↔processo/Issue/RNC/ação e relações requisito↔requisito.</span></div>
+            <div class="req-flow-arrow">→</div>
+            <div class="req-flow-step"><strong>4. Conformidade</strong><span>Avaliação por requisito e matriz de cobertura com lacunas em aberto.</span></div>
+            <div class="req-flow-arrow">→</div>
+            <div class="req-flow-step"><strong>5. Documentos</strong><span>Todo documento é controlado: revisões versionadas, check-out/lock-out, aprovação, auditoria e leitura por IA. Fonte: PDF/DOCX, link (Google Docs) ou cadastrado.</span></div>
+          </div>
+          <p class="hint">IA (OpenRouter): leitura do documento da norma e sugestão de requisitos para aprovação humana; análise de lacunas na cobertura.</p>
+        </div>
+      </section>
+      <section id="section-requisitos" class="section">
+        <h2>Requisitos</h2>
+        <p class="hint">Selecione a norma para gerir seus requisitos (cláusulas, prioridade, atributos e relações). Empresa: a selecionada no cabeçalho.</p>
+        <div id="requisitosWorkspace"></div>
+      </section>
+      <section id="section-req-atributos" class="section">
+        <h2>Configuração de atributos de requisitos</h2>
+        <div id="reqAtributosWorkspace"></div>
+      </section>
+      <section id="section-normas" class="section">
+        <h2>Normas e Regulamentos</h2>
+        <p class="hint">Capture e organize normas e regulamentos de fontes diversas. Empresa: a selecionada no cabeçalho.</p>
+        <div id="normasWorkspace"></div>
+      </section>
+      <section id="section-cobertura" class="section">
+        <h2>Matriz de Conformidade</h2>
+        <p class="hint">Requisito × situação, vínculos de rastreabilidade e lacunas em aberto — em tabela ou mapa. Empresa: a selecionada no cabeçalho.</p>
+        <div id="coberturaWorkspace"></div>
+      </section>
+      <section id="section-rastreabilidade" class="section">
+        <h2>Rastreabilidade — árvore</h2>
+        <p class="hint">Selecione a norma/regulamento para gerar a árvore: Norma → Requisitos → vínculos (processo/Issue/RNC/ação) e relações. Empresa: a selecionada no cabeçalho.</p>
+        <div id="rastreabilidadeWorkspace"></div>
+      </section>
+      <section id="section-versionamento" class="section">
+        <h2>Árvore de versionamento</h2>
+        <p class="hint">Por norma: cada requisito e seu histórico de versões (R01/R02…). Empresa: a selecionada no cabeçalho.</p>
+        <div id="versionamentoWorkspace"></div>
+      </section>
+      <section id="section-documentos" class="section">
+        <h2>Documentos — Kanban do ciclo</h2>
+        <p class="hint">Status dos documentos por etapa do ciclo. Empresa: a selecionada no cabeçalho.</p>
+        <div id="documentosWorkspace"></div>
+      </section>
+      <section id="section-variantes" class="section">
+        <h2>Variantes dos requisitos</h2>
+        <p class="hint">Consulta gráfica: requisito base → suas variantes (ex.: 127V / 220V). Empresa: a selecionada no cabeçalho.</p>
+        <div id="variantesWorkspace"></div>
+      </section>
+      <section id="section-impacto" class="section">
+        <h2>Análise de impacto econômico</h2>
+        <p class="hint">Economia = (custo atual − custo projetado) × volume, por requisito. Ex.: descarte $150→$50 × milhões de unidades. Empresa: a selecionada no cabeçalho.</p>
+        <div id="impactoWorkspace"></div>
+      </section>
     </main>
   </div>
 
@@ -480,6 +573,16 @@
   <script src="/static/js/afinidades.js"></script>
   <script src="/static/js/relacoes.js"></script>
   <script src="/static/js/matriz.js"></script>
+  <script src="/static/js/normas.js"></script>
+  <script src="/static/js/requisitos.js"></script>
+  <script src="/static/js/requisitos_geral.js"></script>
+  <script src="/static/js/cobertura.js"></script>
+  <script src="/static/js/rastreabilidade.js"></script>
+  <script src="/static/js/impacto.js"></script>
+  <script src="/static/js/variantes.js"></script>
+  <script src="/static/js/versionamento.js"></script>
+  <script src="/static/js/documentos.js"></script>
+  <script src="/static/js/produtos.js"></script>
   <script src="/static/js/app.js"></script>
 </body>
 </html>

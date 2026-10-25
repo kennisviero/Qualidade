@@ -1,0 +1,52 @@
+<div class="mx-auto max-w-6xl h-full">
+  <div class="grid grid-cols-1 gap-4">
+    <div class="bg-white border rounded-lg p-6">
+      <div>
+        <h1 class="text-lg font-semibold mb-4">
+          {{ requirementId }} - {{ selectedRequirement.title }}
+        </h1>
+        <!-- Button to regenerate flow diagram. -->
+        <div class="flex justify-end space-x-4 mt-4 w-full">
+          <div *ngIf="selectedBusinessProcess.regenerate" class="ml-auto">
+            <app-button
+              buttonContent="Regenerate"
+              theme="primary"
+              size="sm"
+              rounded="lg"
+              (click)="generateProcessFlowDiagram()"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="">
+        <!--Placeholder for mermaid flow diagram-->
+        <div class="mermaid-container my-4 overflow-y-auto flex justify-center">
+          <div class="mermaid-wrapper" #mermaidContainer id="mermaidContainer">
+            <p *ngIf="errorBlockVisible">{{ errorMessage }}</p>
+            <pre *ngIf="!errorBlockVisible" class="mermaid"></pre>
+          </div>
+        </div>
+        <!--Display download button and reset button only when image is loaded.-->
+        <div
+          *ngIf="selectedBusinessProcess.download"
+          class="w-full flex space-x-4 ml-auto justify-end"
+        >
+          <app-button
+            buttonContent="Reset"
+            theme="secondary"
+            size="sm"
+            rounded="lg"
+            (click)="resetZoom()"
+          />
+          <app-button
+            buttonContent="Download"
+            theme="primary"
+            size="sm"
+            rounded="lg"
+            (click)="downloadDiagram()"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

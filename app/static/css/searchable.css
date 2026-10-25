@@ -1,0 +1,40 @@
+/* Busca ao digitar em selects de consulta (progressive enhancement global). */
+.ss-wrap { position: relative; display: block; }
+.ss-native {
+  position: absolute !important;
+  width: 1px !important; height: 1px !important;
+  padding: 0 !important; margin: -1px !important;
+  overflow: hidden !important; clip: rect(0 0 0 0) !important;
+  white-space: nowrap !important; border: 0 !important;
+  pointer-events: none !important;
+}
+.ss-input {
+  width: 100%;
+  box-sizing: border-box;
+  cursor: text;
+}
+.ss-input::placeholder { color: #9aa0a6; }
+.ss-panel {
+  position: absolute;
+  z-index: 50;
+  left: 0; right: 0;
+  top: 100%;
+  max-height: 260px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #c9ced6;
+  border-radius: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  margin-top: 2px;
+}
+.ss-opt {
+  padding: 6px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-opt:hover, .ss-opt.active { background: #eef3ff; }
+.ss-opt.sel { font-weight: 600; }
+.ss-empty { padding: 6px 10px; font-size: 13px; color: #9aa0a6; }

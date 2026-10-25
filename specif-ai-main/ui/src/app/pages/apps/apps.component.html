@@ -1,0 +1,74 @@
+<div
+  class="mb-4 bg-white rounded-lg border h-full relative min-h-96"
+  *ngIf="projectsWithStatus$ | async as apps"
+>
+  <div
+    class="flex items-center justify-between p-4 sticky top-0 bg-white rounded-t-lg"
+  >
+    <h1 class="text-xl font-semibold leading-6 text-secondary-900">
+      Solutions
+    </h1>
+    <app-button
+      (click)="navigateToCreate()"
+      buttonContent="Create Solution"
+      size="sm"
+    />
+  </div>
+  <main>
+    <!-- Main content -->
+    <div class="px-6 pb-6" *ngIf="apps.length === 0">
+      <app-empty-state
+        heading="Let's Build Something Great ✨"
+        description="No solutions here... yet! Kick things off by creating your first solution and let Specifai work its magic — auto-generating docs, tasks, and more to make your workflow shine."
+        buttonText="Create Solution"
+        imageSrc="assets/img/empty-states/solutions.png"
+        (buttonClick)="navigateToCreate()"
+      ></app-empty-state>
+    </div>
+
+    <ul role="list" class="divide-y border-t h-full overflow-hidden">
+      <li
+        class="flex items-center justify-between gap-x-6 px-6 py-3 hover:bg-secondary-50 cursor-pointer"
+        *ngFor="let app of apps; index as i"
+        (click)="navigateToApp(app?.metadata)"
+      >
+        <div class="min-w-0">
+          <div class="flex items-start gap-x-3">
+            <p
+              class="capitalize text-sm font-semibold leading-6 text-secondary-900"
+            >
+              {{ app.project }}
+            </p>
+            <ng-container *ngIf="app.workflowStatus$ | async as workflowStatus">
+              <p
+                *ngIf="getBadgeConfig(workflowStatus) as badgeConfig"
+                class="rounded-md whitespace-nowrap mt-0.5 px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset flex items-center gap-1 {{
+                  badgeConfig.classes
+                }}"
+              >
+                <ng-icon [name]="badgeConfig.icon" size="12"></ng-icon>
+                {{ badgeConfig.text }}
+              </p>
+            </ng-container>
+          </div>
+          <div
+            class="mt-1 flex items-center gap-x-2 text-xs leading-5 text-secondary-500"
+          >
+            <p class="whitespace-nowrap">
+              Created
+              {{ app?.metadata?.createdAt | timezone }}
+            </p>
+          </div>
+        </div>
+        <div class="flex flex-none items-center gap-x-4">
+          <app-button
+            buttonContent="View Solution"
+            theme="secondary_outline"
+            size="sm"
+            rounded="lg"
+          />
+        </div>
+      </li>
+    </ul>
+  </main>
+</div>

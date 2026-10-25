@@ -105,6 +105,15 @@ async function renderRncTabs(target, item, activeTab='registro', activeInvestiga
   const notice=document.createElement('p');notice.className='hint';notice.textContent=item.rnc_fatos_snapshot_origem==='emissao'?'Fatos preservados na emissão. Edições da Issue não alteram este registro.':'Registro histórico: fatos recuperados na migração; a origem de triagem foi usada quando disponível e os demais dados vieram da Issue na data da migração.';registration.appendChild(notice);
   grid=block(registration,'Enquadramento',2);
   field(grid,'Requisito normativo / contratual','enquadramento_normativo','textarea',item.rnc_enquadramento_normativo);
+  // Normas/Requisitos aplicáveis (vínculos estruturados; reusa a API de requisitos).
+  const vincCard=document.createElement('div');vincCard.className='card issue-initial-block rnc-data-block';
+  const vincH=document.createElement('h4');vincH.textContent='Normas/Requisitos aplicáveis';vincCard.appendChild(vincH);
+  const vincHost=document.createElement('div');vincHost.id='rncVinculos';vincCard.appendChild(vincHost);
+  registration.appendChild(vincCard);
+  if(item.rnc_id && typeof renderVinculosBloco==='function'){
+    const reloadVinc=()=>renderVinculosBloco(vincHost,'rnc',item.rnc_id,reloadVinc,writable);
+    reloadVinc();
+  }
   save(registration);
   const containment=panes.contencao;
   grid=block(containment,'Contenção',2);

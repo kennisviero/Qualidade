@@ -18,6 +18,11 @@ from app.routers import (
     planejamento,
     ferramentas_ia,
     llm_acessos,
+    documentos_controlados,
+    normas,
+    requisitos,
+    conformidade,
+    produtos,
     datasets,
     documentos,
     empresas,
@@ -89,6 +94,11 @@ app.include_router(planejamento.pdpc_router)
 app.include_router(planejamento.setas_router)
 app.include_router(ferramentas_ia.router)
 app.include_router(transcricao.router)
+app.include_router(documentos_controlados.router)
+app.include_router(normas.router)
+app.include_router(requisitos.router)
+app.include_router(conformidade.router)
+app.include_router(produtos.router)
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 

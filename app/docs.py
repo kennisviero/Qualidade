@@ -118,6 +118,21 @@ def build_issue_pasta(empresa, codigo):
     return candidate
 
 
+def build_documento_pasta(empresa, codigo):
+    """Pasta no Vault do documento controlado (PDM): Vault/{empresa}/_pdm/{codigo}/.
+
+    O subnível `_pdm` isola os documentos controlados dos códigos de Issue/RNC
+    na mesma empresa. Cada revisão grava em `R{numero}/` (ver router do PDM).
+    """
+    base = "/".join([sanitize(empresa), "_pdm", sanitize(codigo)])
+    candidate = base
+    i = 2
+    while (DOCS_DIR / candidate).exists():
+        candidate = f"{base} ({i})"
+        i += 1
+    return candidate
+
+
 def arvore_tree(pasta):
     parts = [p for p in (pasta or "").split("/") if p]
     root = {"nome": DOCS_DIR.name, "tipo": "dir", "filhos": []}

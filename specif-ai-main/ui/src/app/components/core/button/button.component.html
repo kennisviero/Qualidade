@@ -1,0 +1,38 @@
+<button
+  [ngClass]="[
+    baseClasses,
+    sizeClass,
+    roundedClass,
+    themeClasses.border,
+    disabled ? themeClasses.disabledBg : themeClasses.bg,
+    disabled ? themeClasses.disabledText : themeClasses.text,
+    !disabled ? themeClasses.hoverBg : '',
+    disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+    isFullWidth ? 'w-full' : '',
+  ]"
+  [type]="type"
+  [disabled]="disabled"
+  [matTooltip]="disabled ? tooltipDisabled || '' : tooltip || ''"
+  [matTooltipDisabled]="!tooltip && !tooltipDisabled"
+  matTooltipPosition="above"
+>
+  <ng-content select="[slot=icon-left]"></ng-content>
+  <ng-container *ngIf="icon && iconPosition === 'left'">
+    <ng-icon
+      [name]="icon"
+      strokeWidth="2"
+      [ngClass]="isIconButton ? 'w-5 h-5 text-lg' : 'w-4 h-4 mr-2'"
+    ></ng-icon>
+  </ng-container>
+  <span *ngIf="!isIconButton" class="whitespace-nowrap">{{
+    buttonContent
+  }}</span>
+  <ng-container *ngIf="icon && iconPosition === 'right'">
+    <ng-icon
+      [name]="icon"
+      strokeWidth="2"
+      [ngClass]="isIconButton ? 'w-5 h-5 text-lg' : 'w-4 h-4 ml-2'"
+    ></ng-icon>
+  </ng-container>
+  <ng-content select="[slot=icon-right]"></ng-content>
+</button>

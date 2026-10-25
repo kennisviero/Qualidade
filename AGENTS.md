@@ -1,5 +1,21 @@
 # Qualidade — Gestão da Qualidade em Ciclo Fechado (Issues + PDCA)
 
+## Atualização autorizada (2026-10-24) — Requisitos/Normas: ligações, rastreabilidade, classes e produtos
+
+Sessão sobre o módulo Requisitos e Normas (baseline Siemens/Grady). Tudo aditivo e retrocompatível; nenhum endpoint existente mudou de formato; MASP/Issues/RNC intocados. Toda mudança de schema na base ativa foi precedida de backup em `data/backups/`.
+
+- **Ligar Issue/RNC a requisitos (norma vem junto):** reuso de `requisito_vinculos` (alvo issue/rnc). Novo `GET /api/requisitos/vinculos-por-alvo` (consulta reversa), índice `idx_req_vinculos_alvo`, blocos "Normas/Requisitos aplicáveis" nas telas de Issue e RNC (`app.js renderVinculosBloco`, `rncs.js`). Na emissão da RNC, os vínculos da Issue são copiados (`rnc_emissao.py`). `TIPO_VINCULO` ganhou `viola`/`relacionado`.
+- **Observações na Rastreabilidade:** `/arvore` traz `id`+`observacao` de vínculos/relações e as `mudancas` (change request) por requisito; editar observação por `PUT /{id}/vinculos|relacoes/{id}`; propor/decidir mudança direto na árvore.
+- **Rastreabilidade vertical (Grady §2.2):** colunas `requisitos.fonte` e `requisitos.justificativa`. Ambas **herdam a norma de origem** quando vazias (default na criação + backfill de todos os existentes). Painel do requisito edita os dois.
+- **Auditoria + export (Grady §2.2.6/7):** `GET /api/requisitos/auditoria` (órfãos: sem fonte/justificativa/vínculo/verificação) e `GET /api/requisitos/rastreabilidade-export` (CSV), exibidos na tela Rastreabilidade.
+- **Checklist de qualidade do requisito:** `POST /api/requisitos/atributos/defs/semear-qualidade` (admin) cria 6 atributos (Verificável, Não ambíguo, Singular, Mensurável, Viável, Rastreável).
+- **Clonagem/reuso (Grady §2.4.3):** `POST /api/requisitos/clonar` copia requisitos (campos + valores de atributos) de uma norma para outra.
+- **Classes de requisito por norma (Norma → Classe → Requisito):** tabela `requisito_classes` + coluna `requisitos.classe_id`; CRUD `/api/requisitos/classes`; listas de requisito e árvore de rastreabilidade **agrupam por classe** (inclusive na tela Normas e Regulamentos). Dados populados: ISO 9001 em capítulos 4–10 e Liquidificador (ESP-LIQ-500) em Desempenho/Elétrica/Segurança/Acústica; 14 requisitos encaixados, 0 sem classe.
+- **Produto/Grupo/Família (3 níveis aninhados):** novo router `app/routers/produtos.py` (`produto_familias`/`produto_grupos`/`produtos`), tela "Produtos" (árvore) no menu. `requisito_vinculos` aceita `familia/grupo/produto` (ALVOS + `alvo_empresa` + `_alvo_label`); painel do requisito tem bloco "Aplicabilidade a produtos".
+- **Menu:** reorganizado em grupos recolhíveis (accordion) verticais e retráteis — grupos Cadastro, MASP, Produtos, Normas/Requisitos/Documentos; estado por grupo em localStorage. O enhancer global de busca em `<select>` (`searchable_select.js`) foi **desligado** a pedido do usuário (arquivos preservados no disco).
+- Backups desta sessão em `data/backups/`: `qualidade_antes_requisitos_fonte_*`, `qualidade_antes_fonte_backfill_*`, `qualidade_antes_justif_backfill_*`, `qualidade_antes_classe_produtos_*`, `qualidade_antes_classes_demo_*`.
+- **Verificação:** suíte backend **262 passed**; checks de UI (`check_requisitos/rastreabilidade/produtos/issue_vinculos/rnc_tabs/cobertura/variantes/versionamento/impacto`) OK. Scripts `_apply_*`/`_popular_classes_demo.py` idempotentes, com backup e asserts de preservação. Sem chamadas reais a LLM.
+
 ## Atualização autorizada (2026-10-16) — Diagrama de Matriz
 
 - Adicionada 6-Diagrama de Matriz nos padrões de Afinidades/Relações, com contextos Uma RNC (uma origem) e Geral (2–20 RNCs da mesma empresa), filtros de seleção compartilhados com Pareto e aba Como funciona para ambos.

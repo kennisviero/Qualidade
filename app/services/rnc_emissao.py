@@ -50,6 +50,15 @@ def emitir_rnc_transacao(conn, issue_id, body, user):
     placeholders = ", ".join("?" for _ in values)
     conn.execute(f"INSERT INTO rncs ({columns}) VALUES ({placeholders})", tuple(values.values()))
     rnc_id=conn.execute('SELECT id FROM rncs WHERE issue_id=?',(issue_id,)).fetchone()[0]
+    # Copia os vínculos de requisito/norma da Issue para a RNC (mesma transação).
+    if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='requisito_vinculos'").fetchone():
+        conn.execute(
+            "INSERT OR IGNORE INTO requisito_vinculos "
+            "(empresa_id, requisito_id, alvo_tipo, alvo_id, tipo_relacao, observacao, criado_por_id, criado_em) "
+            "SELECT empresa_id, requisito_id, 'rnc', ?, tipo_relacao, observacao, ?, ? "
+            "FROM requisito_vinculos WHERE alvo_tipo='issue' AND alvo_id=?",
+            (rnc_id, user["id"], emitida_em, issue_id),
+        )
     conn.execute(
         "INSERT INTO acoes (issue_id, descricao, responsavel_id, prazo_limite, status, ordem, rnc_id) "
         "VALUES (?, ?, ?, ?, 'backlog', ?, ?)",

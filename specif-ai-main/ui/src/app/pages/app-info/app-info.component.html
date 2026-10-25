@@ -1,0 +1,262 @@
+<div *ngIf="directories$ | async as directories">
+  <!-- Main 3 column grid -->
+  <div class="grid items-start gap-4 grid-cols-3 h-full">
+    <section aria-labelledby="navigation" class="h-full">
+      <app-sidebar
+        [directories]="directories"
+        [selectedFolder]="selectedFolder"
+        [appName]="appName"
+        [haiFolder]="haiFolder"
+        [isCreatingSolution]="isCreatingSolution"
+        (folderSelected)="selectFolder($event)"
+        (addDocument)="navigateToAdd($event)"
+        (addBPDocument)="navigateToBPAdd()"
+        (navigateToTestCases)="navigateToTestCasesHome()"
+      ></app-sidebar>
+    </section>
+    <section
+      aria-labelledby="Main Content"
+      class="col-span-2 h-[calc(100vh-80px)] overflow-hidden"
+    >
+      <div class="overflow-auto rounded-lg bg-white border h-full">
+        <div
+          *ngIf="
+            selectedFolder?.title !== 'solution' &&
+            selectedFolder?.title !== 'app-integrations' &&
+            selectedFolder?.title !== 'TC'
+          "
+          class="h-full"
+        >
+          <app-document-listing
+            *ngIf="directoryContainsFolder(selectedFolder?.title, directories)"
+            [folder]="selectedFolder"
+          />
+          <div
+            *ngIf="!directoryContainsFolder(selectedFolder?.title, directories)"
+            class="flex items-center justify-center h-full"
+          >
+            No documents available.
+          </div>
+        </div>
+        
+        <!-- Test Cases Component -->
+        <div *ngIf="selectedFolder?.title === 'TC'" class="h-full">
+          <app-test-cases-home></app-test-cases-home>
+        </div>
+        <div *ngIf="selectedFolder?.title === 'solution'">
+          <app-project-failure-message
+            *ngIf="isProjectFailed && !isCreatingSolution"
+            [failureInfo]="projectFailureInfo"
+            [projectId]="projectId!"
+            [workflowType]="WorkflowType.Solution"
+            (retryClicked)="retryProjectCreation()"
+          ></app-project-failure-message>
+
+          <app-workflow-progress
+            [projectId]="projectId!"
+            [workflowType]="WorkflowType.Solution"
+            [isVisible]="isCreatingSolution || solutionCreationComplete"
+            [isCompleted]="solutionCreationComplete"
+            initialTitle="Creating Solution..."
+            completedTitle="Solution Created Successfully!"
+            subtitle="Relax while SpecifAI takes care of the rest..."
+          >
+          </app-workflow-progress>
+
+          <div
+            class="flex-grow h-px bg-gray-300 ml-6 mr-6"
+            *ngIf="isCreatingSolution || solutionCreationComplete"
+          ></div>
+
+          <h1 class="text-title font-semibold p-4">Solution Information</h1>
+          <div class="grid grid-cols-3 gap-4 p-4">
+            <p class="text-secondary-500">Title</p>
+            <h1 class="col-span-2 font-medium capitalize">
+              {{ appInfo.name }}
+            </h1>
+          </div>
+          <div class="grid grid-cols-3 gap-4 p-4">
+            <p class="text-secondary-500">Description</p>
+            <p class="col-span-2">{{ appInfo.description }}</p>
+          </div>
+          <div
+            class="grid grid-cols-3 gap-4 p-4"
+            *ngIf="appInfo.technicalDetails"
+          >
+            <p class="text-secondary-500">Technical Details</p>
+            <p class="col-span-2">{{ appInfo.technicalDetails }}</p>
+          </div>
+        </div>
+        <div
+          class="p-6 max-h-[calc(100vh-8rem)] overflow-y-auto"
+          *ngIf="selectedFolder?.title === 'app-integrations'"
+        >
+          <h1
+            class="text-title font-semibold text-secondary-950 mb-3 pb-3 border-b"
+          >
+            Integrations
+          </h1>
+
+          <app-pmo-integration
+            [projectId]="projectId!"
+            [projectMetadata]="appInfo"
+            [isAccordionOpen]="accordionState['pmoIntegration']"
+            (toggleAccordion)="toggleAccordion('pmoIntegration')"
+            [selectedIntegration]="selectedIntegration"
+          ></app-pmo-integration>
+
+          <app-accordion
+            [withConnectionStatus]="true"
+            [isConnected]="isBedrockConnected"
+            title="AWS Bedrock Knowledge Base"
+            dynamicClass="text-sm font-medium text-secondary-950 ml-3"
+            iconImage="./assets/img/logo/aws_dark_bg_transparent_logo.svg"
+            [isOpen]="accordionState['knowledgeBase']"
+            (toggleAccordion)="toggleAccordion('knowledgeBase')"
+          >
+            <div class="flex justify-start pb-4">
+              <p class="text-sm font-normal text-secondary-500">
+                {{ APP_MESSAGES.AWS_BEDROCK_ACCORDION_MESSAGE }}
+              </p>
+            </div>
+            <div class="flex items-center mb-4" *ngIf="isBedrockConfigPresent">
+              <input
+                type="checkbox"
+                id="useBedrockConfig"
+                [checked]="useBedrockConfig"
+                (change)="toggleBedrockConfig($event)"
+                [disabled]="isBedrockConnected"
+                class="w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+              <label
+                for="useBedrockConfig"
+                class="ml-2 text-sm font-medium text-secondary-700"
+              >
+                Use existing Bedrock configuration from LLM settings
+              </label>
+            </div>
+            <div
+              [formGroup]="bedrockForm"
+              class="grid grid-cols-2 gap-6 w-full"
+            >
+              <div class="flex items-start">
+                <div class="flex-1">
+                  <app-input-field
+                    formControlName="kbId"
+                    elementId="kbId"
+                    elementName="Knowledge Base ID"
+                    elementPlaceHolder="Enter Knowledge Base ID"
+                  ></app-input-field>
+                </div>
+              </div>
+              <div class="flex items-start">
+                <div class="flex-1">
+                  <app-input-field
+                    formControlName="accessKey"
+                    elementId="accessKey"
+                    elementName="AWS Access Key"
+                    elementPlaceHolder="Enter AWS Access Key"
+                    elementType="password"
+                  ></app-input-field>
+                </div>
+              </div>
+              <div class="flex items-start">
+                <div class="flex-1">
+                  <app-input-field
+                    formControlName="secretKey"
+                    elementId="secretKey"
+                    elementName="AWS Secret Key"
+                    elementPlaceHolder="Enter AWS Secret Key"
+                    elementType="password"
+                  ></app-input-field>
+                </div>
+              </div>
+              <div class="flex items-start">
+                <div class="flex-1">
+                  <app-input-field
+                    formControlName="region"
+                    elementId="region"
+                    elementName="AWS Region"
+                    elementPlaceHolder="Enter AWS Region"
+                  ></app-input-field>
+                </div>
+              </div>
+              <div class="flex items-start">
+                <div class="flex-1">
+                  <app-input-field
+                    formControlName="sessionKey"
+                    elementId="sessionKey"
+                    elementName="AWS Session Key (Optional)"
+                    elementPlaceHolder="Enter AWS Session Key"
+                    elementType="password"
+                  ></app-input-field>
+                </div>
+              </div>
+            </div>
+            <div class="mt-6 flex justify-between items-center">
+              <div></div>
+              <app-button
+                [buttonContent]="isBedrockConnected ? 'Disconnect' : 'Connect'"
+                [theme]="isBedrockConnected ? 'danger' : 'primary'"
+                size="sm"
+                (click)="
+                  isBedrockConnected ? disconnectBedrock() : saveBedrockData()
+                "
+                [disabled]="!isBedrockConnected && bedrockEditButtonDisabled"
+              >
+              </app-button>
+            </div>
+          </app-accordion>
+
+          <app-accordion
+            [withConnectionStatus]="false"
+            title="MCP Servers"
+            dynamicClass="text-sm font-medium text-secondary-950 ml-3"
+            iconImage="./assets/img/logo/mcp_logo.svg"
+            [isOpen]="accordionState['mcp']"
+            (toggleAccordion)="toggleAccordion('mcp')"
+          >
+            <ng-container *ngIf="!isEditingMcpSettings; else mcpSettingsForm">
+              <app-mcp-servers
+                [mcpServers]="mcpServers"
+                [isLoading]="mcpServersLoading"
+                [showHeading]="false"
+              ></app-mcp-servers>
+              <div class="mt-6 flex justify-end">
+                <app-button
+                  buttonContent="Edit MCP Settings"
+                  theme="primary"
+                  size="sm"
+                  (click)="toggleMcpSettingsEdit()"
+                ></app-button>
+              </div>
+            </ng-container>
+            <ng-template #mcpSettingsForm>
+              <form [formGroup]="mcpForm" (ngSubmit)="saveMcpSettings()">
+                <app-mcp-integration-configurator
+                  formControlName="mcpSettings"
+                ></app-mcp-integration-configurator>
+                <div class="mt-6 flex justify-end space-x-4">
+                  <app-button
+                    buttonContent="Cancel"
+                    theme="secondary"
+                    size="sm"
+                    type="button"
+                    (click)="toggleMcpSettingsEdit()"
+                  ></app-button>
+                  <app-button
+                    [buttonContent]="isSavingMcpSettings ? 'Saving...' : 'Save'"
+                    theme="primary"
+                    size="sm"
+                    type="submit"
+                    [disabled]="mcpForm.pristine || isSavingMcpSettings"
+                  ></app-button>
+                </div>
+              </form>
+            </ng-template>
+          </app-accordion>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

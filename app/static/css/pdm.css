@@ -1,0 +1,33 @@
+/* Agrupadores da sidebar (MASP / Requisitos) e painel do PDM. */
+.sidebar-group{
+  font-size:11px; text-transform:uppercase; letter-spacing:.04em;
+  color:var(--muted); padding:10px 12px 2px; font-weight:600;
+  cursor:pointer; user-select:none; display:flex; align-items:center; gap:6px;
+}
+.sidebar-group::before{ content:'▾'; font-size:9px; opacity:.6; transition:none; }
+.sidebar-group.collapsed::before{ content:'▸'; }
+.sidebar-group:hover{ color:var(--text); }
+.sidebar .grp-hidden{ display:none !important; }
+
+.pdm-layout, .nor-layout{
+  display:grid; grid-template-columns:minmax(0,360px) minmax(0,1fr);
+  gap:12px; align-items:start; overflow-x:auto;
+}
+.pdm-col-list, .nor-col-list, .pdm-col-detail, .nor-col-detail{ min-width:0; }
+
+.pdm-item, .nor-item{
+  padding:6px 8px; border-bottom:1px solid var(--border); cursor:pointer; font-size:12px;
+}
+.pdm-item:hover, .nor-item:hover{ background:#f1f5f9; }
+.pdm-item.sel, .nor-item.sel{ background:#e0eaff; }
+
+.pdm-badge{
+  display:inline-block; font-size:11px; padding:1px 6px; border-radius:10px;
+  background:#eef2f7; color:var(--muted); margin-left:4px;
+}
+.pdm-lock{ color:#b45309; margin-left:4px; font-size:11px; }
+.pdm-actions{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+
+.pdm-revs{ width:100%; border-collapse:collapse; font-size:12px; margin-top:8px; }
+.pdm-revs th, .pdm-revs td{ border-bottom:1px solid var(--border); padding:4px 6px; text-align:left; vertical-align:top; }
+.pdm-revs input[type=file]{ font-size:11px; }

@@ -1,0 +1,54 @@
+<div class="w-full mb-2 border rounded-lg bg-secondary-50">
+  <div
+    class="flex justify-between items-center py-3 px-4 rounded-md cursor-pointer"
+    (click)="onToggleAccordion()"
+    (keydown.enter)="onToggleAccordion()"
+    (keydown.space)="onToggleAccordion(); $event.preventDefault()"
+    role="button"
+    tabindex="0"
+  >
+    <div class="flex justify-start items-center">
+      <img *ngIf="iconImage" [src]="iconImage" alt="Icon" class="h-[15h]" />
+      <div [ngClass]="dynamicClass">{{ title }}</div>
+      <span
+        *ngIf="showBetaTag"
+        class="ml-2 inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 border border-blue-200 leading-none"
+      >
+        Beta
+      </span>
+    </div>
+    <div class="flex">
+      <ng-container *ngIf="withConnectionStatus">
+        <span
+          *ngIf="isConnected && isOpen"
+          class="text-success-600 font-medium text-xs border-[0.5px] border-success-300 rounded-full mr-4 px-[10px] py-[3px] flex items-center space-x-2"
+        >
+          <span class="w-1 h-1 bg-success-600 rounded-full"></span>
+          <span>Connected</span>
+        </span>
+        <span
+          *ngIf="!isConnected && isOpen"
+          class="text-danger-600 font-medium text-xs border-[0.5px] border-danger-300 rounded-full mr-4 px-[10px] py-[3px] flex items-center space-x-2"
+        >
+          <span class="w-1 h-1 bg-danger-600 rounded-full"></span>
+          <span>Not Connected</span>
+        </span>
+      </ng-container>
+      <span class="transition-transform duration-300 flex items-center">
+        <ng-icon
+          *ngIf="isOpen"
+          name="heroChevronUp"
+          class="font-bold text-xl text-secondary-500"
+        ></ng-icon>
+        <ng-icon
+          *ngIf="!isOpen"
+          name="heroChevronDown"
+          class="font-bold text-xl text-secondary-500"
+        ></ng-icon>
+      </span>
+    </div>
+  </div>
+  <div *ngIf="isOpen" class="p-4 transition-all duration-300">
+    <ng-content></ng-content>
+  </div>
+</div>

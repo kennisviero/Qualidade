@@ -1,0 +1,126 @@
+<div
+  class="bg-white border rounded-lg p-5 flex flex-col h-[calc(100vh-80px)] lg:col-span-2 w-full relative"
+  *ngIf="userStories$ | async as userStories"
+>
+  <app-workflow-progress-dialog
+    [isVisible]="showProgressDialog"
+    [projectId]="navigation.projectId"
+    [workflowType]="WorkflowType.Story"
+    [isCompleted]="storyGenerationComplete"
+    initialTitle="Generating User Stories..."
+    completedTitle="User Stories Generated Successfully!"
+    subtitle="Creating user stories and tasks..."
+    completionButtonText="View Generated Stories"
+    [showCancelButton]="false"
+    (closeDialog)="closeProgressDialog()"
+  />
+
+  <div class="mb-4">
+    <div class="flex items-center mt-2 justify-between">
+      <div class="flex flex-col gap-2 min-w-0">
+        <h1
+          class="text-lg font-bold text-secondary-800 truncate max-w-full pr-8"
+        >
+          {{ newFileName.split("-")[0] }}:
+          {{ navigation.selectedRequirement.title }}
+        </h1>
+
+        <div class="flex items-center">
+          <h2 class="text-md font-semibold text-secondary-600">User Stories</h2>
+          <ng-icon
+            name="heroInformationCircle"
+            (click)="electronService.openExternalUrl(docUrl)"
+            class="cursor-pointer ml-1 hover:text-secondary-500"
+            ></ng-icon>
+          <app-badge [badgeText]="userStories.length"></app-badge>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-3">
+        <app-button
+          buttonContent="Edit PRD"
+          icon="heroArrowTopRightOnSquare"
+          theme="secondary_outline"
+          size="sm"
+          rounded="lg"
+          (click)="navigateToEditPRD()"
+          matTooltip="Edit PRD"
+        />
+        <app-button
+          *ngIf="userStories.length === 0"
+          buttonContent="Generate User Stories"
+          theme="secondary"
+          size="sm"
+          (click)="addMoreContext(userStories.length > 0)"
+          rounded="lg"
+          [disabled]="isGeneratingStories"
+        />
+        <app-export-dropdown
+          [disabled]="userStories.length === 0 || isGeneratingStories"
+          [groupedOptions]="exportOptions"
+        />
+        <app-button
+          buttonContent="Add New"
+          theme="primary"
+          size="sm"
+          rounded="lg"
+          (click)="navigateToAddUserStory()"
+          [disabled]="isGeneratingStories"
+        />
+      </div>
+    </div>
+    <app-search-input
+      *ngIf="userStories.length > 0"
+      placeholder="Search..."
+      (searchChange)="onSearch($event)"
+    ></app-search-input>
+  </div>
+
+  <div class="h-full overflow-y-auto">
+    <app-list-item
+      [payload]="{
+        description: userStory.formattedDescription ?? '',
+        name: userStory.name,
+        id: userStory.id,
+        pmoId: userStory.pmoId,
+        metadata: metadata,
+      }"
+      *ngFor="let userStory of filteredUserStories$ | async; let i = index"
+      [tag]="userStory.id"
+      (click)="navigateToEditUserStory(userStory)"
+      class="relative"
+    >
+      <div class="absolute top-4 right-4 flex gap-2">
+        <app-button
+          (click)="navigateToTaskList(userStory, i)"
+          buttonContent="View Tasks"
+          theme="secondary_outline"
+          size="xs"
+          rounded="lg"
+        />
+        <app-button
+          (click)="navigateToTestCases(userStory, i)"
+          buttonContent="Test Cases"
+          theme="secondary_outline"
+          size="xs"
+          rounded="lg"
+        />
+        <app-button
+          theme="secondary_outline"
+          size="xs"
+          rounded="lg"
+          [isIconButton]="true"
+          icon="heroDocumentDuplicate"
+          (click)="copyUserStoryContent($event, userStory)"
+          matTooltip="Copy"
+        />
+      </div>
+    </app-list-item>
+    <h1
+      class="font-semibold text-secondary-700 mt-4 text-center"
+      *ngIf="(filteredUserStories$ | async)?.length === 0"
+    >
+      No User Stories Available.
+    </h1>
+  </div>
+</div>

@@ -276,6 +276,51 @@ def init_db():
         conn.executescript(MATRIZ_DDL)
         from app.routers.planejamento import DDL as PLANEJAMENTO_DDL
         conn.executescript(PLANEJAMENTO_DDL)
+        from app.routers.documentos_controlados import DDL as PDM_DDL
+        conn.executescript(PDM_DDL)
+        from app.routers.normas import DDL as NORMAS_DDL
+        conn.executescript(NORMAS_DDL)
+        from app.routers.requisitos import DDL as REQUISITOS_DDL
+        conn.executescript(REQUISITOS_DDL)
+        from app.routers.conformidade import DDL as CONFORMIDADE_DDL
+        conn.executescript(CONFORMIDADE_DDL)
+        from app.routers.produtos import DDL as PRODUTOS_DDL
+        conn.executescript(PRODUTOS_DDL)
+        from app.routers.requisitos import CLASSES_DDL
+        conn.executescript(CLASSES_DDL)
+        reqcols = [r[1] for r in conn.execute("PRAGMA table_info(requisitos)").fetchall()]
+        if reqcols and "prioridade" not in reqcols:
+            conn.execute("ALTER TABLE requisitos ADD COLUMN prioridade TEXT DEFAULT ''")
+        if reqcols:
+            for _c in ("custo_atual", "custo_projetado", "volume"):
+                if _c not in reqcols:
+                    conn.execute(f"ALTER TABLE requisitos ADD COLUMN {_c} REAL")
+            if "variante" not in reqcols:
+                conn.execute("ALTER TABLE requisitos ADD COLUMN variante TEXT DEFAULT ''")
+            for _c in ("fonte", "justificativa"):
+                if _c not in reqcols:
+                    conn.execute(f"ALTER TABLE requisitos ADD COLUMN {_c} TEXT DEFAULT ''")
+            if "classe_id" not in reqcols:
+                conn.execute("ALTER TABLE requisitos ADD COLUMN classe_id INTEGER REFERENCES requisito_classes(id)")
+        vcols = [r[1] for r in conn.execute("PRAGMA table_info(requisito_vinculos)").fetchall()]
+        if vcols and "tipo_relacao" not in vcols:
+            conn.execute("ALTER TABLE requisito_vinculos ADD COLUMN tipo_relacao TEXT DEFAULT 'satisfaz'")
+        revcols = [r[1] for r in conn.execute("PRAGMA table_info(documento_revisoes)").fetchall()]
+        if revcols and "variante" not in revcols:
+            conn.execute("ALTER TABLE documento_revisoes ADD COLUMN variante TEXT DEFAULT ''")
+        if revcols and "fonte" not in revcols:
+            conn.execute("ALTER TABLE documento_revisoes ADD COLUMN fonte TEXT DEFAULT 'cadastrado'")
+        if revcols and "url" not in revcols:
+            conn.execute("ALTER TABLE documento_revisoes ADD COLUMN url TEXT DEFAULT ''")
+        # Alinha o estado inicial do documento às raias do Kanban (rascunho -> backlog).
+        if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='documentos_controlados'").fetchone():
+            conn.execute("UPDATE documentos_controlados SET estado='backlog' WHERE estado='rascunho'")
+            # Status da norma segue o ciclo do documento (vigente/em_revisao/obsoleta).
+            if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='normas'").fetchone():
+                conn.execute(
+                    "UPDATE normas SET status = CASE (SELECT estado FROM documentos_controlados d WHERE d.id=normas.documento_id) "
+                    "WHEN 'aprovado' THEN 'vigente' WHEN 'obsoleto' THEN 'obsoleta' ELSE 'em_revisao' END "
+                    "WHERE documento_id IS NOT NULL")
         cols = [r[1] for r in conn.execute("PRAGMA table_info(projects)").fetchall()]
         if "empresa_id" not in cols:
             conn.execute(
